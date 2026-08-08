@@ -32,10 +32,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <a className="transition-colors hover:text-[#3525cd]" href="mailto:stem.support@crossinghurdles.com">
                 Contact us
               </a>
-              <a className="transition-colors hover:text-[#3525cd]" href="www.snorkel.com">
+              <a className="transition-colors hover:text-[#3525cd]" href="https://experts.snorkel-ai.com/">
                 Snorkel
               </a>
-              <a className="transition-colors hover:text-[#3525cd]" href="www.crossinghurdles.com">
+              <a className="transition-colors hover:text-[#3525cd]" href="https://crossinghurdles.com/">
                 Crossing Hurdles
               </a>
             </nav>

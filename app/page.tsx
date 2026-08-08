@@ -709,7 +709,7 @@ export default async function Home() {
             <div className="pointer-events-none absolute right-0 top-full z-50 w-[280px] pt-[10px] group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
               <div
                 id="early-beta-popover"
-                className="rounded-[12px] border border-[#e2e1e8] bg-white p-[14px] text-left opacity-0 shadow-[0px_3px_8px_rgba(0,0,0,0.035),0px_16px_30px_rgba(0,0,0,0.06)] transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                className="hidden rounded-[12px] border border-[#e2e1e8] bg-[#ffffff] p-[14px] text-left shadow-[0px_3px_8px_rgba(0,0,0,0.035),0px_16px_30px_rgba(0,0,0,0.06)] group-hover:block group-focus-within:block"
               >
                 <p className="text-[12px] font-semibold leading-[16px] text-[#1b1b24]">
                   Early Beta
