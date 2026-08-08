@@ -6,7 +6,13 @@ import { createClient } from "@/lib/supabase/client";
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState(() => {
+        if (typeof window === "undefined") {
+            return "";
+        }
+
+        return new URLSearchParams(window.location.search).get("auth_error") ?? "";
+    });
     const siteUrl =
         typeof window !== "undefined"
             ? window.location.origin
