@@ -685,7 +685,7 @@ export default async function Home() {
 
   return (
     <div className="min-h-[844px] overflow-x-hidden bg-[#fcf8ff] text-[#1b1b24] sm:min-h-screen 2xl:min-h-[1080px]">
-      <nav className="relative z-[2] h-[80px] bg-[rgba(252,248,255,0.8)] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-[6px] sm:h-[60px]">
+      <nav className="relative z-[2] h-[80px] bg-[rgba(252,248,255,0.8)] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition-[height] duration-150 focus-within:h-[300px] sm:h-[60px] sm:focus-within:h-[60px]">
         <div className="mx-auto flex h-[80px] w-full max-w-[390px] items-center justify-between px-[20px] sm:h-[60px] sm:max-w-[960px] sm:px-[30px] 2xl:max-w-[1380px]">
           <div className="flex min-w-0 items-center gap-[16px] sm:gap-[12px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -706,10 +706,11 @@ export default async function Home() {
             >
               Early Beta
             </button>
-            <div className="pointer-events-none absolute right-0 top-full z-50 w-[280px] pt-[10px] group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
+            <div className="pointer-events-none absolute right-0 top-full z-50 w-[280px] max-w-[calc(100vw-40px)] pt-[10px] group-hover:pointer-events-auto group-focus-within:pointer-events-auto">
               <div
                 id="early-beta-popover"
-                className="hidden rounded-[12px] border border-[#e2e1e8] bg-[#ffffff] p-[14px] text-left shadow-[0px_3px_8px_rgba(0,0,0,0.035),0px_16px_30px_rgba(0,0,0,0.06)] group-hover:block group-focus-within:block"
+                className="hidden rounded-[12px] border border-[#e2e1e8] bg-white p-[14px] text-left shadow-[0px_3px_8px_rgba(0,0,0,0.035),0px_16px_30px_rgba(0,0,0,0.06)] group-hover:block group-focus-within:block"
+                style={{ backgroundColor: "#ffffff", opacity: 1 }}
               >
                 <p className="text-[12px] font-semibold leading-[16px] text-[#1b1b24]">
                   Early Beta

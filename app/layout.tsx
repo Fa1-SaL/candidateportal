@@ -11,6 +11,14 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Candidate Portal",
   description: "Crossing Hurdles candidate assignment dashboard",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
