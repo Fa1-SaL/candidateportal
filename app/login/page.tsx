@@ -8,8 +8,10 @@ export default function LoginPage() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-        "http://localhost:3000";
+        typeof window !== "undefined"
+            ? window.location.origin
+            : process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+              "http://localhost:3000";
 
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
