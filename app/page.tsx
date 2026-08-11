@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import ProjectSwitcher from "./project-switcher";
+import PaymentStructure from "./payment-structure";
 
 type Candidate = {
   id: string;
@@ -35,6 +37,7 @@ type TaskMetrics = {
   accepted: number | null;
   rejected: number | null;
   rework: number | null;
+  evaluation_pending: number | null;
 };
 
 type Payment = {
@@ -42,6 +45,18 @@ type Payment = {
   currency: string | null;
   status: string | null;
   paid_on: string | null;
+};
+
+type PaymentTerm = {
+  id: string;
+  label: string;
+  amount: number | null;
+  minimum_amount: number | null;
+  maximum_amount: number | null;
+  currency: string | null;
+  unit: string | null;
+  is_specified: boolean;
+  display_order: number;
 };
 
 type NamedRecord = {
@@ -119,6 +134,24 @@ function getRateParts(assignment: Assignment) {
   };
 }
 
+function uniqueDisplayValues(values: Array<string | null | undefined>) {
+  const seen = new Set<string>();
+
+  return values
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value))
+    .filter((value) => {
+      const key = value.toLowerCase();
+
+      if (seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    });
+}
+
 function projectDetailsFallback(assignment: Assignment) {
   const text = [
     assignment.source_sheet,
@@ -130,9 +163,15 @@ function projectDetailsFallback(assignment: Assignment) {
 
   const projects = [
     { key: "rainier", label: "Rainier", vertical: "STEM" },
-    { key: "riga", label: "Riga", vertical: "Coding" },
-    { key: "sequoia", label: "Sequoia", vertical: "Coding" },
+    { key: "riga", label: "Riga", vertical: "STEM" },
+    { key: "sequoia", label: "Sequoia", vertical: "STEM" },
     { key: "starfish", label: "Starfish", vertical: "STEM" },
+    { key: "terminus", label: "Terminus", vertical: "Coding" },
+    { key: "otter", label: "Otter", vertical: "Coding" },
+    { key: "sentinel", label: "Sentinel Ultra", vertical: "Coding" },
+    { key: "suite life", label: "SuiteLife", vertical: "Coding" },
+    { key: "rudder", label: "Rudder", vertical: "Coding" },
+    { key: "mojave", label: "Mojave", vertical: "Mojave" },
   ];
 
   const project = projects.find(({ key }) => text.includes(key));
@@ -197,6 +236,13 @@ function MaterialIcon({
         <path d="M12 3 5 6v5c0 4.4 2.8 8.4 7 10 4.2-1.6 7-5.6 7-10V6l-7-3Z" />
         <path d="M12 8v5" />
         <path d="M12 16.5h.01" />
+      </>
+    ),
+    info: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <path d="M12 10.5v5" />
+        <path d="M12 7.5h.01" />
       </>
     ),
     task_alt: (
@@ -494,7 +540,15 @@ function PaymentInfo({
   );
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ project?: string | string[] }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const requestedProjectId = Array.isArray(resolvedSearchParams.project)
+    ? resolvedSearchParams.project[0]
+    : resolvedSearchParams.project;
   const supabase = await createClient();
   const {
     data: { user },
@@ -537,10 +591,14 @@ export default async function Home() {
     .eq("candidate_id", candidate.id)
     .eq("is_offboarded_heuristic", false)
     .order("last_seen_at", { ascending: false })
-    .limit(1)
+    .order("updated_at", { ascending: false })
     .returns<Assignment[]>();
 
-  const assignment = assignments?.[0] ?? null;
+  const activeAssignments = assignments ?? [];
+  const assignment =
+    activeAssignments.find(
+      (activeAssignment) => activeAssignment.id === requestedProjectId,
+    ) ?? activeAssignments[0] ?? null;
 
   if (!assignment) {
     return (
@@ -553,70 +611,92 @@ export default async function Home() {
             Hi {candidate.full_name ?? candidate.email}
           </h1>
           <p className="mt-4 text-[#464555]">
-            There is no active assignment connected to your profile right now.
+            There is no active project connected to your profile right now.
           </p>
         </section>
       </main>
     );
   }
 
-  const { data: subproject } = await supabase
-    .from("subprojects")
-    .select("id,vertical_id,display_name,active")
-    .eq("id", assignment.subproject_id)
-    .maybeSingle<Subproject>();
+  const subprojectIds = uniqueDisplayValues(
+    activeAssignments.map((activeAssignment) => activeAssignment.subproject_id),
+  );
 
-  const { data: vertical } = !subproject?.vertical_id
-    ? { data: null }
-    : await supabase
-      .from("verticals")
-      .select("id,client_id,display_name")
-      .eq("id", subproject.vertical_id)
-      .maybeSingle<Vertical>();
+  const { data: subprojects } = subprojectIds.length
+    ? await supabase
+      .from("subprojects")
+      .select("id,vertical_id,display_name,active")
+      .in("id", subprojectIds)
+      .returns<Subproject[]>()
+    : { data: [] };
 
-  const { data: client } = !vertical?.client_id
-    ? { data: null }
-    : await supabase
-      .from("clients")
-      .select("id,display_name")
-      .eq("id", vertical.client_id)
-      .maybeSingle<NamedRecord>();
+  const subprojectById = new Map(
+    (subprojects ?? []).map((subproject) => [subproject.id, subproject]),
+  );
+  const verticalIds = uniqueDisplayValues(
+    (subprojects ?? []).map((subproject) => subproject.vertical_id),
+  );
 
-  const { data: subprojectByText } =
-    subproject || !assignment.source_sheet
-      ? { data: null }
-      : await supabase
-        .from("subprojects")
-        .select("id,vertical_id,display_name,active")
-        .ilike("display_name", `%${assignment.source_sheet}%`)
-        .maybeSingle<Subproject>();
-
-  const resolvedSubproject = subproject ?? subprojectByText;
-
-  const { data: verticalByText } = resolvedSubproject?.vertical_id && !vertical
+  const { data: verticals } = verticalIds.length
     ? await supabase
       .from("verticals")
       .select("id,client_id,display_name")
-      .eq("id", resolvedSubproject.vertical_id)
-      .maybeSingle<Vertical>()
-    : { data: null };
+      .in("id", verticalIds)
+      .returns<Vertical[]>()
+    : { data: [] };
 
-  const resolvedVertical = vertical ?? verticalByText;
+  const verticalById = new Map(
+    (verticals ?? []).map((vertical) => [vertical.id, vertical]),
+  );
+  const clientIds = uniqueDisplayValues(
+    (verticals ?? []).map((vertical) => vertical.client_id),
+  );
 
-  const { data: clientByText } = resolvedVertical?.client_id && !client
+  const { data: clients } = clientIds.length
     ? await supabase
       .from("clients")
       .select("id,display_name")
-      .eq("id", resolvedVertical.client_id)
-      .maybeSingle<NamedRecord>()
-    : { data: null };
+      .in("id", clientIds)
+      .returns<NamedRecord[]>()
+    : { data: [] };
 
-  const resolvedClient = client ?? clientByText;
+  const clientById = new Map(
+    (clients ?? []).map((client) => [client.id, client]),
+  );
+
+  const assignmentSummaries = activeAssignments.map((activeAssignment) => {
+    const subproject = subprojectById.get(activeAssignment.subproject_id) ?? null;
+    const vertical = subproject
+      ? verticalById.get(subproject.vertical_id) ?? null
+      : null;
+    const client = vertical ? clientById.get(vertical.client_id) ?? null : null;
+    const fallbackProjectDetails = projectDetailsFallback(activeAssignment);
+
+    const verticalName =
+      vertical?.display_name ?? fallbackProjectDetails.verticalName ?? "Not available";
+    const rawProjectName =
+      subproject?.display_name ?? fallbackProjectDetails.projectName ?? "Not available";
+
+    return {
+      assignment: activeAssignment,
+      clientName: client?.display_name ?? fallbackProjectDetails.clientName,
+      verticalName,
+      projectName:
+        verticalName === "Mojave" && rawProjectName === "Mojave"
+          ? "No sub-project"
+          : rawProjectName,
+    };
+  });
+  const selectedAssignmentSummary =
+    assignmentSummaries.find(
+      (summary) => summary.assignment.id === assignment.id,
+    ) ?? assignmentSummaries[0];
 
   const [
     { data: backgroundVerification },
     { data: taskMetrics },
     { data: payments },
+    { data: paymentTerms },
   ] = await Promise.all([
     supabase
       .from("background_verification")
@@ -625,7 +705,7 @@ export default async function Home() {
       .maybeSingle<BackgroundVerification>(),
     supabase
       .from("task_metrics")
-      .select("submitted,accepted,rejected,rework")
+      .select("submitted,accepted,rejected,rework,evaluation_pending")
       .eq("assignment_id", assignment.id)
       .order("as_of", { ascending: false })
       .limit(1)
@@ -637,13 +717,20 @@ export default async function Home() {
       .order("period_end", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .returns<Payment[]>(),
+    supabase
+      .from("assignment_payment_terms")
+      .select(
+        "id,label,amount,minimum_amount,maximum_amount,currency,unit,is_specified,display_order",
+      )
+      .eq("assignment_id", assignment.id)
+      .order("display_order", { ascending: true })
+      .returns<PaymentTerm[]>(),
   ]);
 
   const assignmentStatus = assignment.is_offboarded_heuristic ? "Offboarded" : "Active";
-  const fallbackProjectDetails = projectDetailsFallback(assignment);
-  const clientName = resolvedClient?.display_name ?? fallbackProjectDetails.clientName;
-  const verticalName = resolvedVertical?.display_name ?? fallbackProjectDetails.verticalName ?? "Not available";
-  const projectName = resolvedSubproject?.display_name ?? fallbackProjectDetails.projectName ?? "Not available";
+  const clientName = selectedAssignmentSummary?.clientName ?? "Not available";
+  const verticalName = selectedAssignmentSummary?.verticalName ?? "Not available";
+  const projectName = selectedAssignmentSummary?.projectName ?? "Not available";
   const disbursedPayments =
     payments?.filter((payment) => payment.status?.toLowerCase() === "disbursed") ??
     [];
@@ -673,7 +760,7 @@ export default async function Home() {
   const contractSigned = contractStatus === "Signed";
   const springVerified = springVerifyStatus === "Verified";
   const remofirstVerified = remofirstStatus === "Verified";
-  const taskEvaluationPending = Math.max(
+  const taskEvaluationPending = taskMetrics?.evaluation_pending ?? Math.max(
     (taskMetrics?.submitted ?? 0) -
     (taskMetrics?.accepted ?? 0) -
     (taskMetrics?.rejected ?? 0) -
@@ -681,6 +768,10 @@ export default async function Home() {
     0,
   );
   const rate = getRateParts(assignment);
+  const fallbackPaymentTerm = {
+    label: assignment.rate_unit ? formatStatus(assignment.rate_unit) : "Pay rate",
+    value: rate.amount + rate.unit,
+  };
   const candidateName = candidate.full_name ?? "Not available";
 
   return (
@@ -745,10 +836,19 @@ export default async function Home() {
               Hi {candidate.full_name ?? candidate.email}
             </h1>
             <p className="mt-[8px] text-[14px] font-normal leading-[22px] text-[#464555] sm:mt-[6px] sm:text-[14px] sm:leading-[21px]">
-              Here is an overview of your current assignment and tasks.
+              Here is an overview of your current projects and tasks.
             </p>
           </div>
         </section>
+
+        <ProjectSwitcher
+          selectedProjectId={assignment.id}
+          projects={assignmentSummaries.map((summary) => ({
+            id: summary.assignment.id,
+            verticalName: summary.verticalName,
+            projectName: summary.projectName,
+          }))}
+        />
 
         <div className="grid grid-cols-1 gap-[24px] xl:grid-cols-[minmax(0,594px)_286px] xl:gap-[20px] 2xl:grid-cols-[minmax(0,895px)_405px]">
           <div className="flex flex-col gap-[24px] sm:gap-[26px]">
@@ -822,6 +922,11 @@ export default async function Home() {
               </Card>
             </div>
 
+            <PaymentStructure
+              terms={paymentTerms ?? []}
+              fallbackTerm={fallbackPaymentTerm}
+            />
+
             <div className="grid grid-cols-1 gap-[14px] md:grid-cols-3 md:gap-[14px]">
               <VerificationCard
                 icon="description"
@@ -846,10 +951,27 @@ export default async function Home() {
           </div>
 
           <aside className="flex flex-col gap-[34px] sm:gap-[26px]">
-            <Card className="h-auto p-[24px] sm:p-[26px] xl:h-[446px]">
+            <Card className="relative h-auto overflow-visible p-[24px] sm:p-[26px] xl:h-[446px]">
               <h2 className="text-[20px] font-semibold leading-[26px] text-[#1b1b24] sm:text-[18px] sm:leading-[23px]">
                 Task Summary
               </h2>
+              <div className="group absolute right-[24px] top-[24px] z-20 sm:right-[26px] sm:top-[26px]">
+                <button
+                  type="button"
+                  aria-describedby="task-summary-update-note"
+                  aria-label="Task Summary update schedule"
+                  className="inline-flex size-[22px] items-center justify-center rounded-full text-[#625f72] transition-colors duration-150 hover:text-[#4035d1] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6257dd]/40 sm:size-[19px]"
+                >
+                  <MaterialIcon name="info" className="text-[18px] sm:text-[16px]" />
+                </button>
+                <div
+                  id="task-summary-update-note"
+                  role="tooltip"
+                  className="pointer-events-none absolute bottom-full right-0 z-20 w-max max-w-[calc(100vw-32px)] translate-y-px rounded-[8px] border border-[#e2e1e8] bg-white px-[10px] py-[7px] text-[11px] font-medium leading-[15px] text-[#464555] opacity-0 shadow-[0px_4px_12px_rgba(0,0,0,0.08)] transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 sm:px-[9px] sm:py-[6px] sm:text-[10px] sm:leading-[13px]"
+                >
+                  Details are updated on a 72hr cycle.
+                </div>
+              </div>
               <div className="mt-[24px] grid grid-cols-2 gap-[9px] sm:mt-[18px] sm:gap-[7px]">
                 <MetricTile
                   icon="check_circle"

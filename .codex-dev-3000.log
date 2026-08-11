@@ -1,0 +1,51 @@
+
+> candidate-portal@0.1.0 dev
+> next dev --hostname 127.0.0.1 --port 3000
+
+▲ Next.js 16.3.0 (Turbopack)
+- Local:         http://127.0.0.1:3000
+- Network:       http://127.0.0.1:3000
+- Environments: .env.local
+✓ Ready in 632ms
+✓ Running next.config.ts took 41ms
+
+ GET /login 200 in 710ms (next.js: 359ms, application-code: 351ms)
+ GET /auth/confirm?token_hash=pkce_ea7922ce2bef8cb222d0068ee81023698d7e7db305b39a6f9d653a72&type=email&next=/ 307 in 2.5s (next.js: 1482ms, application-code: 987ms)
+ GET / 200 in 4.4s (next.js: 255ms, application-code: 4.2s)
+ GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 2.9s (next.js: 21ms, application-code: 2.8s)
+ GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 3.0s (next.js: 30ms, application-code: 2.9s)
+ GET / 307 in 2.1s (next.js: 653ms, application-code: 1459ms)
+ GET /login 200 in 957ms (next.js: 435ms, application-code: 522ms)
+ GET /login 200 in 138ms (next.js: 58ms, application-code: 80ms)
+ GET /login 200 in 102ms (next.js: 25ms, application-code: 77ms)
+ GET / 307 in 259ms (next.js: 27ms, application-code: 232ms)
+ GET /login 200 in 125ms (next.js: 11ms, application-code: 114ms)
+ GET / 307 in 214ms (next.js: 22ms, application-code: 192ms)
+ GET /login 200 in 82ms (next.js: 19ms, application-code: 63ms)
+ GET /?token_hash=pkce_9645dfc2115cb7f34918e6c817f10ca3a807ac145a30f738d36ebcd6&type=email&next=/ 500 in 2.3s (next.js: 15ms, application-code: 2.3s)
+ GET /auth/confirm?token_hash=pkce_b828fd510e45d99080d62c8b5f0916b01ef9b2488b5b9f4118671b12&type=email&next=/ 307 in 405ms (next.js: 60ms, application-code: 345ms)
+ GET / 200 in 3.7s (next.js: 12ms, application-code: 3.7s)
+ GET /?project=a58c0524-aaaf-4dd8-b3e3-16a9ab809436 200 in 2.5s (next.js: 17ms, application-code: 2.5s)
+ GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 2.2s (next.js: 8ms, application-code: 2.2s)
+ GET /?project=eb4c28df-7f2e-42d4-9114-2bbdbc07a4a6 200 in 2.0s (next.js: 14ms, application-code: 2.0s)
+ GET /?project=2333d3da-3b34-4c54-9b0b-29356b139996 200 in 3.2s (next.js: 8ms, application-code: 3.2s)
+ GET /?project=a58c0524-aaaf-4dd8-b3e3-16a9ab809436 200 in 2.6s (next.js: 30ms, application-code: 2.5s)
+ GET /?project=809882a6-f124-4525-958b-572d07fbcd50 200 in 2.3s (next.js: 18ms, application-code: 2.3s)
+ GET /?project=2333d3da-3b34-4c54-9b0b-29356b139996 200 in 3.5s (next.js: 26ms, application-code: 3.5s)
+ GET /?project=00621513-32f3-40d9-9233-a1f8eacb24c7 200 in 1778ms (next.js: 18ms, application-code: 1759ms)
+ GET /?project=809882a6-f124-4525-958b-572d07fbcd50 200 in 983ms (next.js: 8ms, application-code: 974ms)
+ GET /?project=809882a6-f124-4525-958b-572d07fbcd50 500 in 363ms (next.js: 22ms, application-code: 341ms)
+ GET /auth/confirm?token_hash=pkce_56e7ed01b15b3c5d8a81f400f3932e60ff0329ef801780ae7df19a10&type=email&next=/ 307 in 1001ms (next.js: 8ms, application-code: 994ms)
+ GET / 200 in 2.4s (next.js: 12ms, application-code: 2.4s)
+ GET /?project=a58c0524-aaaf-4dd8-b3e3-16a9ab809436 200 in 2.4s (next.js: 15ms, application-code: 2.4s)
+ GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 2.8s (next.js: 12ms, application-code: 2.8s)
+ GET /?project=809882a6-f124-4525-958b-572d07fbcd50 200 in 2.7s (next.js: 11ms, application-code: 2.7s)
+ GET /?project=a58c0524-aaaf-4dd8-b3e3-16a9ab809436 200 in 1809ms (next.js: 11ms, application-code: 1798ms)
+ GET /?project=809882a6-f124-4525-958b-572d07fbcd50 200 in 2.0s (next.js: 16ms, application-code: 2.0s)
+ GET /auth/confirm?token_hash=pkce_864bf64caccb68f515fcde779653e755fbe19445143245cc3de83f07&type=email&next=/ 307 in 463ms (next.js: 66ms, application-code: 397ms)
+ GET / 200 in 2.4s (next.js: 33ms, application-code: 2.4s)
+ GET / 500 in 2.1s (next.js: 261ms, application-code: 1846ms)
+ GET / 200 in 3.1s (next.js: 48ms, application-code: 3.1s)
+ GET / 200 in 1803ms (next.js: 54ms, application-code: 1749ms)
+ GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 1764ms (next.js: 9ms, application-code: 1754ms)
+ GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 234ms (next.js: 26ms, application-code: 207ms)

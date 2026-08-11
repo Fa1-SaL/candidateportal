@@ -1,0 +1,192 @@
+{
+  "name": "Candidate Portal - Sentinel Ultra Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "04e11d7a-2309-4ec9-84c3-5c54c8f0b584",
+      "name": "Manual run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -720,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "1e8e3788-a93d-4aea-b06e-a5961e65dcad",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -720,
+        -40
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sentinel Task Pull",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "713d3659-bf04-4831-b1fb-dbb2d8018bd2",
+      "name": "Read Sentinel Task Pull",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -480,
+        40
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nfunction text(value) {\n  return String(value ?? '').trim();\n}\n\nfunction key(value) {\n  return text(value).toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key);\n  for (const name of wanted) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\n\nfunction directCount(row, ...names) {\n  const raw = text(read(row, ...names));\n  if (!raw) return null;\n  const value = Number(raw.replace(/[,\\s]/g, ''));\n  return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : null;\n}\n\nfunction emailFrom(row) {\n  const named = text(read(row, 'Email', 'Contributor Email', 'Worker Email', 'Candidate Email')).toLowerCase();\n  if (EMAIL_RE.test(named)) return named;\n  for (const value of Object.values(row || {})) {\n    const candidate = text(value).toLowerCase();\n    if (EMAIL_RE.test(candidate)) return candidate;\n  }\n  return '';\n}\n\nfunction classify(value) {\n  const status = text(value).toLowerCase();\n  if (/accept|approve|complete|pass/.test(status)) return 'accepted';\n  if (/reject|fail|invalid/.test(status)) return 'rejected';\n  if (/rework|revision|fixable|needs.?fix/.test(status)) return 'rework';\n  if (/review|pending|queue|hold/.test(status)) return 'evaluation_pending';\n  return 'submitted';\n}\n\nconst byEmail = new Map();\nconst asOf = new Date().toISOString().slice(0, 10);\n\nfor (const item of items) {\n  const row = item.json;\n  const email = emailFrom(row);\n  if (!EMAIL_RE.test(email)) continue;\n\n  const direct = {\n    submitted: directCount(row, 'Submitted', 'Total Submitted', 'Task Count', 'Task Count All Time'),\n    accepted: directCount(row, 'Accepted', 'Total Accepted'),\n    rejected: directCount(row, 'Rejected', 'Total Rejected'),\n    rework: directCount(row, 'Rework', 'Needs Revision', 'Requiring Rework'),\n    evaluation_pending: directCount(row, 'Evaluation Pending', 'To Be Reviewed', 'Pending'),\n  };\n\n  if (Object.values(direct).some((value) => value !== null)) {\n    byEmail.set(email, {\n      p_email: email,\n      p_project_slug: 'sentinel_ultra',\n      p_as_of: asOf,\n      p_submitted: direct.submitted,\n      p_accepted: direct.accepted,\n      p_rejected: direct.rejected,\n      p_rework: direct.rework,\n      p_evaluation_pending: direct.evaluation_pending,\n      p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',\n      p_metric_kind: 'cumulative',\n    });\n    continue;\n  }\n\n  const metric = byEmail.get(email) || {\n    p_email: email,\n    p_project_slug: 'sentinel_ultra',\n    p_as_of: asOf,\n    p_submitted: 0,\n    p_accepted: 0,\n    p_rejected: 0,\n    p_rework: 0,\n    p_evaluation_pending: 0,\n    p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',\n    p_metric_kind: 'cumulative',\n  };\n  const statusKey = classify(read(row, 'Task Status', 'Status', 'Final Status', 'Task State'));\n  metric.p_submitted += 1;\n  if (statusKey !== 'submitted') metric['p_' + statusKey] += 1;\n  byEmail.set(email, metric);\n}\n\nreturn [...byEmail.values()].map((json) => ({ json }));"
+      },
+      "id": "208a3f48-75dd-42c2-bf02-ff1e85f6d5a1",
+      "name": "Normalize Sentinel Task Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { p_rows: items.map((item) => item.json) } }];"
+      },
+      "id": "7899d1e6-595b-4d83-98ed-5426be35ea01",
+      "name": "Batch Sentinel Task Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "57053773-0f46-45b1-8fec-b5e6e56abdea",
+      "name": "Upsert Sentinel Task Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        40
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual run": {
+      "main": [
+        [
+          {
+            "node": "Read Sentinel Task Pull",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Read Sentinel Task Pull",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Task Pull": {
+      "main": [
+        [
+          {
+            "node": "Normalize Sentinel Task Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Sentinel Task Metrics": {
+      "main": [
+        [
+          {
+            "node": "Batch Sentinel Task Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Sentinel Task Metrics": {
+      "main": [
+        [
+          {
+            "node": "Upsert Sentinel Task Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0082126e-32f1-40c4-b9a2-3639f4d6c9c5",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

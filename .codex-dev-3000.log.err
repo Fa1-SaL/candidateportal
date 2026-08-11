@@ -1,0 +1,271 @@
+⚠ Warning: Next.js ignored package-lock.json in C:\Users\faisa_2u122zn\Desktop\resend_test because it is outside the current Git repository (C:\Users\faisa_2u122zn\Desktop\resend_test\candidate-portal).
+ To use this directory, set `turbopack.root` in your Next.js config.
+
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             }, {
+  digest: '3895837166@E1180'
+}
+[browser] Uncaught Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <anonymous> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>:1:22)
+    at setAll (src\lib\supabase\server.ts:16:34)
+    at Promise.all (<anonymous>:1:20)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+Error [AuthRefreshDiscardedError]: Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 409,
+  code: undefined
+}
+Error [AuthRefreshDiscardedError]: Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 409,
+  code: undefined
+}
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             }, {
+  digest: '3895837166@E1180'
+}
+[browser] Uncaught Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <anonymous> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>:1:22)
+    at setAll (src\lib\supabase\server.ts:16:34)
+    at Promise.all (<anonymous>:1:20)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             }, {
+  digest: '3895837166@E1180'
+}
+[browser] Uncaught Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <anonymous> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>:1:22)
+    at setAll (src\lib\supabase\server.ts:16:34)
+    at Promise.all (<anonymous>:1:20)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+Error [AuthRefreshDiscardedError]: Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 409,
+  code: undefined
+}
+Error [AuthRefreshDiscardedError]: Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 409,
+  code: undefined
+}
+Error [AuthRefreshDiscardedError]: Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 409,
+  code: undefined
+}
+Error [AuthRefreshDiscardedError]: Refresh result discarded: session state changed mid-flight (e.g., concurrent signOut)
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 409,
+  code: undefined
+}
+Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ unhandledRejection: Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },
+⨯ Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <unknown> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>)
+    at setAll (src\lib\supabase\server.ts:16:34)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             }, {
+  digest: '3895837166@E1180'
+}
+[browser] Uncaught Error: Cookies can only be modified in a Server Action or Route Handler. Read more: https://nextjs.org/docs/app/api-reference/functions/cookies#options
+    at <anonymous> (src\lib\supabase\server.ts:17:37)
+    at Array.forEach (<anonymous>:1:22)
+    at setAll (src\lib\supabase\server.ts:16:34)
+    at Promise.all (<anonymous>:1:20)
+  15 |                 setAll(cookiesToSet) {
+  16 |                     cookiesToSet.forEach(({ name, value, options }) => {
+> 17 |                         cookieStore.set(name, value, options);
+     |                                     ^
+  18 |                     });
+  19 |                 },
+  20 |             },

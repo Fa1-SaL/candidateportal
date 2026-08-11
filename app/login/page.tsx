@@ -1,25 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState("");
+    const [message, setMessage] = useState(() => {
+        if (typeof window === "undefined") {
+            return "";
+        }
+
+        return new URLSearchParams(window.location.search).get("auth_error") ?? "";
+    });
     const siteUrl =
         typeof window !== "undefined"
             ? window.location.origin
             : process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
               "http://localhost:3000";
-
-    useEffect(() => {
-        const authError = new URLSearchParams(window.location.search).get("auth_error");
-
-        if (authError) {
-            setMessage(authError);
-        }
-    }, []);
 
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();

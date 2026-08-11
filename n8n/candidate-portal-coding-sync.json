@@ -1,0 +1,174 @@
+{
+  "name": "Candidate Portal - Coding Assignment Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "fdbfc345-0a2f-4557-a29c-ec9a3d10c4f1",
+      "name": "Manual run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-720, 120]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "7ec51c67-410e-444d-9fc8-63332b64ee90",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-720, -40]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1VxpehOpbE0iUsj_aWDphuVh8jXauG6wZYc7gmtCxqlE",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Master User List - Snorkel",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b5356c71-2b86-4a88-8522-4595f2cc7ca2",
+      "name": "Read Coding Master List",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-480, 40],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nconst PROJECTS = {\n  terminus: 'Terminus',\n  otter: 'Otter',\n  'sentinel ultra': 'Sentinel Ultra',\n  'sentinal ultra': 'Sentinel Ultra',\n  'suite life': 'SuiteLife',\n  suitelife: 'SuiteLife',\n  rudder: 'Rudder',\n  paper: 'PaperBench',\n  paperbench: 'PaperBench',\n  'paper bench': 'PaperBench',\n};\n\nfunction read(row, ...names) {\n  const keys = Object.keys(row || {});\n  for (const name of names) {\n    const key = keys.find((candidate) => candidate.trim().toLowerCase() === name.toLowerCase());\n    if (key && row[key] !== null && row[key] !== undefined) return row[key];\n  }\n  return '';\n}\n\nfunction text(value) {\n  return String(value ?? '').trim();\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n\n  if (!EMAIL_RE.test(email) || (status && status !== 'active')) continue;\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const sourceProjects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))\n    .filter(Boolean);\n\n  for (const sourceProject of sourceProjects) {\n    const project = PROJECTS[sourceProject];\n    if (!project) continue;\n\n    output.push({\n      json: {\n        p_email: email,\n        p_full_name: fullName,\n        p_client: 'Snorkel',\n        p_vertical: 'Coding',\n        p_project: project,\n        p_domain: domain || null,\n        p_is_offboarded_heuristic: false,\n        p_source_sheet: 'Snorkel Internal Main / Master User List - Snorkel',\n      },\n    });\n  }\n}\n\nreturn output;"
+      },
+      "id": "bd12e0aa-4e28-4444-805b-15f20c9b95a1",
+      "name": "Normalize Active Coding Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-220, 40]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { p_rows: items.map((item) => item.json) } }];"
+      },
+      "id": "6dd89b31-2e1e-4927-a164-804338e040c4",
+      "name": "Batch Candidate Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [40, 40]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_candidate_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "5831e4b0-5417-4fe1-8d3f-a9e45f74781c",
+      "name": "Upsert Coding Assignments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 40],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual run": {
+      "main": [
+        [
+          {
+            "node": "Read Coding Master List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Read Coding Master List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Coding Master List": {
+      "main": [
+        [
+          {
+            "node": "Normalize Active Coding Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Active Coding Assignments": {
+      "main": [
+        [
+          {
+            "node": "Batch Candidate Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Candidate Assignments": {
+      "main": [
+        [
+          {
+            "node": "Upsert Coding Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "21a46f99-c345-49a6-a88f-07e47e16517c",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

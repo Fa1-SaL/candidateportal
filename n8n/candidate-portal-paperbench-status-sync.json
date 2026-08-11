@@ -1,0 +1,174 @@
+{
+  "name": "Candidate Portal - Paperbench Status Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "517a0a6c-63a7-4584-9347-9fcb2b81ea8e",
+      "name": "Manual run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-720, 120]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "47887ad6-f45b-4bb0-a7f7-8033f33b4e55",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-720, -40]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1zgjIRlGOl2i7ZMFCufcxAIpU4SbSJgrQW1XBzJw2mQc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "PaperBench Live Candidates",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "50af6504-91e6-4e33-9fa2-a783d6f71692",
+      "name": "Read Paperbench Live Candidates",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-480, 40],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n};\n\nfunction read(row, ...names) {\n  const keys = Object.keys(row || {});\n  for (const name of names) {\n    const key = keys.find((candidate) => candidate.trim().toLowerCase() === name.toLowerCase());\n    if (key && row[key] !== null && row[key] !== undefined) return row[key];\n  }\n  return '';\n}\n\nfunction text(value) {\n  return String(value ?? '').trim();\n}\n\nfunction springverify(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('complete') || status.includes('verified') || status.includes('approved')) return 'done';\n  if (status.includes('not started') || status.includes('pending') || status.includes('await')) return 'awaited';\n  return null;\n}\n\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('approved') || status.includes('verified')) return 'approved';\n  if (status.includes('not started') || status.includes('not received') || status.includes('rejected')) return 'not_received';\n  if (status.includes('pending') || status.includes('sent')) return 'pending';\n  return null;\n}\n\nfunction contractStatus(signed, sent) {\n  const signedText = text(signed).toLowerCase();\n  const sentText = text(sent).toLowerCase();\n  if (signedText && /signed|complete|yes|true/.test(signedText)) return 'signed';\n  if (sentText && /not sent|not started|no/.test(sentText)) return 'not_signed';\n  if (sentText && /sent|shared/.test(sentText)) return 'sent';\n  return null;\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n  if (!EMAIL_RE.test(email) || status !== 'active') continue;\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const projects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))\n    .filter(Boolean);\n\n  const common = {\n    p_email: email,\n    p_full_name: fullName,\n    p_client: 'Snorkel',\n    p_domain: domain || null,\n    p_bgv_id_status: springverify(read(row, 'CH Background Check')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contractStatus(read(row, 'Contracts Signed'), read(row, 'Contract Sent')),\n    p_is_offboarded_heuristic: false,\n    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates',\n  };\n\n  for (const sourceProject of projects) {\n    const project = PROJECTS[sourceProject];\n    if (!project) continue;\n    output.push({ json: { ...common, p_vertical: project.vertical, p_project: project.project } });\n  }\n}\n\nreturn output;"
+      },
+      "id": "c2efaa27-42af-4c74-b0fa-43268d072ffe",
+      "name": "Normalize Active Portal Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-220, 40]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { p_rows: items.map((item) => item.json) } }];"
+      },
+      "id": "bd9467d0-c70c-42d0-a85b-9e83c7f7b41e",
+      "name": "Batch Candidate Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [40, 40]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_candidate_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "754e0857-8d47-4fd3-b198-4e6fc4e37d94",
+      "name": "Upsert Paperbench Assignments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 40],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual run": {
+      "main": [
+        [
+          {
+            "node": "Read Paperbench Live Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Read Paperbench Live Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Paperbench Live Candidates": {
+      "main": [
+        [
+          {
+            "node": "Normalize Active Portal Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Active Portal Assignments": {
+      "main": [
+        [
+          {
+            "node": "Batch Candidate Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Candidate Assignments": {
+      "main": [
+        [
+          {
+            "node": "Upsert Paperbench Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "94e8d9a7-1393-4f05-9536-d31892622823",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

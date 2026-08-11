@@ -1,0 +1,130 @@
+{
+  "name": "Candidate Portal - Mojave Compensation Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "9a5e5fca-6f24-4bc7-86e3-3d8dfc8ebaf0",
+      "name": "Manual run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-640, 120]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "67577703-437c-4021-87ef-5ff08fc4ec30",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-640, -40]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1icVvzZeL2yR7Kj2O6KUcOUKYqpg0S1B2zFI7LRIUDEs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "cbfc1d14-4ecc-4e78-b0bf-a945ca719c8a",
+      "name": "Read Mojave July Compensation",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-400, 40],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nfunction text(value) {\n  return String(value ?? '').trim();\n}\n\nfunction normalizedKey(value) {\n  return text(value).toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(normalizedKey);\n  for (const name of wanted) {\n    const exact = entries.find(([key, value]) => normalizedKey(key) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n  }\n  for (const name of wanted) {\n    const partial = entries.find(([key, value]) => {\n      const candidate = normalizedKey(key);\n      return value !== null && value !== undefined && (candidate.includes(name) || name.includes(candidate));\n    });\n    if (partial) return partial[1];\n  }\n  return '';\n}\n\nfunction findEmail(row) {\n  for (const value of Object.values(row || {})) {\n    const candidate = text(value).toLowerCase();\n    if (EMAIL_RE.test(candidate)) return candidate;\n  }\n  return '';\n}\n\nfunction field(row, columnIndex, ...names) {\n  const named = read(row, ...names);\n  if (text(named)) return named;\n  return row && Object.prototype.hasOwnProperty.call(row, 'col_' + columnIndex)\n    ? row['col_' + columnIndex]\n    : '';\n}\n\nfunction amount(value) {\n  const parsed = Number(text(value).replace(/[$,\\s]/g, ''));\n  return Number.isFinite(parsed) ? parsed : null;\n}\n\nfunction contractStatus(value) {\n  const status = text(value).toLowerCase();\n  if (/complete|signed|yes/.test(status)) return 'signed';\n  if (/sent|shared/.test(status)) return 'sent';\n  if (/not|pending/.test(status)) return 'not_signed';\n  return null;\n}\n\nfunction paymentStatus(value) {\n  const status = text(value).toLowerCase();\n  if (/sent|paid|disbursed/.test(status)) return 'disbursed';\n  if (/process|pending/.test(status)) return 'processing';\n  if (/reject|fail/.test(status)) return 'failed';\n  return status || 'pending';\n}\n\nfunction pad(value) {\n  return String(value).padStart(2, '0');\n}\n\nfunction isoDate(value) {\n  const raw = text(value);\n  if (!raw) return null;\n  if (/^\\d{4}-\\d{2}-\\d{2}$/.test(raw)) return raw;\n\n  const named = raw.match(/^(\\d{1,2})[\\s-]([A-Za-z]{3,9})[\\s,.-]+(\\d{4})$/);\n  if (named) {\n    const month = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 }[named[2].slice(0, 3).toLowerCase()];\n    return month ? named[3] + '-' + pad(month) + '-' + pad(named[1]) : null;\n  }\n\n  const parsed = new Date(raw);\n  return Number.isNaN(parsed.getTime())\n    ? null\n    : parsed.getFullYear() + '-' + pad(parsed.getMonth() + 1) + '-' + pad(parsed.getDate());\n}\n\nconst output = [];\n\nfor (const item of items) {\n  const row = item.json;\n  const email = (text(field(row, 1, 'Email Id', 'Email')) || findEmail(row)).toLowerCase();\n  if (!EMAIL_RE.test(email)) continue;\n\n  const taskRate = amount(field(row, 8, 'Candidates Rate Task - USD', 'Candidate Rate -Task'));\n  const reviewRate = amount(field(row, 11, 'Candidates Rate USD', 'Candidate Rate - Review'));\n  const finalAmount = amount(field(row, 16, 'Final Amt', 'Final Amount'));\n\n  output.push({\n    json: {\n      p_email: email,\n      p_full_name: text(field(row, 2, 'Name')) || null,\n      p_contract_status: contractStatus(field(row, 5, 'Contract Status', 'Contract status')), \n      p_task_rate_amount: taskRate,\n      p_review_rate_amount: reviewRate,\n      p_currency: 'USD',\n      p_payment_amount: finalAmount,\n      p_payment_currency: 'INR',\n      p_payment_status: paymentStatus(field(row, 17, 'Payment Status', 'Status')), \n      p_paid_on: isoDate(field(row, 18, 'Amount Sent Date')),\n      p_period_start: '2026-07-01',\n      p_period_end: '2026-07-31',\n      p_payment_reference: 'Mojave / July 2026',\n      p_source_sheet: 'SnorkelxMojave - Sub Contracting Payment / July - 2026',\n    },\n  });\n}\n\nreturn output;"
+      },
+      "id": "fd5d43fb-baf5-44f7-a279-f451dd2ed9be",
+      "name": "Normalize Mojave Compensation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-140, 40]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { p_rows: items.map((item) => item.json) } }];"
+      },
+      "id": "af2afae9-7b24-4801-a878-abd0db9c1bb7",
+      "name": "Batch Mojave Compensation",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 40]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_mojave_compensation_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "d00741d3-fbf0-462f-adf3-cc67ea88df4a",
+      "name": "Upsert Mojave Compensation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [380, 40],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual run": {
+      "main": [[{"node": "Read Mojave July Compensation", "type": "main", "index": 0}]]
+    },
+    "Every 5 minutes": {
+      "main": [[{"node": "Read Mojave July Compensation", "type": "main", "index": 0}]]
+    },
+    "Read Mojave July Compensation": {
+      "main": [[{"node": "Normalize Mojave Compensation", "type": "main", "index": 0}]]
+    },
+    "Normalize Mojave Compensation": {
+      "main": [[{"node": "Batch Mojave Compensation", "type": "main", "index": 0}]]
+    },
+    "Batch Mojave Compensation": {
+      "main": [[{"node": "Upsert Mojave Compensation", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "bb4f4af9-5d14-476c-817d-179c8237a061",
+  "meta": {"templateCredsSetupCompleted": true},
+  "tags": []
+}

@@ -1,0 +1,130 @@
+{
+  "name": "Candidate Portal - Mojave Activity Sync",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c3af294d-8dd2-4391-9cb9-d572977a0be5",
+      "name": "Manual run",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [-640, 120]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "df5b8c18-7891-4d5e-a35d-543ad6fc4e7f",
+      "name": "Every 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-640, -40]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1icVvzZeL2yR7Kj2O6KUcOUKYqpg0S1B2zFI7LRIUDEs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Client Shared Details - till 31st July",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "0c132417-6fa4-47a7-9532-3a6a3156205c",
+      "name": "Read Mojave Activity",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [-400, 40],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nfunction text(value) {\n  return String(value ?? '').trim();\n}\n\nfunction read(row, ...names) {\n  const keys = Object.keys(row || {});\n  for (const name of names) {\n    const key = keys.find((candidate) => candidate.trim().toLowerCase() === name.toLowerCase());\n    if (key && row[key] !== null && row[key] !== undefined) return row[key];\n  }\n  return '';\n}\n\nfunction count(value) {\n  const parsed = Number(text(value).replace(/[,\\s]/g, ''));\n  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : 0;\n}\n\nconst asOf = new Date().toISOString().slice(0, 10);\nconst output = [];\n\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'CONTRIBUTOR EMAIL', 'Email')).toLowerCase();\n  const activityStatus = text(read(row, 'ACTIVITY STATUS', 'Status')).toLowerCase();\n  if (!EMAIL_RE.test(email) || activityStatus !== 'active') continue;\n\n  output.push({\n    json: {\n      p_email: email,\n      p_domain: text(read(row, 'DOMAIN')) || null,\n      p_as_of: asOf,\n      p_submitted: count(read(row, 'TOTAL SUBMISSIONS')),\n      p_accepted: count(read(row, 'TOTAL ACCEPTED')),\n      p_rejected: count(read(row, 'TOTAL REJECTED')),\n      p_rework: count(read(row, 'TOTAL NEEDS REVISION')),\n      p_source_sheet: 'SnorkelxMojave - Sub Contracting Payment / Client Shared Details - till 31st July',\n    },\n  });\n}\n\nreturn output;"
+      },
+      "id": "8af57510-401a-45f3-a006-7370dfbbd50b",
+      "name": "Normalize Mojave Activity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-140, 40]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { p_rows: items.map((item) => item.json) } }];"
+      },
+      "id": "59ba1a22-b7f1-4d03-9327-b1f7a5a8c535",
+      "name": "Batch Mojave Activity",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [120, 40]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_mojave_activity_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "a14afaa6-60bd-438e-87d8-d75008bbf87d",
+      "name": "Upsert Mojave Activity",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [380, 40],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual run": {
+      "main": [[{"node": "Read Mojave Activity", "type": "main", "index": 0}]]
+    },
+    "Every 5 minutes": {
+      "main": [[{"node": "Read Mojave Activity", "type": "main", "index": 0}]]
+    },
+    "Read Mojave Activity": {
+      "main": [[{"node": "Normalize Mojave Activity", "type": "main", "index": 0}]]
+    },
+    "Normalize Mojave Activity": {
+      "main": [[{"node": "Batch Mojave Activity", "type": "main", "index": 0}]]
+    },
+    "Batch Mojave Activity": {
+      "main": [[{"node": "Upsert Mojave Activity", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {"executionOrder": "v1"},
+  "versionId": "a46c2d47-e89b-4df5-b0b6-466bb59d1e04",
+  "meta": {"templateCredsSetupCompleted": true},
+  "tags": []
+}
