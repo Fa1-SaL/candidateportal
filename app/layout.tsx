@@ -32,9 +32,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${manrope.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col pb-[64px]">
+      <body className="flex min-h-full flex-col">
         {children}
-        <footer className="fixed inset-x-0 bottom-0 z-50 h-[64px] border-t border-[#e2e1e8] bg-[#fcf8ff]">
+        <footer className="h-[64px] shrink-0 border-t border-[#e2e1e8] bg-[#fcf8ff]">
           <div className="mx-auto flex h-full w-full max-w-[960px] items-center justify-end px-[30px] 2xl:max-w-[1380px]">
             <nav className="flex items-center gap-[34px] text-[12px] font-medium leading-[16px] text-[#5f5d6d]">
               <a className="transition-colors hover:text-[#3525cd]" href="mailto:stem.support@crossinghurdles.com">

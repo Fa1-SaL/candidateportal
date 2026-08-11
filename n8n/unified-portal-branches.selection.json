@@ -1,0 +1,1004 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 3,
+              "triggerAtHour": 0,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "e1e75a20-94f9-4b45-b630-da4b177f655b",
+      "name": "Schedule Trigger - Unified Portal Data",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2160,
+        1260
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Master User - Snorkel",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "9439c513-348a-4e96-aadc-b6999669312a",
+      "name": "Read Snorkel Master User",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1920,
+        1120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Contracts Sent",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "31d488ea-61e3-4f99-a98a-d51f612fdba7",
+      "name": "Read Snorkel Contracts Sent",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1920,
+        1240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "contract signed",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "0d90bfa4-59cb-497d-863a-571551aea8f0",
+      "name": "Read Snorkel Contracts Signed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1920,
+        1360
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "SpringVerify Pull",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "0867b34b-899a-4d4c-9599-68d8c34e23ca",
+      "name": "Read Snorkel SpringVerify",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -1920,
+        1480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "77179226-0bc8-4db8-ab8c-043e1d595795",
+              "name": "_source",
+              "value": "master",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c2768ee6-6c84-4df5-b7cf-3649a9f10e67",
+      "name": "Tag Snorkel Master",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1680,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4349c05d-61d9-4faf-8488-d93b61e6821a",
+              "name": "_source",
+              "value": "contract_sent",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6170fbf3-a510-4ed8-8117-e5add8b6a363",
+      "name": "Tag Contracts Sent",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1680,
+        1240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7dd5f39b-8744-4c30-991a-e250d341b21a",
+              "name": "_source",
+              "value": "contract_signed",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bf136017-c823-4140-9d17-90905c786df5",
+      "name": "Tag Contracts Signed",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1680,
+        1360
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e31f5ec7-f983-401e-ab0c-b28f21e65e02",
+              "name": "_source",
+              "value": "springverify",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6ed7f9d3-fe2b-4627-a997-08fa64786e2f",
+      "name": "Tag SpringVerify",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1680,
+        1480
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c1507fed-5411-4ef3-8f35-dfd32e6ddb1a",
+      "name": "Merge Master + Contract Sent",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -1440,
+        1180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "63afff1f-ff52-4077-a61a-ab8439cc1f88",
+      "name": "Merge + Contract Signed",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -1200,
+        1240
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "5cfa9110-f5a3-4ff7-b415-64b7183ba73a",
+      "name": "Merge + SpringVerify",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -960,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  mojave: { vertical: 'Mojave', project: 'Mojave' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  otter: { vertical: 'Coding', project: 'Otter' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'suite life': { vertical: 'Coding', project: 'SuiteLife' },\n  suitelife: { vertical: 'Coding', project: 'SuiteLife' },\n  rudder: { vertical: 'Coding', project: 'Rudder' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key);\n  for (const name of wanted) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction email(row, ...names) {\n  const value = text(read(row, ...names)).toLowerCase();\n  return EMAIL_RE.test(value) ? value : '';\n}\n\nconst masterRows = items.filter((item) => item.json._source === 'master').map((item) => item.json);\nconst sent = new Set(items.filter((item) => item.json._source === 'contract_sent').map((item) => email(item.json, 'Email', 'Recipient Email')).filter(Boolean));\nconst signed = new Set(items.filter((item) => item.json._source === 'contract_signed').map((item) => email(item.json, 'Recipient Email', 'Email')).filter(Boolean));\nconst spring = new Map();\n\nfor (const item of items.filter((entry) => entry.json._source === 'springverify')) {\n  const row = item.json;\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail) continue;\n  const status = text(read(row, 'Overall Status')).toLowerCase();\n  spring.set(candidateEmail,\n    status === 'completed' ? 'done' :\n    status === 'completed with exception' ? 'exception' :\n    status ? 'awaited' : null\n  );\n}\n\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const row of masterRows) {\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const contractStatus = signed.has(candidateEmail) ? 'signed' : sent.has(candidateEmail) ? 'sent' : null;\n  const projects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))\n    .filter(Boolean);\n\n  for (const token of projects) {\n    const project = PROJECTS[token];\n    if (!project) continue;\n    output.push({ json: {\n      p_email: candidateEmail,\n      p_full_name: fullName || null,\n      p_client: 'Snorkel',\n      p_vertical: project.vertical,\n      p_project: project.project,\n      p_domain: domain || null,\n      p_bgv_id_status: spring.get(candidateEmail) || null,\n      p_contract_status: contractStatus,\n      p_source_key: 'snorkel-master-user',\n      p_source_priority: 90,\n      p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Master User - Snorkel',\n      p_source_row: row.row_number || null,\n      p_sync_run_id: syncRunId,\n      p_membership_authoritative: true,\n    } });\n  }\n}\n\nreturn output;"
+      },
+      "id": "8e56901c-b4b9-4fd6-9a3d-a808b9a5dba9",
+      "name": "Normalize Unified Candidate Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
+      },
+      "id": "1f97df79-4cfc-4da5-85b4-462300f3b8e5",
+      "name": "Batch Unified Candidate Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_portal_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "cb5af2a3-7f99-430d-9a91-e68869ee56b7",
+      "name": "Upsert Unified Candidate Assignments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -240,
+        1300
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+      },
+      "id": "d7a95a4a-4abe-4acb-890a-2982760d66c1",
+      "name": "Validate Unified Candidate Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        1300
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1zgjIRlGOl2i7ZMFCufcxAIpU4SbSJgrQW1XBzJw2mQc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "PaperBench Live Candidates",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "6d7dab36-03d8-4d0f-9943-2a5318ca25fd",
+      "name": "Read PaperBench Live Candidates - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n};\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) { return String(value ?? '').trim(); }\nfunction springverify(value) {\n  const status = text(value).toLowerCase();\n  if (status === 'complete' || status === 'completed' || status === 'verified' || status === 'approved') return 'done';\n  if (status.includes('exception')) return 'exception';\n  if (status) return 'awaited';\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (status.includes('approved') || status.includes('verified')) return 'approved';\n  if (status.includes('not started') || status.includes('not received') || status.includes('rejected')) return 'not_received';\n  if (status.includes('pending') || status.includes('sent')) return 'pending';\n  return null;\n}\nfunction contract(signed, sent) {\n  const signedStatus = text(signed).toLowerCase();\n  const sentStatus = text(sent).toLowerCase();\n  if (/signed|complete|yes|true/.test(signedStatus)) return 'signed';\n  if (/sent|shared/.test(sentStatus)) return 'sent';\n  if (/not sent|not started|no/.test(sentStatus)) return 'not_signed';\n  return null;\n}\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const item of items) {\n  const row = item.json;\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  if (!EMAIL_RE.test(candidateEmail) || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const common = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_domain: domain || null,\n    p_bgv_id_status: springverify(read(row, 'CH Background Check')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(read(row, 'Contracts Signed'), read(row, 'Contract Sent')),\n    p_source_key: 'paperbench-live-candidates',\n    p_source_priority: 80,\n    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates',\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  for (const token of text(read(row, 'Project')).split(/[,;/]+/).map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))) {\n    const project = PROJECTS[token];\n    if (project) output.push({ json: { ...common, p_vertical: project.vertical, p_project: project.project } });\n  }\n}\nreturn output;"
+      },
+      "id": "43a407eb-009a-4753-a527-835e0c6dbd02",
+      "name": "Normalize PaperBench Status - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
+      },
+      "id": "ce7c9dad-a992-4983-b967-22fd082a14a2",
+      "name": "Batch PaperBench Status - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_portal_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "9a2cee8d-1709-437d-878e-e93a7b1f3e67",
+      "name": "Upsert PaperBench Status - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        1120
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+      },
+      "id": "91027498-6cfb-43dc-b63c-c3c107682d07",
+      "name": "Validate PaperBench Status - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sentinel Task Pull",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "7460b743-f39a-4df2-9989-7a60d448cf29",
+      "name": "Read Sentinel Task Pull - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1320
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst byEmail = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'Email')).trim().toLowerCase();\n  if (!EMAIL_RE.test(email)) continue;\n  const status = String(read(row, 'Status')).trim().toLowerCase();\n  const metric = byEmail.get(email) || { submitted: 0, accepted: 0, rejected: 0, rework: 0, evaluation_pending: 0 };\n  metric.submitted += 1;\n  if (status === 'accepted' || status === 'approved') metric.accepted += 1;\n  else if (status === 'rejected') metric.rejected += 1;\n  else if (status === 'needs revision' || status === 'rework') metric.rework += 1;\n  else metric.evaluation_pending += 1;\n  byEmail.set(email, metric);\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nreturn [...byEmail.entries()].map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Sentinel Ultra',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluation_pending,\n  p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: true,\n} }));"
+      },
+      "id": "8414171d-59e9-4b29-a118-cf06f19f5564",
+      "name": "Normalize Sentinel Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "b694ed90-cc54-4b68-9286-91549d77603d",
+      "name": "Batch Sentinel Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "15ea0755-9bb9-4976-adae-0f1fb993eb54",
+      "name": "Upsert Sentinel Tasks - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        1320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+      },
+      "id": "fbe3fe8c-b73b-4483-803e-dee065139347",
+      "name": "Validate Sentinel Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Tzgi8zIZddLkllQ5bYI6z8UNNdJTD8F1pbHACcygYuc",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Activity Tracker",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "9b09712b-c156-4341-bfba-1404ceaedf13",
+      "name": "Read PaperBench Activity - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        1120
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value) {\n  const raw = String(value ?? '').trim();\n  if (!raw) return null;\n  const parsed = Number(raw.replace(/[,\\s]/g, ''));\n  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : null;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst output = [];\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'email', 'Email')).trim().toLowerCase();\n  if (!EMAIL_RE.test(email)) continue;\n  output.push({ json: {\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'PaperBench',\n    p_as_of: asOf,\n    p_submitted: count(read(row, 'Task Count (All-Time)', 'Task Count (All Time)', 'Submitted')),\n    p_accepted: count(read(row, 'Accepted')),\n    p_rejected: count(read(row, 'Rejected')),\n    p_rework: count(read(row, 'Needs Revision', 'Requiring Rework', 'Rework')),\n    p_evaluation_pending: count(read(row, 'To Be Reviewed', 'Evaluation Pending')),\n    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / Activity Tracker',\n    p_metric_kind: 'cumulative',\n    p_allow_missing_assignment: true,\n  } });\n}\nreturn output;"
+      },
+      "id": "acb91699-09a5-4b72-beba-40b2dd0f1c35",
+      "name": "Normalize PaperBench Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "6debfce0-84e9-4f47-8bd7-99307bc392a6",
+      "name": "Batch PaperBench Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "3a67d571-a6d4-4fbc-9d6e-3e696639f8d4",
+      "name": "Upsert PaperBench Tasks - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        1120
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+      },
+      "id": "a1c4c381-bf77-457c-ae25-829d39337b23",
+      "name": "Validate PaperBench Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        1120
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - Unified Portal Data": {
+      "main": [
+        [
+          {
+            "node": "Read Snorkel Master User",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Snorkel Contracts Sent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Snorkel Contracts Signed",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Snorkel SpringVerify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Snorkel Master User": {
+      "main": [
+        [
+          {
+            "node": "Tag Snorkel Master",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Snorkel Contracts Sent": {
+      "main": [
+        [
+          {
+            "node": "Tag Contracts Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Snorkel Contracts Signed": {
+      "main": [
+        [
+          {
+            "node": "Tag Contracts Signed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Snorkel SpringVerify": {
+      "main": [
+        [
+          {
+            "node": "Tag SpringVerify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Snorkel Master": {
+      "main": [
+        [
+          {
+            "node": "Merge Master + Contract Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Contracts Sent": {
+      "main": [
+        [
+          {
+            "node": "Merge Master + Contract Sent",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Master + Contract Sent": {
+      "main": [
+        [
+          {
+            "node": "Merge + Contract Signed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Contracts Signed": {
+      "main": [
+        [
+          {
+            "node": "Merge + Contract Signed",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Contract Signed": {
+      "main": [
+        [
+          {
+            "node": "Merge + SpringVerify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag SpringVerify": {
+      "main": [
+        [
+          {
+            "node": "Merge + SpringVerify",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + SpringVerify": {
+      "main": [
+        [
+          {
+            "node": "Normalize Unified Candidate Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Unified Candidate Assignments": {
+      "main": [
+        [
+          {
+            "node": "Batch Unified Candidate Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Unified Candidate Assignments": {
+      "main": [
+        [
+          {
+            "node": "Upsert Unified Candidate Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Unified Candidate Assignments": {
+      "main": [
+        [
+          {
+            "node": "Validate Unified Candidate Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Unified Candidate Assignments": {
+      "main": [
+        [
+          {
+            "node": "Read PaperBench Live Candidates - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Task Pull - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PaperBench Live Candidates - Unified": {
+      "main": [
+        [
+          {
+            "node": "Normalize PaperBench Status - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize PaperBench Status - Unified": {
+      "main": [
+        [
+          {
+            "node": "Batch PaperBench Status - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch PaperBench Status - Unified": {
+      "main": [
+        [
+          {
+            "node": "Upsert PaperBench Status - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert PaperBench Status - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate PaperBench Status - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Task Pull - Unified": {
+      "main": [
+        [
+          {
+            "node": "Normalize Sentinel Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Sentinel Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Batch Sentinel Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Sentinel Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Upsert Sentinel Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Sentinel Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate Sentinel Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate PaperBench Status - Unified": {
+      "main": [
+        [
+          {
+            "node": "Read PaperBench Activity - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read PaperBench Activity - Unified": {
+      "main": [
+        [
+          {
+            "node": "Normalize PaperBench Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize PaperBench Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Batch PaperBench Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch PaperBench Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Upsert PaperBench Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert PaperBench Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate PaperBench Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

@@ -49,3 +49,8 @@
  GET / 200 in 1803ms (next.js: 54ms, application-code: 1749ms)
  GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 1764ms (next.js: 9ms, application-code: 1754ms)
  GET /?project=55f98786-d021-45ed-8f19-e4a2742cd341 200 in 234ms (next.js: 26ms, application-code: 207ms)
+ GET /login 200 in 337ms (next.js: 79ms, application-code: 258ms)
+ GET / 307 in 427ms (next.js: 128ms, application-code: 299ms)
+ GET /login 200 in 129ms (next.js: 66ms, application-code: 62ms)
+ GET / 307 in 121ms (next.js: 16ms, application-code: 105ms)
+ GET /login 200 in 74ms (next.js: 8ms, application-code: 66ms)

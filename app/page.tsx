@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import ProjectSwitcher from "./project-switcher";
-import PaymentStructure from "./payment-structure";
 
 type Candidate = {
   id: string;
@@ -45,18 +44,6 @@ type Payment = {
   currency: string | null;
   status: string | null;
   paid_on: string | null;
-};
-
-type PaymentTerm = {
-  id: string;
-  label: string;
-  amount: number | null;
-  minimum_amount: number | null;
-  maximum_amount: number | null;
-  currency: string | null;
-  unit: string | null;
-  is_specified: boolean;
-  display_order: number;
 };
 
 type NamedRecord = {
@@ -696,7 +683,6 @@ export default async function Home({
     { data: backgroundVerification },
     { data: taskMetrics },
     { data: payments },
-    { data: paymentTerms },
   ] = await Promise.all([
     supabase
       .from("background_verification")
@@ -717,20 +703,18 @@ export default async function Home({
       .order("period_end", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .returns<Payment[]>(),
-    supabase
-      .from("assignment_payment_terms")
-      .select(
-        "id,label,amount,minimum_amount,maximum_amount,currency,unit,is_specified,display_order",
-      )
-      .eq("assignment_id", assignment.id)
-      .order("display_order", { ascending: true })
-      .returns<PaymentTerm[]>(),
   ]);
 
   const assignmentStatus = assignment.is_offboarded_heuristic ? "Offboarded" : "Active";
   const clientName = selectedAssignmentSummary?.clientName ?? "Not available";
   const verticalName = selectedAssignmentSummary?.verticalName ?? "Not available";
   const projectName = selectedAssignmentSummary?.projectName ?? "Not available";
+  const displayDomain =
+    verticalName.toLowerCase() === "coding"
+      ? "Coding"
+      : assignment.domain
+        ? formatStatus(assignment.domain)
+        : "Not available";
   const disbursedPayments =
     payments?.filter((payment) => payment.status?.toLowerCase() === "disbursed") ??
     [];
@@ -768,15 +752,11 @@ export default async function Home({
     0,
   );
   const rate = getRateParts(assignment);
-  const fallbackPaymentTerm = {
-    label: assignment.rate_unit ? formatStatus(assignment.rate_unit) : "Pay rate",
-    value: rate.amount + rate.unit,
-  };
   const candidateName = candidate.full_name ?? "Not available";
 
   return (
     <div className="min-h-[844px] overflow-x-hidden bg-[#fcf8ff] text-[#1b1b24] sm:min-h-screen 2xl:min-h-[1080px]">
-      <nav className="relative z-[2] h-[80px] bg-[rgba(252,248,255,0.8)] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] backdrop-blur-[6px] transition-[height] duration-150 focus-within:h-[300px] sm:h-[60px] sm:focus-within:h-[60px]">
+      <nav className="sticky top-0 z-50 h-[80px] bg-[#fcf8ff] shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-[height] duration-150 focus-within:h-[300px] sm:h-[60px] sm:focus-within:h-[60px]">
         <div className="mx-auto flex h-[80px] w-full max-w-[390px] items-center justify-between px-[20px] sm:h-[60px] sm:max-w-[960px] sm:px-[30px] 2xl:max-w-[1380px]">
           <div className="flex min-w-0 items-center gap-[16px] sm:gap-[12px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -873,9 +853,9 @@ export default async function Home({
               />
               <InfoCard
                 icon="category"
-                label="Vertical / Project"
-                value={verticalName}
-                subvalue={projectName}
+                label="Project / Vertical"
+                value={projectName}
+                subvalue={verticalName}
                 className="h-[140px] sm:h-[105px]"
               />
             </div>
@@ -915,17 +895,12 @@ export default async function Home({
                       Domain
                     </p>
                     <p className="mt-[8px] break-words text-[18px] font-semibold leading-[24px] text-[#1b1b24] sm:mt-[8px] sm:text-[15px] sm:leading-[20px] 2xl:text-[17px] 2xl:leading-[21px]">
-                      {assignment.domain ? formatStatus(assignment.domain) : "Not available"}
+                      {displayDomain}
                     </p>
                   </div>
                 </div>
               </Card>
             </div>
-
-            <PaymentStructure
-              terms={paymentTerms ?? []}
-              fallbackTerm={fallbackPaymentTerm}
-            />
 
             <div className="grid grid-cols-1 gap-[14px] md:grid-cols-3 md:gap-[14px]">
               <VerificationCard
