@@ -982,7 +982,7 @@ export default async function Home({
               </div>
             </Card>
 
-            <Card className="h-auto p-[24px] sm:p-[26px] xl:h-[227px]">
+            <Card className="hidden h-auto p-[24px] sm:p-[26px] xl:h-[227px]">
               <h2 className="text-[20px] font-semibold leading-[26px] text-[#1b1b24] sm:text-[18px] sm:leading-[23px]">
                 Payments Overview
               </h2>

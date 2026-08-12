@@ -50,10 +50,24 @@ export default function ProjectSwitcher({
           Your Projects
         </p>
         <p
-          className="text-[12px] font-medium leading-[15px] text-[#5f5d6d] sm:text-[11px] sm:leading-[12px]"
+          className={
+            isPending
+              ? "inline-flex min-h-[26px] items-center gap-[7px] rounded-full border border-[#b8b2e8] bg-[#f0ecff] px-[10px] text-[12px] font-semibold leading-[15px] text-[#3525cd] shadow-[0px_2px_6px_rgba(53,37,205,0.1)] sm:min-h-[23px] sm:px-[9px] sm:text-[11px] sm:leading-[12px]"
+              : "text-[12px] font-medium leading-[15px] text-[#5f5d6d] sm:text-[11px] sm:leading-[12px]"
+          }
           aria-live="polite"
         >
-          {isPending ? "Switching..." : `${projects.length} active`}
+          {isPending ? (
+            <>
+              <span
+                aria-hidden="true"
+                className="size-[11px] shrink-0 animate-spin rounded-full border-2 border-[#b8b2e8] border-t-[#3525cd]"
+              />
+              Switching...
+            </>
+          ) : (
+            `${projects.length} active`
+          )}
         </p>
       </div>
       <div

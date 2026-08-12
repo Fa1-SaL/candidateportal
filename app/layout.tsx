@@ -34,9 +34,20 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="flex min-h-full flex-col">
         {children}
-        <footer className="h-[64px] shrink-0 border-t border-[#e2e1e8] bg-[#fcf8ff]">
-          <div className="mx-auto flex h-full w-full max-w-[960px] items-center justify-end px-[30px] 2xl:max-w-[1380px]">
-            <nav className="flex items-center gap-[34px] text-[12px] font-medium leading-[16px] text-[#5f5d6d]">
+        <footer className="shrink-0 border-t border-[#e2e1e8] bg-[#fcf8ff]">
+          <div className="mx-auto flex min-h-[94px] w-full max-w-[960px] flex-col justify-center gap-[13px] px-[20px] py-[14px] sm:px-[30px] 2xl:max-w-[1380px]">
+            <p className="text-center text-[11px] font-normal leading-[16px] text-[#6b6978]">
+              <strong className="font-semibold text-[#555363]">Early Beta:</strong>{" "}
+              This portal is currently in its early beta stage. Some information may occasionally be inaccurate or incomplete. For ideas, suggestions, or corrections, please email{" "}
+              <a
+                className="font-medium text-[#3525cd] transition-colors hover:text-[#1f1599]"
+                href="mailto:faisal@crossinghurdles.com"
+              >
+                faisal@crossinghurdles.com
+              </a>
+              .
+            </p>
+            <nav className="flex items-center justify-end gap-[34px] text-[12px] font-medium leading-[16px] text-[#5f5d6d]">
               <a className="transition-colors hover:text-[#3525cd]" href="mailto:stem.support@crossinghurdles.com">
                 Contact us
               </a>
