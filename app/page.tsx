@@ -1,6 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import PaymentBreakdownTrigger, {
+  type PaymentBreakdownLine,
+  type PaymentDetail,
+} from "./payment-breakdown-trigger";
 import ProjectSwitcher from "./project-switcher";
+import TaskIdDialogTrigger from "./task-id-dialog-trigger";
 
 type Candidate = {
   id: string;
@@ -39,11 +44,35 @@ type TaskMetrics = {
   evaluation_pending: number | null;
 };
 
+type TaskEvent = {
+  task_external_id: string;
+  status: string | null;
+};
+
+type TaskIdLists = {
+  submitted: string[];
+  accepted: string[];
+  rejected: string[];
+  rework: string[];
+  evaluationPending: string[];
+};
+
 type Payment = {
+  period_start: string | null;
+  period_end: string | null;
   amount: number | null;
   currency: string | null;
   status: string | null;
   paid_on: string | null;
+  reference: string | null;
+  component_key: string | null;
+  component_label: string | null;
+  quantity: number | null;
+  rate_amount: number | null;
+  rate_currency: string | null;
+  gross_amount: number | null;
+  tds_amount: number | null;
+  breakdown: unknown;
 };
 
 type NamedRecord = {
@@ -105,6 +134,99 @@ function formatCurrency(amount: number | null | undefined, currency?: string | n
     currency: resolvedCurrency,
     maximumFractionDigits: 2,
   }).format(amount);
+}
+
+function formatPaymentDate(value: string | null | undefined) {
+  if (!value) {
+    return "Not available";
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) {
+    return "Not available";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+}
+
+function getPaymentDetails(value: unknown): PaymentDetail[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((detail, index) => {
+    if (!detail || typeof detail !== "object") return [];
+    const source = detail as Record<string, unknown>;
+    const label = typeof source.label === "string" ? source.label.trim() : "";
+    if (!label) return [];
+
+    return [{
+      key: typeof source.key === "string" ? source.key : String(index),
+      label,
+      quantity: typeof source.quantity === "number" ? source.quantity : null,
+      rateAmount: typeof source.rate_amount === "number" ? source.rate_amount : null,
+      rateCurrency: typeof source.rate_currency === "string" ? source.rate_currency : null,
+    }];
+  });
+}
+
+function getVerifiedTaskIds(
+  taskEvents: TaskEvent[] | null,
+  counts: {
+    submitted: number;
+    accepted: number;
+    rejected: number;
+    rework: number;
+    evaluationPending: number;
+  },
+) {
+  if (!taskEvents) {
+    return null;
+  }
+
+  const taskIds = taskEvents.map((taskEvent) => taskEvent.task_external_id.trim());
+  if (taskIds.some((taskId) => !taskId) || new Set(taskIds).size !== taskIds.length) {
+    return null;
+  }
+
+  const lists: TaskIdLists = {
+    submitted: taskIds,
+    accepted: [],
+    rejected: [],
+    rework: [],
+    evaluationPending: [],
+  };
+
+  taskEvents.forEach((taskEvent, index) => {
+    const status = taskEvent.status?.trim().toLowerCase();
+    const taskId = taskIds[index];
+
+    if (["accepted", "approved", "provisionally accepted"].includes(status ?? "")) {
+      lists.accepted.push(taskId);
+    } else if (["rejected", "invalid"].includes(status ?? "")) {
+      lists.rejected.push(taskId);
+    } else if (
+      ["needs revision", "needs_revision", "rework", "requiring rework"].includes(
+        status ?? "",
+      )
+    ) {
+      lists.rework.push(taskId);
+    } else {
+      lists.evaluationPending.push(taskId);
+    }
+  });
+
+  const reconciled =
+    lists.submitted.length === counts.submitted &&
+    lists.accepted.length === counts.accepted &&
+    lists.rejected.length === counts.rejected &&
+    lists.rework.length === counts.rework &&
+    lists.evaluationPending.length === counts.evaluationPending;
+
+  return reconciled ? lists : null;
 }
 
 function getRateParts(assignment: Assignment) {
@@ -683,6 +805,7 @@ export default async function Home({
     { data: backgroundVerification },
     { data: taskMetrics },
     { data: payments },
+    { data: taskEvents, error: taskEventsError },
   ] = await Promise.all([
     supabase
       .from("background_verification")
@@ -698,11 +821,19 @@ export default async function Home({
       .maybeSingle<TaskMetrics>(),
     supabase
       .from("payments")
-      .select("amount,currency,status,paid_on")
+      .select(
+        "period_start,period_end,amount,currency,status,paid_on,reference,component_key,component_label,quantity,rate_amount,rate_currency,gross_amount,tds_amount,breakdown",
+      )
       .eq("assignment_id", assignment.id)
       .order("period_end", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .returns<Payment[]>(),
+    supabase
+      .from("task_events")
+      .select("task_external_id,status")
+      .eq("assignment_id", assignment.id)
+      .order("task_external_id", { ascending: true })
+      .returns<TaskEvent[]>(),
   ]);
 
   const assignmentStatus = assignment.is_offboarded_heuristic ? "Offboarded" : "Active";
@@ -715,17 +846,57 @@ export default async function Home({
       : assignment.domain
         ? formatStatus(assignment.domain)
         : "Not available";
-  const disbursedPayments =
-    payments?.filter((payment) => payment.status?.toLowerCase() === "disbursed") ??
-    [];
-  const totalDisbursed = disbursedPayments.reduce(
+  const latestPaymentPeriod = payments?.find((payment) => (payment.amount ?? 0) > 0);
+  const paymentRows = latestPaymentPeriod
+    ? (payments ?? []).filter(
+        (payment) =>
+          (payment.amount ?? 0) > 0 &&
+          payment.period_start === latestPaymentPeriod.period_start &&
+          payment.period_end === latestPaymentPeriod.period_end,
+      )
+    : [];
+  const totalFinalAmount = paymentRows.reduce(
     (total, payment) => total + (payment.amount ?? 0),
     0,
   );
-  const paymentCurrency = disbursedPayments[0]?.currency ?? payments?.[0]?.currency ?? "INR";
-  const latestPaymentStatus = payments?.[0]?.status
-    ? formatStatus(payments[0].status)
-    : "Not available";
+  const paymentCurrency = paymentRows[0]?.currency ?? "INR";
+  const latestAmountSentDate = formatPaymentDate(
+    paymentRows
+      .map((payment) => payment.paid_on)
+      .filter((paidOn): paidOn is string => Boolean(paidOn))
+      .sort((left, right) => right.localeCompare(left))[0],
+  );
+  const paymentComponentOrder: Record<string, number> = {
+    task: 0,
+    workflow_a: 0,
+    assessment: 0,
+    mojave_total: 0,
+    review: 1,
+    workflow_b: 1,
+    fixable: 1,
+    non_fixable: 2,
+  };
+  const paymentBreakdown: PaymentBreakdownLine[] = [...paymentRows]
+    .sort(
+      (left, right) =>
+        (paymentComponentOrder[left.component_key ?? ""] ?? 99) -
+          (paymentComponentOrder[right.component_key ?? ""] ?? 99) ||
+        (left.component_label ?? "").localeCompare(right.component_label ?? ""),
+    )
+    .map((payment, index) => ({
+      key: `${payment.component_key ?? payment.reference ?? "payment"}-${index}`,
+      label: payment.component_label ?? payment.reference ?? "Payment",
+      amount: payment.amount ?? 0,
+      currency: payment.currency ?? "INR",
+      status: payment.status,
+      paidOn: payment.paid_on,
+      quantity: payment.quantity,
+      rateAmount: payment.rate_amount,
+      rateCurrency: payment.rate_currency,
+      grossAmount: payment.gross_amount,
+      tdsAmount: payment.tds_amount,
+      details: getPaymentDetails(payment.breakdown),
+    }));
   const springVerifyStatus = formatBinaryStatus(backgroundVerification?.id_status, [
     "done",
     "verified",
@@ -750,6 +921,17 @@ export default async function Home({
     (taskMetrics?.rejected ?? 0) -
     (taskMetrics?.rework ?? 0),
     0,
+  );
+  const taskCounts = {
+    submitted: taskMetrics?.submitted ?? 0,
+    accepted: taskMetrics?.accepted ?? 0,
+    rejected: taskMetrics?.rejected ?? 0,
+    rework: taskMetrics?.rework ?? 0,
+    evaluationPending: taskEvaluationPending,
+  };
+  const verifiedTaskIds = getVerifiedTaskIds(
+    taskEventsError ? null : taskEvents,
+    taskCounts,
   );
   const rate = getRateParts(assignment);
   const candidateName = candidate.full_name ?? "Not available";
@@ -948,59 +1130,99 @@ export default async function Home({
                 </div>
               </div>
               <div className="mt-[24px] grid grid-cols-2 gap-[9px] sm:mt-[18px] sm:gap-[7px]">
-                <MetricTile
-                  icon="check_circle"
-                  value={taskMetrics?.submitted ?? 0}
+                <TaskIdDialogTrigger
+                  count={taskCounts.submitted}
                   label="Submitted"
-                  tone="primary"
-                />
-                <MetricTile
-                  icon="task_alt"
-                  value={taskMetrics?.accepted ?? 0}
+                  taskIds={verifiedTaskIds?.submitted ?? null}
+                >
+                  <MetricTile
+                    icon="check_circle"
+                    value={taskCounts.submitted}
+                    label="Submitted"
+                    tone="primary"
+                  />
+                </TaskIdDialogTrigger>
+                <TaskIdDialogTrigger
+                  count={taskCounts.accepted}
                   label="Accepted"
-                  tone="success"
-                />
-                <MetricTile
-                  icon="cancel"
-                  value={taskMetrics?.rejected ?? 0}
+                  taskIds={verifiedTaskIds?.accepted ?? null}
+                >
+                  <MetricTile
+                    icon="task_alt"
+                    value={taskCounts.accepted}
+                    label="Accepted"
+                    tone="success"
+                  />
+                </TaskIdDialogTrigger>
+                <TaskIdDialogTrigger
+                  count={taskCounts.rejected}
                   label="Rejected"
-                  tone="error"
-                />
-                <MetricTile
-                  icon="build"
-                  value={taskMetrics?.rework ?? 0}
+                  taskIds={verifiedTaskIds?.rejected ?? null}
+                >
+                  <MetricTile
+                    icon="cancel"
+                    value={taskCounts.rejected}
+                    label="Rejected"
+                    tone="error"
+                  />
+                </TaskIdDialogTrigger>
+                <TaskIdDialogTrigger
+                  count={taskCounts.rework}
                   label="Requiring Rework"
-                  tone="warning"
-                />
-                <MetricTile
-                  icon="pending_actions"
-                  value={taskEvaluationPending}
+                  taskIds={verifiedTaskIds?.rework ?? null}
+                >
+                  <MetricTile
+                    icon="build"
+                    value={taskCounts.rework}
+                    label="Requiring Rework"
+                    tone="warning"
+                  />
+                </TaskIdDialogTrigger>
+                <TaskIdDialogTrigger
+                  count={taskCounts.evaluationPending}
                   label="Evaluation Pending"
-                  tone="neutral"
+                  taskIds={verifiedTaskIds?.evaluationPending ?? null}
                   wide
-                />
+                >
+                  <MetricTile
+                    icon="pending_actions"
+                    value={taskCounts.evaluationPending}
+                    label="Evaluation Pending"
+                    tone="neutral"
+                    wide
+                  />
+                </TaskIdDialogTrigger>
               </div>
             </Card>
 
-            <Card className="hidden h-auto p-[24px] sm:p-[26px] xl:h-[227px]">
-              <h2 className="text-[20px] font-semibold leading-[26px] text-[#1b1b24] sm:text-[18px] sm:leading-[23px]">
-                Payments Overview
-              </h2>
-              <div className="mt-[24px] flex flex-col gap-[20px] sm:mt-[18px] sm:gap-[15px]">
-                <PaymentInfo
-                  icon="payments"
-                  label="Already Disbursed"
-                  value={formatCurrency(totalDisbursed, paymentCurrency)}
-                  tone="success"
-                />
-                <PaymentInfo
-                  icon="schedule"
-                  label="Latest Status"
-                  value={latestPaymentStatus}
-                  tone={latestPaymentStatus === "Not available" ? "neutral" : "warning"}
-                />
-              </div>
-            </Card>
+            {paymentBreakdown.length ? (
+              <Card className="h-auto p-[24px] sm:p-[26px] xl:h-[227px]">
+                <h2 className="text-[20px] font-semibold leading-[26px] text-[#1b1b24] sm:text-[18px] sm:leading-[23px]">
+                  Payments Overview
+                </h2>
+                <div className="mt-[24px] flex flex-col gap-[20px] sm:mt-[18px] sm:gap-[15px]">
+                  <PaymentBreakdownTrigger
+                    projectName={projectName}
+                    total={totalFinalAmount}
+                    currency={paymentCurrency}
+                    lines={paymentBreakdown}
+                  >
+                    <PaymentInfo
+                      icon="payments"
+                      label="Final Amount"
+                      value={formatCurrency(totalFinalAmount, paymentCurrency)}
+                      tone="success"
+                    />
+                  </PaymentBreakdownTrigger>
+                  <PaymentInfo
+                    icon="schedule"
+                    label="Amount Sent Date"
+                    value={latestAmountSentDate}
+                    tone={latestAmountSentDate === "Not available" ? "neutral" : "warning"}
+                  />
+                </div>
+              </Card>
+            ) : null}
           </aside>
         </div>
       </main>

@@ -1,0 +1,943 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 3,
+              "triggerAtHour": 0,
+              "triggerAtMinute": 15
+            }
+          ]
+        }
+      },
+      "id": "6602bb4f-5661-4bee-8e3a-5802d53b8949",
+      "name": "Schedule Trigger - Project July Payments",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1icVvzZeL2yR7Kj2O6KUcOUKYqpg0S1B2zFI7LRIUDEs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "822a9b0f-fa88-4760-be0f-daad5ba5ce18",
+      "name": "Read Mojave July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1540
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July, 2026(Task)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "c0e35f99-8361-4f7e-83f9-1ad4e546a5a4",
+      "name": "Read Terminus Task Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1660
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(Review)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "71e740da-3ef4-41a0-b02d-cd42408ab3ef",
+      "name": "Read Terminus Review Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1780
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(workflow A)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "5af9d749-41bf-4523-9b46-ccbf716d1f56",
+      "name": "Read Otter Workflow A Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1900
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(workflow B)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "ea07abbc-e1f8-4a03-8f08-e96f535f21c5",
+      "name": "Read Otter Workflow B Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2020
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(Assessment)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "070106b3-c8c3-41cf-82ff-0f0e0ec04ee3",
+      "name": "Read Sentinel Assessment Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2140
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(Fixable)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "8ffbd1ca-f70a-4c05-aad6-af6bccb4cba3",
+      "name": "Read Sentinel Fixable Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2260
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(N.Fixable)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "6ed84078-7b2a-4216-946f-e690a0cc61e2",
+      "name": "Read Sentinel Non Fixable Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2380
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3df6fb1-3f74-44bd-a0dd-099df3337c47",
+              "name": "_source",
+              "value": "mojave",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "3e9647ab-c6eb-4112-a71c-82abe0772839",
+      "name": "Tag Mojave July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e3b005e2-1717-4611-8a87-90a5430e56b8",
+              "name": "_source",
+              "value": "terminus_task",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ed88f148-8f0b-442c-8a45-11b7d49123e5",
+      "name": "Tag Terminus Task Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1660
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04696797-167e-41fa-a98b-13a1c749956a",
+              "name": "_source",
+              "value": "terminus_review",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bfd8c8d0-e769-45b8-aabb-fbeea03f6c9f",
+      "name": "Tag Terminus Review Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ad7dfac5-bcae-42ab-ad08-9a8785c8fc31",
+              "name": "_source",
+              "value": "otter_a",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "9bdb2e95-d00a-4d75-9e31-dd778d7c10ca",
+      "name": "Tag Otter Workflow A Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1900
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4cb469a-1ce8-4bb0-ade1-75fb08ff5d1c",
+              "name": "_source",
+              "value": "otter_b",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5a4754fd-40e1-4a25-b78c-bb9b9a95d16e",
+      "name": "Tag Otter Workflow B Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2020
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4d1d783-0f88-4f22-96b3-66a46abc790b",
+              "name": "_source",
+              "value": "sentinel_assessment",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6dbe0fcf-e6ee-4f38-a385-eb8fad93de37",
+      "name": "Tag Sentinel Assessment Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a57bee9d-d30d-44e9-b548-e248f7b86491",
+              "name": "_source",
+              "value": "sentinel_fixable",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4592efef-1446-4ebc-b415-e3e6dd5d1769",
+      "name": "Tag Sentinel Fixable Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2260
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3ae97e9c-984e-433a-8e38-993bcb083add",
+              "name": "_source",
+              "value": "sentinel_non_fixable",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "651f25ec-5010-4927-8ca0-c78c3624059e",
+      "name": "Tag Sentinel Non Fixable Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2380
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a76e9c00-4c3f-4dab-a533-8edad0681118",
+      "name": "Merge Mojave + Terminus Task Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2640,
+        1600
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "75ef960c-26e4-43b9-9b28-2021dbabcaf4",
+      "name": "Merge + Terminus Review Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2880,
+        1660
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9f20ad70-6be6-4607-9ebb-52b5c6b99721",
+      "name": "Merge + Otter Workflow A Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3120,
+        1720
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "12a925a4-b914-4fda-afd1-abb45816aaa8",
+      "name": "Merge + Otter Workflow B Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3360,
+        1780
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "40bcf19e-7007-46b3-88d4-1eee32d3c38f",
+      "name": "Merge + Sentinel Assessment Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3600,
+        1840
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "eefbf362-58c1-4436-912b-5b0ef27e77c8",
+      "name": "Merge + Sentinel Fixable Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3840,
+        1900
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "60eab3c3-8bd5-4ba7-be9e-64870bb54242",
+      "name": "Merge + Sentinel Non Fixable Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        4080,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  mojave: {\n    vertical: 'Mojave', project: 'Mojave', componentKey: 'mojave_total',\n    componentLabel: 'Task + Review', sourceSheet: 'SnorkelxMojave - Sub Contracting Payment / July - 2026',\n  },\n  terminus_task: {\n    vertical: 'Coding', project: 'Terminus', componentKey: 'task',\n    componentLabel: 'Approved Tasks', sourceSheet: 'SnorkelxTerminus - Sub Contract Payment / July, 2026(Task)',\n  },\n  terminus_review: {\n    vertical: 'Coding', project: 'Terminus', componentKey: 'review',\n    componentLabel: 'Approved Reviews', sourceSheet: 'SnorkelxTerminus - Sub Contract Payment / July,2026(Review)',\n  },\n  otter_a: {\n    vertical: 'Coding', project: 'Otter', componentKey: 'workflow_a',\n    componentLabel: 'Workflow A', sourceSheet: 'SnorkelxOtter - Sub Contract Payment / July,2026(workflow A)',\n  },\n  otter_b: {\n    vertical: 'Coding', project: 'Otter', componentKey: 'workflow_b',\n    componentLabel: 'Workflow B', sourceSheet: 'SnorkelxOtter - Sub Contract Payment / July,2026(workflow B)',\n  },\n  sentinel_assessment: {\n    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'assessment',\n    componentLabel: 'Assessment', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Assessment)',\n  },\n  sentinel_fixable: {\n    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'fixable',\n    componentLabel: 'Fixable', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Fixable)',\n  },\n  sentinel_non_fixable: {\n    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'non_fixable',\n    componentLabel: 'Non Fixable', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(N.Fixable)',\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key).filter(Boolean);\n  for (const name of wanted) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n  }\n  for (const name of wanted) {\n    const partial = entries.find(([column, value]) => {\n      const candidate = key(column);\n      return value !== null && value !== undefined && name.length >= 6 &&\n        (candidate.includes(name) || name.includes(candidate));\n    });\n    if (partial) return partial[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction amount(value) {\n  if (typeof value === 'number') return Number.isFinite(value) ? value : null;\n  const cleaned = text(value).replace(/[^0-9.-]/g, '');\n  if (!cleaned || cleaned === '-' || cleaned === '.') return null;\n  const parsed = Number(cleaned);\n  return Number.isFinite(parsed) ? parsed : null;\n}\nfunction paymentStatus(value, paidOnValue) {\n  const status = text(value).toLowerCase();\n  if (!status) return text(paidOnValue) ? 'disbursed' : 'processing';\n  if (/sent|paid|disbursed|completed/.test(status)) return 'disbursed';\n  if (/proceed|process|pending|queued|approved/.test(status)) return 'processing';\n  if (/reject|fail|cancel/.test(status)) return 'failed';\n  throw new Error('Unknown payment status: ' + JSON.stringify(value));\n}\nfunction combineStatus(left, right) {\n  if (left === 'failed' || right === 'failed') return 'failed';\n  if (left === 'processing' || right === 'processing') return 'processing';\n  return 'disbursed';\n}\nfunction isoDate(value) {\n  if (value === null || value === undefined || text(value) === '') return null;\n  if (typeof value === 'number' && Number.isFinite(value)) {\n    return new Date(Date.UTC(1899, 11, 30) + value * 86400000).toISOString().slice(0, 10);\n  }\n  const raw = text(value);\n  const iso = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/);\n  if (iso) return [iso[1], iso[2].padStart(2, '0'), iso[3].padStart(2, '0')].join('-');\n  const slash = raw.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})$/);\n  if (slash) return [slash[3], slash[2].padStart(2, '0'), slash[1].padStart(2, '0')].join('-');\n  const parsed = new Date(raw);\n  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid payment date: ' + JSON.stringify(value));\n  return parsed.toISOString().slice(0, 10);\n}\nfunction addNullable(left, right) {\n  if (left === null && right === null) return null;\n  return (left || 0) + (right || 0);\n}\nfunction mergeDetails(target, incoming) {\n  for (const detail of incoming) {\n    const current = target.find((candidate) => candidate.key === detail.key);\n    if (!current) {\n      target.push({ ...detail });\n      continue;\n    }\n    current.quantity = addNullable(current.quantity, detail.quantity);\n    if (current.rate_amount !== detail.rate_amount || current.rate_currency !== detail.rate_currency) {\n      current.rate_amount = null;\n      current.rate_currency = null;\n    }\n  }\n}\n\nconst grouped = new Map();\nconst observedComponents = [...new Set(items\n  .map((item) => SOURCES[text(item.json?._source).toLowerCase()]?.componentKey)\n  .filter(Boolean))].sort();\nconst expectedComponents = [\n  'assessment', 'fixable', 'mojave_total', 'non_fixable',\n  'review', 'task', 'workflow_a', 'workflow_b',\n];\nif (JSON.stringify(observedComponents) !== JSON.stringify(expectedComponents)) {\n  throw new Error('Project payment source snapshot is incomplete: ' + JSON.stringify(observedComponents));\n}\n\nfor (const item of items) {\n  const row = item.json;\n  const sourceKey = text(row._source).toLowerCase();\n  const source = SOURCES[sourceKey];\n  if (!source) throw new Error('Unknown project payment source: ' + JSON.stringify(row._source));\n\n  const email = text(read(row, 'Email Id', 'Email ID', 'EMAIL', 'Email')).toLowerCase();\n  const finalAmount = amount(read(row, 'Final Amt', 'Final Amount'));\n  if (!email && finalAmount === null) continue;\n  if (!EMAIL_RE.test(email)) throw new Error(source.project + '/' + source.componentLabel + ': invalid email ' + JSON.stringify(email));\n  if (finalAmount === null || finalAmount <= 0) continue;\n\n  const paidOnValue = read(row, 'Amount Sent Date', 'Payment Date');\n  const status = paymentStatus(read(row, 'Status', 'Payment Status'), paidOnValue);\n  const paidOn = status === 'disbursed' ? isoDate(paidOnValue) : null;\n  const tdsAmount = amount(read(row, 'TDS Deducted', 'TDS'));\n  const grossFromSheet = amount(read(row, 'Payable Amt', 'Payable Amount'));\n  const grossAmount = grossFromSheet ?? finalAmount + (tdsAmount || 0);\n  let quantity = amount(read(row, 'Total Task completed', 'Total Task complete', 'Approved Task', 'Approved Review'));\n  let rateAmount = amount(read(row, 'Candidate Rate', 'Candidates Rate Amt', 'Candidate Rate Amt'));\n  let rateCurrency = rateAmount === null ? null : 'INR';\n  const breakdown = [];\n\n  if (sourceKey === 'mojave') {\n    quantity = null;\n    rateAmount = null;\n    rateCurrency = null;\n    const taskQuantity = amount(read(row, 'Total Task completed', 'Total Task complete'));\n    const taskRate = amount(read(row, 'Candidates Rate Task USD', 'Candidate Rate Task', 'Candidates Rate Task'));\n    const reviewQuantity = amount(read(row, 'Total Approved', 'Approved Review'));\n    const reviewRate = amount(read(row, 'Candidates Rate USD', 'Candidate Rate Review', 'Candidates Rate Review'));\n    if (taskQuantity !== null && taskRate !== null) {\n      breakdown.push({ key: 'task', label: 'Approved Tasks', quantity: taskQuantity, rate_amount: taskRate, rate_currency: 'USD' });\n    }\n    if (reviewQuantity !== null && reviewRate !== null) {\n      breakdown.push({ key: 'review', label: 'Approved Reviews', quantity: reviewQuantity, rate_amount: reviewRate, rate_currency: 'USD' });\n    }\n  }\n\n  const groupKey = [email, sourceKey].join('|');\n  const current = grouped.get(groupKey);\n  if (!current) {\n    grouped.set(groupKey, {\n      email, source, status, paidOn, amount: finalAmount, grossAmount, tdsAmount,\n      quantity, rateAmount, rateCurrency, breakdown,\n    });\n    continue;\n  }\n\n  current.amount += finalAmount;\n  current.grossAmount = addNullable(current.grossAmount, grossAmount);\n  current.tdsAmount = addNullable(current.tdsAmount, tdsAmount);\n  current.quantity = addNullable(current.quantity, quantity);\n  if (current.rateAmount !== rateAmount || current.rateCurrency !== rateCurrency) {\n    current.rateAmount = null;\n    current.rateCurrency = null;\n  }\n  current.status = combineStatus(current.status, status);\n  if (paidOn && (!current.paidOn || paidOn > current.paidOn)) current.paidOn = paidOn;\n  mergeDetails(current.breakdown, breakdown);\n}\n\nconst syncRunId = String($execution.id);\nconst pRows = [...grouped.values()]\n  .sort((left, right) => [left.source.project, left.email, left.source.componentKey].join('|')\n    .localeCompare([right.source.project, right.email, right.source.componentKey].join('|')))\n  .map((payment) => ({\n    p_email: payment.email,\n    p_client: 'Snorkel',\n    p_vertical: payment.source.vertical,\n    p_project: payment.source.project,\n    p_component_key: payment.source.componentKey,\n    p_component_label: payment.source.componentLabel,\n    p_amount: payment.amount,\n    p_currency: 'INR',\n    p_status: payment.status,\n    p_paid_on: payment.paidOn,\n    p_quantity: payment.quantity,\n    p_rate_amount: payment.rateAmount,\n    p_rate_currency: payment.rateCurrency,\n    p_gross_amount: payment.grossAmount,\n    p_tds_amount: payment.tdsAmount,\n    p_breakdown: payment.breakdown,\n    p_reference: ['Snorkel', payment.source.project, 'July 2026', payment.source.componentLabel].join(' / '),\n    p_source_key: 'project-payments-july-2026',\n    p_source_sheet: payment.source.sourceSheet,\n    p_sync_run_id: syncRunId,\n    p_observed_components: observedComponents,\n  }));\n\nreturn [{ json: { p_rows: pRows } }];"
+      },
+      "id": "5d32b1b7-df6a-4a56-95e1-1390024ef276",
+      "name": "Normalize Project July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/sync_project_july_2026_payments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fcae1ab7-cbe0-4902-8f73-d7eed75607a8",
+      "name": "Sync Project July Payments - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4560,
+        1960
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "acd8a025-a812-40c3-ace9-2b0a9721d83d",
+      "name": "Validate Project July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        1960
+      ]
+    }
+  ],
+  "connections": {
+    "Read Mojave July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Mojave July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Task Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Terminus Task Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Review Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Terminus Review Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Otter Workflow A Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Otter Workflow A Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Otter Workflow B Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Otter Workflow B Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Assessment Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sentinel Assessment Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Fixable Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sentinel Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Non Fixable Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sentinel Non Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Mojave July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Mojave + Terminus Task Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Terminus Task Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Mojave + Terminus Task Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Mojave + Terminus Task Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Terminus Review Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Terminus Review Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Terminus Review Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Terminus Review Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow A Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Otter Workflow A Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow A Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Otter Workflow A Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow B Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Otter Workflow B Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow B Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Otter Workflow B Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Assessment Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sentinel Assessment Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Assessment Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sentinel Assessment Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sentinel Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Fixable Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sentinel Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Non Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sentinel Non Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Non Fixable Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sentinel Non Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Normalize Project July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Project July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Sync Project July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync Project July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate Project July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Project July Payments": {
+      "main": [
+        [
+          {
+            "node": "Read Mojave July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Task Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Review Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Workflow A Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Workflow B Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Assessment Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Fixable Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Non Fixable Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

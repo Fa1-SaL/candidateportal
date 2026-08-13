@@ -1,0 +1,561 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 3,
+              "triggerAtHour": 0,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "9fb6a0af-b80d-4fcb-a181-87f55b588df3",
+      "name": "Schedule Trigger - STEM July Payments",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1720
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yvitEtjut8zweM_FnXZNIMxRe6dcIS66A63aggYL1Xw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "5c804d54-00d1-4634-8497-942f1a8aaa76",
+      "name": "Read Riga July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1540
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18lcLPsPe223WQ-fPxpwEdHY5klAIMn3RWaTowCO-K6A",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "298d4c7c-82d7-4d60-b42f-0b154f8098f1",
+      "name": "Read Rainier July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1660
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "14oCalx2DT3YH1nVJ8_BJo0owwshxqfqku6mrpoubOEo",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "4e63d951-6d08-45e7-8527-a52e1d5673fa",
+      "name": "Read Sequoia July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1780
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1en49pUNjs9d74-IulRYQE4ITz74F3RSlj_ANI91q4v0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b5ff7b44-8100-4387-8920-2bc8c57b5aff",
+      "name": "Read Starfish July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1900
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5cb13564-5546-40f8-b61e-459952bfdee2",
+              "name": "_source",
+              "value": "riga",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "55374522-e50d-4d31-80c0-8cac71366fb7",
+      "name": "Tag Riga July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "762e069e-8a2a-4017-8150-6ddcfb5db232",
+              "name": "_source",
+              "value": "rainier",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "7c8e7206-61f8-404e-b292-166fc60d8fb5",
+      "name": "Tag Rainier July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1660
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "90b596c1-8d5b-41bd-b489-3943b0c4187e",
+              "name": "_source",
+              "value": "sequoia",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d9d634fe-8dc0-4b12-92bb-e36abb67955f",
+      "name": "Tag Sequoia July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e9c065f-ebfb-42bb-9cb2-218c0cd60d26",
+              "name": "_source",
+              "value": "starfish",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ae4ae9f5-7379-4802-8814-c81c8d38f1f3",
+      "name": "Tag Starfish July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1900
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f2df1235-cfbb-4c3e-85c2-cd7fa08500c8",
+      "name": "Merge Riga + Rainier Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        720,
+        1600
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "22b91c1a-9a88-408d-a3c1-42ad3d58195c",
+      "name": "Merge + Sequoia Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        960,
+        1660
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1cc93829-00dd-4542-81d5-547d7c026ee3",
+      "name": "Merge + Starfish Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        1720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: 'Riga',\n  rainier: 'Rainier',\n  sequoia: 'Sequoia',\n  starfish: 'Starfish',\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction amount(value) {\n  if (typeof value === 'number') return Number.isFinite(value) ? value : null;\n  const cleaned = text(value).replace(/[^0-9.-]/g, '');\n  if (!cleaned) return null;\n  const parsed = Number(cleaned);\n  return Number.isFinite(parsed) ? parsed : null;\n}\nfunction paymentStatus(value, paidOnValue) {\n  const status = text(value).toLowerCase();\n  if (!status) return text(paidOnValue) ? 'disbursed' : 'processing';\n  if (/sent|paid|disbursed|completed/.test(status)) return 'disbursed';\n  if (/proceed|process|pending|queued|approved/.test(status)) return 'processing';\n  if (/reject|fail|cancel/.test(status)) return 'failed';\n  throw new Error('Unknown payment status: ' + JSON.stringify(value));\n}\nfunction isoDate(value) {\n  if (value === null || value === undefined || text(value) === '') return null;\n  if (typeof value === 'number' && Number.isFinite(value)) {\n    return new Date(Date.UTC(1899, 11, 30) + value * 86400000).toISOString().slice(0, 10);\n  }\n  const raw = text(value);\n  const iso = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/);\n  if (iso) return [iso[1], iso[2].padStart(2, '0'), iso[3].padStart(2, '0')].join('-');\n  const slash = raw.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})$/);\n  if (slash) return [slash[3], slash[2].padStart(2, '0'), slash[1].padStart(2, '0')].join('-');\n  const parsed = new Date(raw);\n  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid payment date: ' + JSON.stringify(value));\n  return parsed.toISOString().slice(0, 10);\n}\n\nconst grouped = new Map();\nconst projectCounts = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = text(row._source).toLowerCase();\n  const project = PROJECTS[source];\n  if (!project) throw new Error('Unknown STEM payment source: ' + JSON.stringify(row._source));\n\n  const rawEmail = text(read(row, 'Email Id', 'Email ID', 'Email')).toLowerCase();\n  if (!rawEmail) continue;\n  const rawAmount = amount(read(row, 'Final Amt'));\n  if (!EMAIL_RE.test(rawEmail)) throw new Error(project + ': invalid email ' + JSON.stringify(rawEmail));\n  if (rawAmount === null || rawAmount <= 0) throw new Error(project + ': invalid Final Amt for ' + rawEmail);\n\n  const paidOnValue = read(row, 'Amount Sent Date', 'Payment Date');\n  const status = paymentStatus(read(row, 'Status', 'Payment Status'), paidOnValue);\n  const paidOn = status === 'disbursed' ? isoDate(paidOnValue) : null;\n  const groupKey = [rawEmail, source, status].join('|');\n  const current = grouped.get(groupKey) || { email: rawEmail, project, source, status, amount: 0, paidOn: null };\n  current.amount += rawAmount;\n  if (paidOn && (!current.paidOn || paidOn > current.paidOn)) current.paidOn = paidOn;\n  grouped.set(groupKey, current);\n  projectCounts.set(project, (projectCounts.get(project) || 0) + 1);\n}\n\nfor (const project of Object.values(PROJECTS)) {\n  if (!projectCounts.get(project)) throw new Error('No July 2026 payment rows found for ' + project);\n}\n\nconst syncRunId = String($execution.id);\nconst pRows = [...grouped.values()]\n  .sort((left, right) => [left.project, left.email, left.status].join('|').localeCompare([right.project, right.email, right.status].join('|')))\n  .map((payment) => ({\n    p_email: payment.email,\n    p_client: 'Snorkel',\n    p_vertical: 'STEM',\n    p_project: payment.project,\n    p_amount: payment.amount,\n    p_currency: 'INR',\n    p_status: payment.status,\n    p_paid_on: payment.paidOn,\n    p_reference: ['STEM', payment.project, 'July 2026', payment.status].join(' / '),\n    p_source_key: 'stem-payments-july-2026',\n    p_source_sheet: payment.project + ' payment workbook / July - 2026 / Final Amt',\n    p_sync_run_id: syncRunId,\n  }));\n\nreturn [{ json: { p_rows: pRows } }];"
+      },
+      "id": "9e83dac3-7031-4e2c-9700-276c82ba94a6",
+      "name": "Normalize STEM July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        1720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/sync_stem_july_2026_payments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "4fb0b179-2769-4fa2-864e-78243e449870",
+      "name": "Sync STEM July Payments - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        1720
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "c082cb85-dab5-4f23-968d-2458c5c8f2ff",
+      "name": "Validate STEM July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1720
+      ]
+    }
+  ],
+  "connections": {
+    "Read Riga July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Riga July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rainier July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Rainier July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sequoia July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sequoia July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Starfish July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Starfish July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Riga July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Riga + Rainier Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Rainier July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Riga + Rainier Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Riga + Rainier Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sequoia Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sequoia July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sequoia Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sequoia Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Starfish Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Starfish July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Starfish Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Starfish Payments": {
+      "main": [
+        [
+          {
+            "node": "Normalize STEM July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize STEM July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Sync STEM July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync STEM July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate STEM July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate STEM July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Read Mojave July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Task Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Review Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Workflow A Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Workflow B Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Assessment Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Fixable Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Non Fixable Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - STEM July Payments": {
+      "main": [
+        [
+          {
+            "node": "Read Riga July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Rainier July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sequoia July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Starfish July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

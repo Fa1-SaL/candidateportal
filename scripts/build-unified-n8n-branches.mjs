@@ -124,6 +124,15 @@ if (errors.length) {
 return [{ json: {
   processed: results.filter((row) => row?.out_status === 'ok').length,
   skipped: results.filter((row) => row?.out_status === 'skipped').length,
+  skipped_rows: results
+    .filter((row) => row?.out_status === 'skipped')
+    .map((row) => ({
+      email: row.out_email,
+      project: row.out_project,
+      component: row.out_component,
+      reason: row.out_message,
+      amount: row.out_amount,
+    })),
 } }];`;
 
 const masterNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -376,6 +385,323 @@ for (const item of items) {
 }
 return output;`;
 
+const stemPaymentNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PROJECTS = {
+  riga: 'Riga',
+  rainier: 'Rainier',
+  sequoia: 'Sequoia',
+  starfish: 'Starfish',
+};
+
+function key(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function read(row, ...names) {
+  const entries = Object.entries(row || {});
+  for (const name of names.map(key)) {
+    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);
+    if (match) return match[1];
+  }
+  return '';
+}
+function text(value) {
+  return String(value ?? '').trim();
+}
+function amount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const cleaned = text(value).replace(/[^0-9.-]/g, '');
+  if (!cleaned) return null;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+function paymentStatus(value, paidOnValue) {
+  const status = text(value).toLowerCase();
+  if (!status) return text(paidOnValue) ? 'disbursed' : 'processing';
+  if (/sent|paid|disbursed|completed/.test(status)) return 'disbursed';
+  if (/proceed|process|pending|queued|approved/.test(status)) return 'processing';
+  if (/reject|fail|cancel/.test(status)) return 'failed';
+  throw new Error('Unknown payment status: ' + JSON.stringify(value));
+}
+function isoDate(value) {
+  if (value === null || value === undefined || text(value) === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return new Date(Date.UTC(1899, 11, 30) + value * 86400000).toISOString().slice(0, 10);
+  }
+  const raw = text(value);
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return [iso[1], iso[2].padStart(2, '0'), iso[3].padStart(2, '0')].join('-');
+  const slash = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (slash) return [slash[3], slash[2].padStart(2, '0'), slash[1].padStart(2, '0')].join('-');
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid payment date: ' + JSON.stringify(value));
+  return parsed.toISOString().slice(0, 10);
+}
+
+const grouped = new Map();
+const projectCounts = new Map();
+for (const item of items) {
+  const row = item.json;
+  const source = text(row._source).toLowerCase();
+  const project = PROJECTS[source];
+  if (!project) throw new Error('Unknown STEM payment source: ' + JSON.stringify(row._source));
+
+  const rawEmail = text(read(row, 'Email Id', 'Email ID', 'Email')).toLowerCase();
+  if (!rawEmail) continue;
+  const rawAmount = amount(read(row, 'Final Amt'));
+  if (!EMAIL_RE.test(rawEmail)) throw new Error(project + ': invalid email ' + JSON.stringify(rawEmail));
+  if (rawAmount === null || rawAmount <= 0) throw new Error(project + ': invalid Final Amt for ' + rawEmail);
+
+  const paidOnValue = read(row, 'Amount Sent Date', 'Payment Date');
+  const status = paymentStatus(read(row, 'Status', 'Payment Status'), paidOnValue);
+  const paidOn = status === 'disbursed' ? isoDate(paidOnValue) : null;
+  const groupKey = [rawEmail, source, status].join('|');
+  const current = grouped.get(groupKey) || { email: rawEmail, project, source, status, amount: 0, paidOn: null };
+  current.amount += rawAmount;
+  if (paidOn && (!current.paidOn || paidOn > current.paidOn)) current.paidOn = paidOn;
+  grouped.set(groupKey, current);
+  projectCounts.set(project, (projectCounts.get(project) || 0) + 1);
+}
+
+for (const project of Object.values(PROJECTS)) {
+  if (!projectCounts.get(project)) throw new Error('No July 2026 payment rows found for ' + project);
+}
+
+const syncRunId = String($execution.id);
+const pRows = [...grouped.values()]
+  .sort((left, right) => [left.project, left.email, left.status].join('|').localeCompare([right.project, right.email, right.status].join('|')))
+  .map((payment) => ({
+    p_email: payment.email,
+    p_client: 'Snorkel',
+    p_vertical: 'STEM',
+    p_project: payment.project,
+    p_amount: payment.amount,
+    p_currency: 'INR',
+    p_status: payment.status,
+    p_paid_on: payment.paidOn,
+    p_reference: ['STEM', payment.project, 'July 2026', payment.status].join(' / '),
+    p_source_key: 'stem-payments-july-2026',
+    p_source_sheet: payment.project + ' payment workbook / July - 2026 / Final Amt',
+    p_sync_run_id: syncRunId,
+  }));
+
+return [{ json: { p_rows: pRows } }];`;
+
+const projectPaymentNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SOURCES = {
+  mojave: {
+    vertical: 'Mojave', project: 'Mojave', componentKey: 'mojave_total',
+    componentLabel: 'Task + Review', sourceSheet: 'SnorkelxMojave - Sub Contracting Payment / July - 2026',
+  },
+  terminus_task: {
+    vertical: 'Coding', project: 'Terminus', componentKey: 'task',
+    componentLabel: 'Approved Tasks', sourceSheet: 'SnorkelxTerminus - Sub Contract Payment / July, 2026(Task)',
+  },
+  terminus_review: {
+    vertical: 'Coding', project: 'Terminus', componentKey: 'review',
+    componentLabel: 'Approved Reviews', sourceSheet: 'SnorkelxTerminus - Sub Contract Payment / July,2026(Review)',
+  },
+  otter_a: {
+    vertical: 'Coding', project: 'Otter', componentKey: 'workflow_a',
+    componentLabel: 'Workflow A', sourceSheet: 'SnorkelxOtter - Sub Contract Payment / July,2026(workflow A)',
+  },
+  otter_b: {
+    vertical: 'Coding', project: 'Otter', componentKey: 'workflow_b',
+    componentLabel: 'Workflow B', sourceSheet: 'SnorkelxOtter - Sub Contract Payment / July,2026(workflow B)',
+  },
+  sentinel_assessment: {
+    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'assessment',
+    componentLabel: 'Assessment', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Assessment)',
+  },
+  sentinel_fixable: {
+    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'fixable',
+    componentLabel: 'Fixable', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Fixable)',
+  },
+  sentinel_non_fixable: {
+    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'non_fixable',
+    componentLabel: 'Non Fixable', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(N.Fixable)',
+  },
+};
+
+function key(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function read(row, ...names) {
+  const entries = Object.entries(row || {});
+  const wanted = names.map(key).filter(Boolean);
+  for (const name of wanted) {
+    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);
+    if (exact) return exact[1];
+  }
+  for (const name of wanted) {
+    const partial = entries.find(([column, value]) => {
+      const candidate = key(column);
+      return value !== null && value !== undefined && name.length >= 6 &&
+        (candidate.includes(name) || name.includes(candidate));
+    });
+    if (partial) return partial[1];
+  }
+  return '';
+}
+function text(value) {
+  return String(value ?? '').trim();
+}
+function amount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const cleaned = text(value).replace(/[^0-9.-]/g, '');
+  if (!cleaned || cleaned === '-' || cleaned === '.') return null;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+function paymentStatus(value, paidOnValue) {
+  const status = text(value).toLowerCase();
+  if (!status) return text(paidOnValue) ? 'disbursed' : 'processing';
+  if (/sent|paid|disbursed|completed/.test(status)) return 'disbursed';
+  if (/proceed|process|pending|queued|approved/.test(status)) return 'processing';
+  if (/reject|fail|cancel/.test(status)) return 'failed';
+  throw new Error('Unknown payment status: ' + JSON.stringify(value));
+}
+function combineStatus(left, right) {
+  if (left === 'failed' || right === 'failed') return 'failed';
+  if (left === 'processing' || right === 'processing') return 'processing';
+  return 'disbursed';
+}
+function isoDate(value) {
+  if (value === null || value === undefined || text(value) === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return new Date(Date.UTC(1899, 11, 30) + value * 86400000).toISOString().slice(0, 10);
+  }
+  const raw = text(value);
+  const iso = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return [iso[1], iso[2].padStart(2, '0'), iso[3].padStart(2, '0')].join('-');
+  const slash = raw.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (slash) return [slash[3], slash[2].padStart(2, '0'), slash[1].padStart(2, '0')].join('-');
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid payment date: ' + JSON.stringify(value));
+  return parsed.toISOString().slice(0, 10);
+}
+function addNullable(left, right) {
+  if (left === null && right === null) return null;
+  return (left || 0) + (right || 0);
+}
+function mergeDetails(target, incoming) {
+  for (const detail of incoming) {
+    const current = target.find((candidate) => candidate.key === detail.key);
+    if (!current) {
+      target.push({ ...detail });
+      continue;
+    }
+    current.quantity = addNullable(current.quantity, detail.quantity);
+    if (current.rate_amount !== detail.rate_amount || current.rate_currency !== detail.rate_currency) {
+      current.rate_amount = null;
+      current.rate_currency = null;
+    }
+  }
+}
+
+const grouped = new Map();
+const observedComponents = [...new Set(items
+  .map((item) => SOURCES[text(item.json?._source).toLowerCase()]?.componentKey)
+  .filter(Boolean))].sort();
+const expectedComponents = [
+  'assessment', 'fixable', 'mojave_total', 'non_fixable',
+  'review', 'task', 'workflow_a', 'workflow_b',
+];
+if (JSON.stringify(observedComponents) !== JSON.stringify(expectedComponents)) {
+  throw new Error('Project payment source snapshot is incomplete: ' + JSON.stringify(observedComponents));
+}
+
+for (const item of items) {
+  const row = item.json;
+  const sourceKey = text(row._source).toLowerCase();
+  const source = SOURCES[sourceKey];
+  if (!source) throw new Error('Unknown project payment source: ' + JSON.stringify(row._source));
+
+  const email = text(read(row, 'Email Id', 'Email ID', 'EMAIL', 'Email')).toLowerCase();
+  const finalAmount = amount(read(row, 'Final Amt', 'Final Amount'));
+  if (!email && finalAmount === null) continue;
+  if (!EMAIL_RE.test(email)) throw new Error(source.project + '/' + source.componentLabel + ': invalid email ' + JSON.stringify(email));
+  if (finalAmount === null || finalAmount <= 0) continue;
+
+  const paidOnValue = read(row, 'Amount Sent Date', 'Payment Date');
+  const status = paymentStatus(read(row, 'Status', 'Payment Status'), paidOnValue);
+  const paidOn = status === 'disbursed' ? isoDate(paidOnValue) : null;
+  const tdsAmount = amount(read(row, 'TDS Deducted', 'TDS'));
+  const grossFromSheet = amount(read(row, 'Payable Amt', 'Payable Amount'));
+  const grossAmount = grossFromSheet ?? finalAmount + (tdsAmount || 0);
+  let quantity = amount(read(row, 'Total Task completed', 'Total Task complete', 'Approved Task', 'Approved Review'));
+  let rateAmount = amount(read(row, 'Candidate Rate', 'Candidates Rate Amt', 'Candidate Rate Amt'));
+  let rateCurrency = rateAmount === null ? null : 'INR';
+  const breakdown = [];
+
+  if (sourceKey === 'mojave') {
+    quantity = null;
+    rateAmount = null;
+    rateCurrency = null;
+    const taskQuantity = amount(read(row, 'Total Task completed', 'Total Task complete'));
+    const taskRate = amount(read(row, 'Candidates Rate Task USD', 'Candidate Rate Task', 'Candidates Rate Task'));
+    const reviewQuantity = amount(read(row, 'Total Approved', 'Approved Review'));
+    const reviewRate = amount(read(row, 'Candidates Rate USD', 'Candidate Rate Review', 'Candidates Rate Review'));
+    if (taskQuantity !== null && taskRate !== null) {
+      breakdown.push({ key: 'task', label: 'Approved Tasks', quantity: taskQuantity, rate_amount: taskRate, rate_currency: 'USD' });
+    }
+    if (reviewQuantity !== null && reviewRate !== null) {
+      breakdown.push({ key: 'review', label: 'Approved Reviews', quantity: reviewQuantity, rate_amount: reviewRate, rate_currency: 'USD' });
+    }
+  }
+
+  const groupKey = [email, sourceKey].join('|');
+  const current = grouped.get(groupKey);
+  if (!current) {
+    grouped.set(groupKey, {
+      email, source, status, paidOn, amount: finalAmount, grossAmount, tdsAmount,
+      quantity, rateAmount, rateCurrency, breakdown,
+    });
+    continue;
+  }
+
+  current.amount += finalAmount;
+  current.grossAmount = addNullable(current.grossAmount, grossAmount);
+  current.tdsAmount = addNullable(current.tdsAmount, tdsAmount);
+  current.quantity = addNullable(current.quantity, quantity);
+  if (current.rateAmount !== rateAmount || current.rateCurrency !== rateCurrency) {
+    current.rateAmount = null;
+    current.rateCurrency = null;
+  }
+  current.status = combineStatus(current.status, status);
+  if (paidOn && (!current.paidOn || paidOn > current.paidOn)) current.paidOn = paidOn;
+  mergeDetails(current.breakdown, breakdown);
+}
+
+const syncRunId = String($execution.id);
+const pRows = [...grouped.values()]
+  .sort((left, right) => [left.source.project, left.email, left.source.componentKey].join('|')
+    .localeCompare([right.source.project, right.email, right.source.componentKey].join('|')))
+  .map((payment) => ({
+    p_email: payment.email,
+    p_client: 'Snorkel',
+    p_vertical: payment.source.vertical,
+    p_project: payment.source.project,
+    p_component_key: payment.source.componentKey,
+    p_component_label: payment.source.componentLabel,
+    p_amount: payment.amount,
+    p_currency: 'INR',
+    p_status: payment.status,
+    p_paid_on: payment.paidOn,
+    p_quantity: payment.quantity,
+    p_rate_amount: payment.rateAmount,
+    p_rate_currency: payment.rateCurrency,
+    p_gross_amount: payment.grossAmount,
+    p_tds_amount: payment.tdsAmount,
+    p_breakdown: payment.breakdown,
+    p_reference: ['Snorkel', payment.source.project, 'July 2026', payment.source.componentLabel].join(' / '),
+    p_source_key: 'project-payments-july-2026',
+    p_source_sheet: payment.source.sourceSheet,
+    p_sync_run_id: syncRunId,
+    p_observed_components: observedComponents,
+  }));
+
+return [{ json: { p_rows: pRows } }];`;
+
 const trigger = addNode(
   "Schedule Trigger - Unified Portal Data",
   "n8n-nodes-base.scheduleTrigger",
@@ -428,6 +754,93 @@ const upsertPaperTasks = http("Upsert PaperBench Tasks - Unified", "upsert_task_
 const validatePaperTasks = code("Validate PaperBench Tasks - Unified", validateCode, [2400, 1120]);
 connect(validatePaperCandidates, paperTasks); connect(paperTasks, normalizePaperTasks); connect(normalizePaperTasks, batchPaperTasks); connect(batchPaperTasks, upsertPaperTasks); connect(upsertPaperTasks, validatePaperTasks);
 
+const rigaPayments = sheets("Read Riga July Payments - Unified", "1yvitEtjut8zweM_FnXZNIMxRe6dcIS66A63aggYL1Xw", "July - 2026", [240, 1540]);
+const rainierPayments = sheets("Read Rainier July Payments - Unified", "18lcLPsPe223WQ-fPxpwEdHY5klAIMn3RWaTowCO-K6A", "July - 2026", [240, 1660]);
+const sequoiaPayments = sheets("Read Sequoia July Payments - Unified", "14oCalx2DT3YH1nVJ8_BJo0owwshxqfqku6mrpoubOEo", "July - 2026", [240, 1780]);
+const starfishPayments = sheets("Read Starfish July Payments - Unified", "1en49pUNjs9d74-IulRYQE4ITz74F3RSlj_ANI91q4v0", "July - 2026", [240, 1900]);
+const tagRigaPayments = tag("Tag Riga July Payments", "riga", [480, 1540]);
+const tagRainierPayments = tag("Tag Rainier July Payments", "rainier", [480, 1660]);
+const tagSequoiaPayments = tag("Tag Sequoia July Payments", "sequoia", [480, 1780]);
+const tagStarfishPayments = tag("Tag Starfish July Payments", "starfish", [480, 1900]);
+const mergeRigaRainierPayments = addNode("Merge Riga + Rainier Payments", "n8n-nodes-base.merge", 3, [720, 1600], {});
+const mergeSequoiaPayments = addNode("Merge + Sequoia Payments", "n8n-nodes-base.merge", 3, [960, 1660], {});
+const mergeStarfishPayments = addNode("Merge + Starfish Payments", "n8n-nodes-base.merge", 3, [1200, 1720], {});
+const normalizeStemPayments = code("Normalize STEM July Payments - Unified", stemPaymentNormalizer, [1440, 1720]);
+const upsertStemPayments = http("Sync STEM July Payments - Unified", "sync_stem_july_2026_payments", [1680, 1720], 30000);
+const validateStemPayments = code("Validate STEM July Payments - Unified", validateCode, [1920, 1720]);
+
+for (const source of [rigaPayments, rainierPayments, sequoiaPayments, starfishPayments]) connect(validateMaster, source);
+connect(rigaPayments, tagRigaPayments); connect(rainierPayments, tagRainierPayments); connect(sequoiaPayments, tagSequoiaPayments); connect(starfishPayments, tagStarfishPayments);
+connect(tagRigaPayments, mergeRigaRainierPayments, 0); connect(tagRainierPayments, mergeRigaRainierPayments, 1);
+connect(mergeRigaRainierPayments, mergeSequoiaPayments, 0); connect(tagSequoiaPayments, mergeSequoiaPayments, 1);
+connect(mergeSequoiaPayments, mergeStarfishPayments, 0); connect(tagStarfishPayments, mergeStarfishPayments, 1);
+connect(mergeStarfishPayments, normalizeStemPayments); connect(normalizeStemPayments, upsertStemPayments); connect(upsertStemPayments, validateStemPayments);
+
+const mojavePayments = sheets("Read Mojave July Payments - Unified", "1icVvzZeL2yR7Kj2O6KUcOUKYqpg0S1B2zFI7LRIUDEs", "July - 2026", [2160, 1540]);
+const terminusTaskPayments = sheets("Read Terminus Task Payments - Unified", "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o", "July, 2026(Task)", [2160, 1660]);
+const terminusReviewPayments = sheets("Read Terminus Review Payments - Unified", "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o", "July,2026(Review)", [2160, 1780]);
+const otterWorkflowAPayments = sheets("Read Otter Workflow A Payments - Unified", "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k", "July,2026(workflow A)", [2160, 1900]);
+const otterWorkflowBPayments = sheets("Read Otter Workflow B Payments - Unified", "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k", "July,2026(workflow B)", [2160, 2020]);
+const sentinelAssessmentPayments = sheets("Read Sentinel Assessment Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July,2026(Assessment)", [2160, 2140]);
+const sentinelFixablePayments = sheets("Read Sentinel Fixable Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July,2026(Fixable)", [2160, 2260]);
+const sentinelNonFixablePayments = sheets("Read Sentinel Non Fixable Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July,2026(N.Fixable)", [2160, 2380]);
+
+for (const sourceName of [
+  mojavePayments,
+  terminusTaskPayments,
+  terminusReviewPayments,
+  otterWorkflowAPayments,
+  otterWorkflowBPayments,
+  sentinelAssessmentPayments,
+  sentinelFixablePayments,
+  sentinelNonFixablePayments,
+]) nodes.find((node) => node.name === sourceName).alwaysOutputData = true;
+
+const tagMojavePayments = tag("Tag Mojave July Payments", "mojave", [2400, 1540]);
+const tagTerminusTaskPayments = tag("Tag Terminus Task Payments", "terminus_task", [2400, 1660]);
+const tagTerminusReviewPayments = tag("Tag Terminus Review Payments", "terminus_review", [2400, 1780]);
+const tagOtterWorkflowAPayments = tag("Tag Otter Workflow A Payments", "otter_a", [2400, 1900]);
+const tagOtterWorkflowBPayments = tag("Tag Otter Workflow B Payments", "otter_b", [2400, 2020]);
+const tagSentinelAssessmentPayments = tag("Tag Sentinel Assessment Payments", "sentinel_assessment", [2400, 2140]);
+const tagSentinelFixablePayments = tag("Tag Sentinel Fixable Payments", "sentinel_fixable", [2400, 2260]);
+const tagSentinelNonFixablePayments = tag("Tag Sentinel Non Fixable Payments", "sentinel_non_fixable", [2400, 2380]);
+
+const mergeMojaveTerminusTask = addNode("Merge Mojave + Terminus Task Payments", "n8n-nodes-base.merge", 3, [2640, 1600], {});
+const mergeTerminusReview = addNode("Merge + Terminus Review Payments", "n8n-nodes-base.merge", 3, [2880, 1660], {});
+const mergeOtterWorkflowA = addNode("Merge + Otter Workflow A Payments", "n8n-nodes-base.merge", 3, [3120, 1720], {});
+const mergeOtterWorkflowB = addNode("Merge + Otter Workflow B Payments", "n8n-nodes-base.merge", 3, [3360, 1780], {});
+const mergeSentinelAssessment = addNode("Merge + Sentinel Assessment Payments", "n8n-nodes-base.merge", 3, [3600, 1840], {});
+const mergeSentinelFixable = addNode("Merge + Sentinel Fixable Payments", "n8n-nodes-base.merge", 3, [3840, 1900], {});
+const mergeSentinelNonFixable = addNode("Merge + Sentinel Non Fixable Payments", "n8n-nodes-base.merge", 3, [4080, 1960], {});
+const normalizeProjectPayments = code("Normalize Project July Payments - Unified", projectPaymentNormalizer, [4320, 1960]);
+const upsertProjectPayments = http("Sync Project July Payments - Unified", "sync_project_july_2026_payments", [4560, 1960], 30000);
+const validateProjectPayments = code("Validate Project July Payments - Unified", validateCode, [4800, 1960]);
+
+for (const source of [
+  mojavePayments,
+  terminusTaskPayments,
+  terminusReviewPayments,
+  otterWorkflowAPayments,
+  otterWorkflowBPayments,
+  sentinelAssessmentPayments,
+  sentinelFixablePayments,
+  sentinelNonFixablePayments,
+]) connect(validateStemPayments, source);
+
+connect(mojavePayments, tagMojavePayments); connect(terminusTaskPayments, tagTerminusTaskPayments);
+connect(terminusReviewPayments, tagTerminusReviewPayments); connect(otterWorkflowAPayments, tagOtterWorkflowAPayments);
+connect(otterWorkflowBPayments, tagOtterWorkflowBPayments); connect(sentinelAssessmentPayments, tagSentinelAssessmentPayments);
+connect(sentinelFixablePayments, tagSentinelFixablePayments); connect(sentinelNonFixablePayments, tagSentinelNonFixablePayments);
+
+connect(tagMojavePayments, mergeMojaveTerminusTask, 0); connect(tagTerminusTaskPayments, mergeMojaveTerminusTask, 1);
+connect(mergeMojaveTerminusTask, mergeTerminusReview, 0); connect(tagTerminusReviewPayments, mergeTerminusReview, 1);
+connect(mergeTerminusReview, mergeOtterWorkflowA, 0); connect(tagOtterWorkflowAPayments, mergeOtterWorkflowA, 1);
+connect(mergeOtterWorkflowA, mergeOtterWorkflowB, 0); connect(tagOtterWorkflowBPayments, mergeOtterWorkflowB, 1);
+connect(mergeOtterWorkflowB, mergeSentinelAssessment, 0); connect(tagSentinelAssessmentPayments, mergeSentinelAssessment, 1);
+connect(mergeSentinelAssessment, mergeSentinelFixable, 0); connect(tagSentinelFixablePayments, mergeSentinelFixable, 1);
+connect(mergeSentinelFixable, mergeSentinelNonFixable, 0); connect(tagSentinelNonFixablePayments, mergeSentinelNonFixable, 1);
+connect(mergeSentinelNonFixable, normalizeProjectPayments); connect(normalizeProjectPayments, upsertProjectPayments); connect(upsertProjectPayments, validateProjectPayments);
+
 const selection = {
   nodes,
   connections,
@@ -436,3 +849,109 @@ const selection = {
 };
 
 writeFileSync(new URL("../n8n/unified-portal-branches.selection.json", import.meta.url), `${JSON.stringify(selection, null, 2)}\n`);
+
+const stemPaymentNodeNames = new Set([
+  rigaPayments,
+  rainierPayments,
+  sequoiaPayments,
+  starfishPayments,
+  tagRigaPayments,
+  tagRainierPayments,
+  tagSequoiaPayments,
+  tagStarfishPayments,
+  mergeRigaRainierPayments,
+  mergeSequoiaPayments,
+  mergeStarfishPayments,
+  normalizeStemPayments,
+  upsertStemPayments,
+  validateStemPayments,
+]);
+const standaloneStemTrigger = {
+  parameters: { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 0 }] } },
+  id: randomUUID(),
+  name: "Schedule Trigger - STEM July Payments",
+  type: "n8n-nodes-base.scheduleTrigger",
+  typeVersion: 1.2,
+  position: [0, 1720],
+};
+const stemPaymentConnections = Object.fromEntries(
+  Object.entries(connections)
+    .filter(([name]) => stemPaymentNodeNames.has(name))
+    .map(([name, value]) => [name, value]),
+);
+stemPaymentConnections[standaloneStemTrigger.name] = {
+  main: [[
+    { node: rigaPayments, type: "main", index: 0 },
+    { node: rainierPayments, type: "main", index: 0 },
+    { node: sequoiaPayments, type: "main", index: 0 },
+    { node: starfishPayments, type: "main", index: 0 },
+  ]],
+};
+const stemPaymentSelection = {
+  nodes: [standaloneStemTrigger, ...nodes.filter((node) => stemPaymentNodeNames.has(node.name))],
+  connections: stemPaymentConnections,
+  pinData: {},
+  meta: { templateCredsSetupCompleted: true },
+};
+writeFileSync(new URL("../n8n/stem-july-2026-payments.selection.json", import.meta.url), `${JSON.stringify(stemPaymentSelection, null, 2)}\n`);
+
+const projectPaymentNodeNames = new Set([
+  mojavePayments,
+  terminusTaskPayments,
+  terminusReviewPayments,
+  otterWorkflowAPayments,
+  otterWorkflowBPayments,
+  sentinelAssessmentPayments,
+  sentinelFixablePayments,
+  sentinelNonFixablePayments,
+  tagMojavePayments,
+  tagTerminusTaskPayments,
+  tagTerminusReviewPayments,
+  tagOtterWorkflowAPayments,
+  tagOtterWorkflowBPayments,
+  tagSentinelAssessmentPayments,
+  tagSentinelFixablePayments,
+  tagSentinelNonFixablePayments,
+  mergeMojaveTerminusTask,
+  mergeTerminusReview,
+  mergeOtterWorkflowA,
+  mergeOtterWorkflowB,
+  mergeSentinelAssessment,
+  mergeSentinelFixable,
+  mergeSentinelNonFixable,
+  normalizeProjectPayments,
+  upsertProjectPayments,
+  validateProjectPayments,
+]);
+const standaloneProjectPaymentTrigger = {
+  parameters: { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 15 }] } },
+  id: randomUUID(),
+  name: "Schedule Trigger - Project July Payments",
+  type: "n8n-nodes-base.scheduleTrigger",
+  typeVersion: 1.2,
+  position: [1920, 1960],
+};
+const projectPaymentConnections = Object.fromEntries(
+  Object.entries(connections)
+    .filter(([name]) => projectPaymentNodeNames.has(name))
+    .map(([name, value]) => [name, value]),
+);
+projectPaymentConnections[standaloneProjectPaymentTrigger.name] = {
+  main: [[
+    { node: mojavePayments, type: "main", index: 0 },
+    { node: terminusTaskPayments, type: "main", index: 0 },
+    { node: terminusReviewPayments, type: "main", index: 0 },
+    { node: otterWorkflowAPayments, type: "main", index: 0 },
+    { node: otterWorkflowBPayments, type: "main", index: 0 },
+    { node: sentinelAssessmentPayments, type: "main", index: 0 },
+    { node: sentinelFixablePayments, type: "main", index: 0 },
+    { node: sentinelNonFixablePayments, type: "main", index: 0 },
+  ]],
+};
+const projectPaymentSelection = {
+  nodes: [standaloneProjectPaymentTrigger, ...nodes.filter((node) => projectPaymentNodeNames.has(node.name))],
+  connections: projectPaymentConnections,
+  pinData: {},
+  meta: { templateCredsSetupCompleted: true },
+};
+writeFileSync(new URL("../n8n/project-july-2026-payments.selection.json", import.meta.url), `${JSON.stringify(projectPaymentSelection, null, 2)}\n`);

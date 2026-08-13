@@ -13,7 +13,7 @@
           ]
         }
       },
-      "id": "e1e75a20-94f9-4b45-b630-da4b177f655b",
+      "id": "d10caab8-265a-4ff2-b2b2-261e000e91f0",
       "name": "Schedule Trigger - Unified Portal Data",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -36,7 +36,7 @@
         },
         "options": {}
       },
-      "id": "9439c513-348a-4e96-aadc-b6999669312a",
+      "id": "0ea4e8f2-fd4f-4455-882c-9bbfec5414c9",
       "name": "Read Snorkel Master User",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -68,7 +68,7 @@
         },
         "options": {}
       },
-      "id": "31d488ea-61e3-4f99-a98a-d51f612fdba7",
+      "id": "337c95e2-01ec-4e7c-ae72-0a3a74cd66fb",
       "name": "Read Snorkel Contracts Sent",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -100,7 +100,7 @@
         },
         "options": {}
       },
-      "id": "0d90bfa4-59cb-497d-863a-571551aea8f0",
+      "id": "8b2fefe8-12f5-4957-8563-18aa9402dd2f",
       "name": "Read Snorkel Contracts Signed",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -132,7 +132,7 @@
         },
         "options": {}
       },
-      "id": "0867b34b-899a-4d4c-9599-68d8c34e23ca",
+      "id": "1fbde7a9-89dd-467d-81ff-00cb17043c20",
       "name": "Read Snorkel SpringVerify",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -155,7 +155,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "77179226-0bc8-4db8-ab8c-043e1d595795",
+              "id": "3d104f80-0c44-4176-a709-0ec4fdcbf6b0",
               "name": "_source",
               "value": "master",
               "type": "string"
@@ -165,7 +165,7 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "c2768ee6-6c84-4df5-b7cf-3649a9f10e67",
+      "id": "d80c8bad-1ead-4f69-9965-6a57e5825cab",
       "name": "Tag Snorkel Master",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -179,7 +179,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "4349c05d-61d9-4faf-8488-d93b61e6821a",
+              "id": "54c9050c-cb77-4e6a-a40c-f357a69882de",
               "name": "_source",
               "value": "contract_sent",
               "type": "string"
@@ -189,7 +189,7 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "6170fbf3-a510-4ed8-8117-e5add8b6a363",
+      "id": "b19950fb-c1fb-42c9-9ddd-f860b4ec9e89",
       "name": "Tag Contracts Sent",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -203,7 +203,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "7dd5f39b-8744-4c30-991a-e250d341b21a",
+              "id": "9043ef59-e7f7-42f0-ae29-06b75b6fee70",
               "name": "_source",
               "value": "contract_signed",
               "type": "string"
@@ -213,7 +213,7 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "bf136017-c823-4140-9d17-90905c786df5",
+      "id": "966744da-31d9-4579-ba48-3f0a8bcedf6a",
       "name": "Tag Contracts Signed",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -227,7 +227,7 @@
         "assignments": {
           "assignments": [
             {
-              "id": "e31f5ec7-f983-401e-ab0c-b28f21e65e02",
+              "id": "680c9e04-e6e6-4449-874f-7838f3a5e2d2",
               "name": "_source",
               "value": "springverify",
               "type": "string"
@@ -237,7 +237,7 @@
         "includeOtherFields": true,
         "options": {}
       },
-      "id": "6ed7f9d3-fe2b-4627-a997-08fa64786e2f",
+      "id": "8ebfe440-57cc-45bf-a467-a493516acd6f",
       "name": "Tag SpringVerify",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
@@ -248,7 +248,7 @@
     },
     {
       "parameters": {},
-      "id": "c1507fed-5411-4ef3-8f35-dfd32e6ddb1a",
+      "id": "70b1d31b-1feb-48c0-952d-b9034bb5f059",
       "name": "Merge Master + Contract Sent",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -259,7 +259,7 @@
     },
     {
       "parameters": {},
-      "id": "63afff1f-ff52-4077-a61a-ab8439cc1f88",
+      "id": "0123d1b0-fc23-4fb5-a282-57eca723fcd2",
       "name": "Merge + Contract Signed",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -270,7 +270,7 @@
     },
     {
       "parameters": {},
-      "id": "5cfa9110-f5a3-4ff7-b415-64b7183ba73a",
+      "id": "6f7d2632-87e3-4b74-8be6-847a554cf0ea",
       "name": "Merge + SpringVerify",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -283,7 +283,7 @@
       "parameters": {
         "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  mojave: { vertical: 'Mojave', project: 'Mojave' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  otter: { vertical: 'Coding', project: 'Otter' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'suite life': { vertical: 'Coding', project: 'SuiteLife' },\n  suitelife: { vertical: 'Coding', project: 'SuiteLife' },\n  rudder: { vertical: 'Coding', project: 'Rudder' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key);\n  for (const name of wanted) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction email(row, ...names) {\n  const value = text(read(row, ...names)).toLowerCase();\n  return EMAIL_RE.test(value) ? value : '';\n}\n\nconst masterRows = items.filter((item) => item.json._source === 'master').map((item) => item.json);\nconst sent = new Set(items.filter((item) => item.json._source === 'contract_sent').map((item) => email(item.json, 'Email', 'Recipient Email')).filter(Boolean));\nconst signed = new Set(items.filter((item) => item.json._source === 'contract_signed').map((item) => email(item.json, 'Recipient Email', 'Email')).filter(Boolean));\nconst spring = new Map();\n\nfor (const item of items.filter((entry) => entry.json._source === 'springverify')) {\n  const row = item.json;\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail) continue;\n  const status = text(read(row, 'Overall Status')).toLowerCase();\n  spring.set(candidateEmail,\n    status === 'completed' ? 'done' :\n    status === 'completed with exception' ? 'exception' :\n    status ? 'awaited' : null\n  );\n}\n\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const row of masterRows) {\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const contractStatus = signed.has(candidateEmail) ? 'signed' : sent.has(candidateEmail) ? 'sent' : null;\n  const projects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))\n    .filter(Boolean);\n\n  for (const token of projects) {\n    const project = PROJECTS[token];\n    if (!project) continue;\n    output.push({ json: {\n      p_email: candidateEmail,\n      p_full_name: fullName || null,\n      p_client: 'Snorkel',\n      p_vertical: project.vertical,\n      p_project: project.project,\n      p_domain: domain || null,\n      p_bgv_id_status: spring.get(candidateEmail) || null,\n      p_contract_status: contractStatus,\n      p_source_key: 'snorkel-master-user',\n      p_source_priority: 90,\n      p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Master User - Snorkel',\n      p_source_row: row.row_number || null,\n      p_sync_run_id: syncRunId,\n      p_membership_authoritative: true,\n    } });\n  }\n}\n\nreturn output;"
       },
-      "id": "8e56901c-b4b9-4fd6-9a3d-a808b9a5dba9",
+      "id": "8c997d14-cd79-4e72-b8af-582293445fde",
       "name": "Normalize Unified Candidate Assignments",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -296,7 +296,7 @@
       "parameters": {
         "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
       },
-      "id": "1f97df79-4cfc-4da5-85b4-462300f3b8e5",
+      "id": "ec85246e-b9e8-439b-9f60-1a31fdfbff14",
       "name": "Batch Unified Candidate Assignments",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -318,7 +318,7 @@
           "timeout": 120000
         }
       },
-      "id": "cb5af2a3-7f99-430d-9a91-e68869ee56b7",
+      "id": "89322d93-c23c-46fe-9bc6-7f42cf7fd563",
       "name": "Upsert Unified Candidate Assignments",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -338,9 +338,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
       },
-      "id": "d7a95a4a-4abe-4acb-890a-2982760d66c1",
+      "id": "6d4304c7-ddc7-4fbc-97d6-77a1890b6c53",
       "name": "Validate Unified Candidate Assignments",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -363,7 +363,7 @@
         },
         "options": {}
       },
-      "id": "6d7dab36-03d8-4d0f-9943-2a5318ca25fd",
+      "id": "f80a5995-7676-4414-b1f6-45ecd90d1bd7",
       "name": "Read PaperBench Live Candidates - Unified",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -385,7 +385,7 @@
       "parameters": {
         "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n};\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) { return String(value ?? '').trim(); }\nfunction springverify(value) {\n  const status = text(value).toLowerCase();\n  if (status === 'complete' || status === 'completed' || status === 'verified' || status === 'approved') return 'done';\n  if (status.includes('exception')) return 'exception';\n  if (status) return 'awaited';\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (status.includes('approved') || status.includes('verified')) return 'approved';\n  if (status.includes('not started') || status.includes('not received') || status.includes('rejected')) return 'not_received';\n  if (status.includes('pending') || status.includes('sent')) return 'pending';\n  return null;\n}\nfunction contract(signed, sent) {\n  const signedStatus = text(signed).toLowerCase();\n  const sentStatus = text(sent).toLowerCase();\n  if (/signed|complete|yes|true/.test(signedStatus)) return 'signed';\n  if (/sent|shared/.test(sentStatus)) return 'sent';\n  if (/not sent|not started|no/.test(sentStatus)) return 'not_signed';\n  return null;\n}\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const item of items) {\n  const row = item.json;\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  if (!EMAIL_RE.test(candidateEmail) || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const common = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_domain: domain || null,\n    p_bgv_id_status: springverify(read(row, 'CH Background Check')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(read(row, 'Contracts Signed'), read(row, 'Contract Sent')),\n    p_source_key: 'paperbench-live-candidates',\n    p_source_priority: 80,\n    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates',\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  for (const token of text(read(row, 'Project')).split(/[,;/]+/).map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))) {\n    const project = PROJECTS[token];\n    if (project) output.push({ json: { ...common, p_vertical: project.vertical, p_project: project.project } });\n  }\n}\nreturn output;"
       },
-      "id": "43a407eb-009a-4753-a527-835e0c6dbd02",
+      "id": "e3a81a31-d3a2-4e67-91c9-cbd18cb96065",
       "name": "Normalize PaperBench Status - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -398,7 +398,7 @@
       "parameters": {
         "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
       },
-      "id": "ce7c9dad-a992-4983-b967-22fd082a14a2",
+      "id": "0aee2f91-a0c3-499c-8d07-bb88d7f03cfd",
       "name": "Batch PaperBench Status - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -420,7 +420,7 @@
           "timeout": 120000
         }
       },
-      "id": "9a2cee8d-1709-437d-878e-e93a7b1f3e67",
+      "id": "097410d1-4130-42d4-8364-1e2f4707240b",
       "name": "Upsert PaperBench Status - Unified",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -440,9 +440,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
       },
-      "id": "91027498-6cfb-43dc-b63c-c3c107682d07",
+      "id": "23169712-1de9-4441-9806-74d4cb3950a5",
       "name": "Validate PaperBench Status - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -465,7 +465,7 @@
         },
         "options": {}
       },
-      "id": "7460b743-f39a-4df2-9989-7a60d448cf29",
+      "id": "d96d4ebf-9dc1-4f07-b767-4b21391c4dce",
       "name": "Read Sentinel Task Pull - Unified",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -487,7 +487,7 @@
       "parameters": {
         "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst byEmail = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'Email')).trim().toLowerCase();\n  if (!EMAIL_RE.test(email)) continue;\n  const status = String(read(row, 'Status')).trim().toLowerCase();\n  const metric = byEmail.get(email) || { submitted: 0, accepted: 0, rejected: 0, rework: 0, evaluation_pending: 0 };\n  metric.submitted += 1;\n  if (status === 'accepted' || status === 'approved') metric.accepted += 1;\n  else if (status === 'rejected') metric.rejected += 1;\n  else if (status === 'needs revision' || status === 'rework') metric.rework += 1;\n  else metric.evaluation_pending += 1;\n  byEmail.set(email, metric);\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nreturn [...byEmail.entries()].map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Sentinel Ultra',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluation_pending,\n  p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: true,\n} }));"
       },
-      "id": "8414171d-59e9-4b29-a118-cf06f19f5564",
+      "id": "9a389654-0318-4bc6-b984-0d8555af7f4b",
       "name": "Normalize Sentinel Tasks - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -500,7 +500,7 @@
       "parameters": {
         "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
       },
-      "id": "b694ed90-cc54-4b68-9286-91549d77603d",
+      "id": "dfa78c07-206c-4b2d-9de1-6e824f94c952",
       "name": "Batch Sentinel Tasks - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -522,7 +522,7 @@
           "timeout": 30000
         }
       },
-      "id": "15ea0755-9bb9-4976-adae-0f1fb993eb54",
+      "id": "acd32ce7-63f8-4181-94dc-7bd02f3b5d93",
       "name": "Upsert Sentinel Tasks - Unified",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -542,9 +542,9 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
       },
-      "id": "fbe3fe8c-b73b-4483-803e-dee065139347",
+      "id": "072ea7fd-b2bb-4bd7-ae2a-365f5eb8a326",
       "name": "Validate Sentinel Tasks - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -567,7 +567,7 @@
         },
         "options": {}
       },
-      "id": "9b09712b-c156-4341-bfba-1404ceaedf13",
+      "id": "ed503433-ada5-4ea1-b47e-88e8239dc426",
       "name": "Read PaperBench Activity - Unified",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -589,7 +589,7 @@
       "parameters": {
         "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value) {\n  const raw = String(value ?? '').trim();\n  if (!raw) return null;\n  const parsed = Number(raw.replace(/[,\\s]/g, ''));\n  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : null;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst output = [];\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'email', 'Email')).trim().toLowerCase();\n  if (!EMAIL_RE.test(email)) continue;\n  output.push({ json: {\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'PaperBench',\n    p_as_of: asOf,\n    p_submitted: count(read(row, 'Task Count (All-Time)', 'Task Count (All Time)', 'Submitted')),\n    p_accepted: count(read(row, 'Accepted')),\n    p_rejected: count(read(row, 'Rejected')),\n    p_rework: count(read(row, 'Needs Revision', 'Requiring Rework', 'Rework')),\n    p_evaluation_pending: count(read(row, 'To Be Reviewed', 'Evaluation Pending')),\n    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / Activity Tracker',\n    p_metric_kind: 'cumulative',\n    p_allow_missing_assignment: true,\n  } });\n}\nreturn output;"
       },
-      "id": "acb91699-09a5-4b72-beba-40b2dd0f1c35",
+      "id": "5f49a0c3-1c9b-4f74-85a7-4fb13000eade",
       "name": "Normalize PaperBench Tasks - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -602,7 +602,7 @@
       "parameters": {
         "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
       },
-      "id": "6debfce0-84e9-4f47-8bd7-99307bc392a6",
+      "id": "8e6db0a1-fb02-4d82-ac85-f03c355e1090",
       "name": "Batch PaperBench Tasks - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -624,7 +624,7 @@
           "timeout": 30000
         }
       },
-      "id": "3a67d571-a6d4-4fbc-9d6e-3e696639f8d4",
+      "id": "e7622670-15eb-4c96-8d61-c7a64bd7b86d",
       "name": "Upsert PaperBench Tasks - Unified",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -644,15 +644,919 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
       },
-      "id": "a1c4c381-bf77-457c-ae25-829d39337b23",
+      "id": "c2417d68-c868-425e-b200-faeaf472cb85",
       "name": "Validate PaperBench Tasks - Unified",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         2400,
         1120
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yvitEtjut8zweM_FnXZNIMxRe6dcIS66A63aggYL1Xw",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "5c804d54-00d1-4634-8497-942f1a8aaa76",
+      "name": "Read Riga July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1540
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "18lcLPsPe223WQ-fPxpwEdHY5klAIMn3RWaTowCO-K6A",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "298d4c7c-82d7-4d60-b42f-0b154f8098f1",
+      "name": "Read Rainier July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1660
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "14oCalx2DT3YH1nVJ8_BJo0owwshxqfqku6mrpoubOEo",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "4e63d951-6d08-45e7-8527-a52e1d5673fa",
+      "name": "Read Sequoia July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1780
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1en49pUNjs9d74-IulRYQE4ITz74F3RSlj_ANI91q4v0",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b5ff7b44-8100-4387-8920-2bc8c57b5aff",
+      "name": "Read Starfish July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        240,
+        1900
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5cb13564-5546-40f8-b61e-459952bfdee2",
+              "name": "_source",
+              "value": "riga",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "55374522-e50d-4d31-80c0-8cac71366fb7",
+      "name": "Tag Riga July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "762e069e-8a2a-4017-8150-6ddcfb5db232",
+              "name": "_source",
+              "value": "rainier",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "7c8e7206-61f8-404e-b292-166fc60d8fb5",
+      "name": "Tag Rainier July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1660
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "90b596c1-8d5b-41bd-b489-3943b0c4187e",
+              "name": "_source",
+              "value": "sequoia",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d9d634fe-8dc0-4b12-92bb-e36abb67955f",
+      "name": "Tag Sequoia July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9e9c065f-ebfb-42bb-9cb2-218c0cd60d26",
+              "name": "_source",
+              "value": "starfish",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ae4ae9f5-7379-4802-8814-c81c8d38f1f3",
+      "name": "Tag Starfish July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        1900
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "f2df1235-cfbb-4c3e-85c2-cd7fa08500c8",
+      "name": "Merge Riga + Rainier Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        720,
+        1600
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "22b91c1a-9a88-408d-a3c1-42ad3d58195c",
+      "name": "Merge + Sequoia Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        960,
+        1660
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1cc93829-00dd-4542-81d5-547d7c026ee3",
+      "name": "Merge + Starfish Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1200,
+        1720
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: 'Riga',\n  rainier: 'Rainier',\n  sequoia: 'Sequoia',\n  starfish: 'Starfish',\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction amount(value) {\n  if (typeof value === 'number') return Number.isFinite(value) ? value : null;\n  const cleaned = text(value).replace(/[^0-9.-]/g, '');\n  if (!cleaned) return null;\n  const parsed = Number(cleaned);\n  return Number.isFinite(parsed) ? parsed : null;\n}\nfunction paymentStatus(value, paidOnValue) {\n  const status = text(value).toLowerCase();\n  if (!status) return text(paidOnValue) ? 'disbursed' : 'processing';\n  if (/sent|paid|disbursed|completed/.test(status)) return 'disbursed';\n  if (/proceed|process|pending|queued|approved/.test(status)) return 'processing';\n  if (/reject|fail|cancel/.test(status)) return 'failed';\n  throw new Error('Unknown payment status: ' + JSON.stringify(value));\n}\nfunction isoDate(value) {\n  if (value === null || value === undefined || text(value) === '') return null;\n  if (typeof value === 'number' && Number.isFinite(value)) {\n    return new Date(Date.UTC(1899, 11, 30) + value * 86400000).toISOString().slice(0, 10);\n  }\n  const raw = text(value);\n  const iso = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/);\n  if (iso) return [iso[1], iso[2].padStart(2, '0'), iso[3].padStart(2, '0')].join('-');\n  const slash = raw.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})$/);\n  if (slash) return [slash[3], slash[2].padStart(2, '0'), slash[1].padStart(2, '0')].join('-');\n  const parsed = new Date(raw);\n  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid payment date: ' + JSON.stringify(value));\n  return parsed.toISOString().slice(0, 10);\n}\n\nconst grouped = new Map();\nconst projectCounts = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = text(row._source).toLowerCase();\n  const project = PROJECTS[source];\n  if (!project) throw new Error('Unknown STEM payment source: ' + JSON.stringify(row._source));\n\n  const rawEmail = text(read(row, 'Email Id', 'Email ID', 'Email')).toLowerCase();\n  if (!rawEmail) continue;\n  const rawAmount = amount(read(row, 'Final Amt'));\n  if (!EMAIL_RE.test(rawEmail)) throw new Error(project + ': invalid email ' + JSON.stringify(rawEmail));\n  if (rawAmount === null || rawAmount <= 0) throw new Error(project + ': invalid Final Amt for ' + rawEmail);\n\n  const paidOnValue = read(row, 'Amount Sent Date', 'Payment Date');\n  const status = paymentStatus(read(row, 'Status', 'Payment Status'), paidOnValue);\n  const paidOn = status === 'disbursed' ? isoDate(paidOnValue) : null;\n  const groupKey = [rawEmail, source, status].join('|');\n  const current = grouped.get(groupKey) || { email: rawEmail, project, source, status, amount: 0, paidOn: null };\n  current.amount += rawAmount;\n  if (paidOn && (!current.paidOn || paidOn > current.paidOn)) current.paidOn = paidOn;\n  grouped.set(groupKey, current);\n  projectCounts.set(project, (projectCounts.get(project) || 0) + 1);\n}\n\nfor (const project of Object.values(PROJECTS)) {\n  if (!projectCounts.get(project)) throw new Error('No July 2026 payment rows found for ' + project);\n}\n\nconst syncRunId = String($execution.id);\nconst pRows = [...grouped.values()]\n  .sort((left, right) => [left.project, left.email, left.status].join('|').localeCompare([right.project, right.email, right.status].join('|')))\n  .map((payment) => ({\n    p_email: payment.email,\n    p_client: 'Snorkel',\n    p_vertical: 'STEM',\n    p_project: payment.project,\n    p_amount: payment.amount,\n    p_currency: 'INR',\n    p_status: payment.status,\n    p_paid_on: payment.paidOn,\n    p_reference: ['STEM', payment.project, 'July 2026', payment.status].join(' / '),\n    p_source_key: 'stem-payments-july-2026',\n    p_source_sheet: payment.project + ' payment workbook / July - 2026 / Final Amt',\n    p_sync_run_id: syncRunId,\n  }));\n\nreturn [{ json: { p_rows: pRows } }];"
+      },
+      "id": "9e83dac3-7031-4e2c-9700-276c82ba94a6",
+      "name": "Normalize STEM July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        1720
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/sync_stem_july_2026_payments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "4fb0b179-2769-4fa2-864e-78243e449870",
+      "name": "Sync STEM July Payments - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        1720
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "c082cb85-dab5-4f23-968d-2458c5c8f2ff",
+      "name": "Validate STEM July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        1720
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1icVvzZeL2yR7Kj2O6KUcOUKYqpg0S1B2zFI7LRIUDEs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July - 2026",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "822a9b0f-fa88-4760-be0f-daad5ba5ce18",
+      "name": "Read Mojave July Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1540
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July, 2026(Task)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "c0e35f99-8361-4f7e-83f9-1ad4e546a5a4",
+      "name": "Read Terminus Task Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1660
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(Review)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "71e740da-3ef4-41a0-b02d-cd42408ab3ef",
+      "name": "Read Terminus Review Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1780
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(workflow A)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "5af9d749-41bf-4523-9b46-ccbf716d1f56",
+      "name": "Read Otter Workflow A Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        1900
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(workflow B)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "ea07abbc-e1f8-4a03-8f08-e96f535f21c5",
+      "name": "Read Otter Workflow B Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2020
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(Assessment)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "070106b3-c8c3-41cf-82ff-0f0e0ec04ee3",
+      "name": "Read Sentinel Assessment Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2140
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(Fixable)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "8ffbd1ca-f70a-4c05-aad6-af6bccb4cba3",
+      "name": "Read Sentinel Fixable Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2260
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "July,2026(N.Fixable)",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "6ed84078-7b2a-4216-946f-e690a0cc61e2",
+      "name": "Read Sentinel Non Fixable Payments - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        2160,
+        2380
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3df6fb1-3f74-44bd-a0dd-099df3337c47",
+              "name": "_source",
+              "value": "mojave",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "3e9647ab-c6eb-4112-a71c-82abe0772839",
+      "name": "Tag Mojave July Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1540
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e3b005e2-1717-4611-8a87-90a5430e56b8",
+              "name": "_source",
+              "value": "terminus_task",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ed88f148-8f0b-442c-8a45-11b7d49123e5",
+      "name": "Tag Terminus Task Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1660
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04696797-167e-41fa-a98b-13a1c749956a",
+              "name": "_source",
+              "value": "terminus_review",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bfd8c8d0-e769-45b8-aabb-fbeea03f6c9f",
+      "name": "Tag Terminus Review Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1780
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ad7dfac5-bcae-42ab-ad08-9a8785c8fc31",
+              "name": "_source",
+              "value": "otter_a",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "9bdb2e95-d00a-4d75-9e31-dd778d7c10ca",
+      "name": "Tag Otter Workflow A Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        1900
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f4cb469a-1ce8-4bb0-ade1-75fb08ff5d1c",
+              "name": "_source",
+              "value": "otter_b",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5a4754fd-40e1-4a25-b78c-bb9b9a95d16e",
+      "name": "Tag Otter Workflow B Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2020
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c4d1d783-0f88-4f22-96b3-66a46abc790b",
+              "name": "_source",
+              "value": "sentinel_assessment",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "6dbe0fcf-e6ee-4f38-a385-eb8fad93de37",
+      "name": "Tag Sentinel Assessment Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2140
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a57bee9d-d30d-44e9-b548-e248f7b86491",
+              "name": "_source",
+              "value": "sentinel_fixable",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "4592efef-1446-4ebc-b415-e3e6dd5d1769",
+      "name": "Tag Sentinel Fixable Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2260
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3ae97e9c-984e-433a-8e38-993bcb083add",
+              "name": "_source",
+              "value": "sentinel_non_fixable",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "651f25ec-5010-4927-8ca0-c78c3624059e",
+      "name": "Tag Sentinel Non Fixable Payments",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2400,
+        2380
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "a76e9c00-4c3f-4dab-a533-8edad0681118",
+      "name": "Merge Mojave + Terminus Task Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2640,
+        1600
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "75ef960c-26e4-43b9-9b28-2021dbabcaf4",
+      "name": "Merge + Terminus Review Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        2880,
+        1660
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "9f20ad70-6be6-4607-9ebb-52b5c6b99721",
+      "name": "Merge + Otter Workflow A Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3120,
+        1720
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "12a925a4-b914-4fda-afd1-abb45816aaa8",
+      "name": "Merge + Otter Workflow B Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3360,
+        1780
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "40bcf19e-7007-46b3-88d4-1eee32d3c38f",
+      "name": "Merge + Sentinel Assessment Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3600,
+        1840
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "eefbf362-58c1-4436-912b-5b0ef27e77c8",
+      "name": "Merge + Sentinel Fixable Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3840,
+        1900
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "60eab3c3-8bd5-4ba7-be9e-64870bb54242",
+      "name": "Merge + Sentinel Non Fixable Payments",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        4080,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  mojave: {\n    vertical: 'Mojave', project: 'Mojave', componentKey: 'mojave_total',\n    componentLabel: 'Task + Review', sourceSheet: 'SnorkelxMojave - Sub Contracting Payment / July - 2026',\n  },\n  terminus_task: {\n    vertical: 'Coding', project: 'Terminus', componentKey: 'task',\n    componentLabel: 'Approved Tasks', sourceSheet: 'SnorkelxTerminus - Sub Contract Payment / July, 2026(Task)',\n  },\n  terminus_review: {\n    vertical: 'Coding', project: 'Terminus', componentKey: 'review',\n    componentLabel: 'Approved Reviews', sourceSheet: 'SnorkelxTerminus - Sub Contract Payment / July,2026(Review)',\n  },\n  otter_a: {\n    vertical: 'Coding', project: 'Otter', componentKey: 'workflow_a',\n    componentLabel: 'Workflow A', sourceSheet: 'SnorkelxOtter - Sub Contract Payment / July,2026(workflow A)',\n  },\n  otter_b: {\n    vertical: 'Coding', project: 'Otter', componentKey: 'workflow_b',\n    componentLabel: 'Workflow B', sourceSheet: 'SnorkelxOtter - Sub Contract Payment / July,2026(workflow B)',\n  },\n  sentinel_assessment: {\n    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'assessment',\n    componentLabel: 'Assessment', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Assessment)',\n  },\n  sentinel_fixable: {\n    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'fixable',\n    componentLabel: 'Fixable', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Fixable)',\n  },\n  sentinel_non_fixable: {\n    vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'non_fixable',\n    componentLabel: 'Non Fixable', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(N.Fixable)',\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key).filter(Boolean);\n  for (const name of wanted) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n  }\n  for (const name of wanted) {\n    const partial = entries.find(([column, value]) => {\n      const candidate = key(column);\n      return value !== null && value !== undefined && name.length >= 6 &&\n        (candidate.includes(name) || name.includes(candidate));\n    });\n    if (partial) return partial[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction amount(value) {\n  if (typeof value === 'number') return Number.isFinite(value) ? value : null;\n  const cleaned = text(value).replace(/[^0-9.-]/g, '');\n  if (!cleaned || cleaned === '-' || cleaned === '.') return null;\n  const parsed = Number(cleaned);\n  return Number.isFinite(parsed) ? parsed : null;\n}\nfunction paymentStatus(value, paidOnValue) {\n  const status = text(value).toLowerCase();\n  if (!status) return text(paidOnValue) ? 'disbursed' : 'processing';\n  if (/sent|paid|disbursed|completed/.test(status)) return 'disbursed';\n  if (/proceed|process|pending|queued|approved/.test(status)) return 'processing';\n  if (/reject|fail|cancel/.test(status)) return 'failed';\n  throw new Error('Unknown payment status: ' + JSON.stringify(value));\n}\nfunction combineStatus(left, right) {\n  if (left === 'failed' || right === 'failed') return 'failed';\n  if (left === 'processing' || right === 'processing') return 'processing';\n  return 'disbursed';\n}\nfunction isoDate(value) {\n  if (value === null || value === undefined || text(value) === '') return null;\n  if (typeof value === 'number' && Number.isFinite(value)) {\n    return new Date(Date.UTC(1899, 11, 30) + value * 86400000).toISOString().slice(0, 10);\n  }\n  const raw = text(value);\n  const iso = raw.match(/^(\\d{4})-(\\d{1,2})-(\\d{1,2})/);\n  if (iso) return [iso[1], iso[2].padStart(2, '0'), iso[3].padStart(2, '0')].join('-');\n  const slash = raw.match(/^(\\d{1,2})[/-](\\d{1,2})[/-](\\d{4})$/);\n  if (slash) return [slash[3], slash[2].padStart(2, '0'), slash[1].padStart(2, '0')].join('-');\n  const parsed = new Date(raw);\n  if (Number.isNaN(parsed.getTime())) throw new Error('Invalid payment date: ' + JSON.stringify(value));\n  return parsed.toISOString().slice(0, 10);\n}\nfunction addNullable(left, right) {\n  if (left === null && right === null) return null;\n  return (left || 0) + (right || 0);\n}\nfunction mergeDetails(target, incoming) {\n  for (const detail of incoming) {\n    const current = target.find((candidate) => candidate.key === detail.key);\n    if (!current) {\n      target.push({ ...detail });\n      continue;\n    }\n    current.quantity = addNullable(current.quantity, detail.quantity);\n    if (current.rate_amount !== detail.rate_amount || current.rate_currency !== detail.rate_currency) {\n      current.rate_amount = null;\n      current.rate_currency = null;\n    }\n  }\n}\n\nconst grouped = new Map();\nconst observedComponents = [...new Set(items\n  .map((item) => SOURCES[text(item.json?._source).toLowerCase()]?.componentKey)\n  .filter(Boolean))].sort();\nconst expectedComponents = [\n  'assessment', 'fixable', 'mojave_total', 'non_fixable',\n  'review', 'task', 'workflow_a', 'workflow_b',\n];\nif (JSON.stringify(observedComponents) !== JSON.stringify(expectedComponents)) {\n  throw new Error('Project payment source snapshot is incomplete: ' + JSON.stringify(observedComponents));\n}\n\nfor (const item of items) {\n  const row = item.json;\n  const sourceKey = text(row._source).toLowerCase();\n  const source = SOURCES[sourceKey];\n  if (!source) throw new Error('Unknown project payment source: ' + JSON.stringify(row._source));\n\n  const email = text(read(row, 'Email Id', 'Email ID', 'EMAIL', 'Email')).toLowerCase();\n  const finalAmount = amount(read(row, 'Final Amt', 'Final Amount'));\n  if (!email && finalAmount === null) continue;\n  if (!EMAIL_RE.test(email)) throw new Error(source.project + '/' + source.componentLabel + ': invalid email ' + JSON.stringify(email));\n  if (finalAmount === null || finalAmount <= 0) continue;\n\n  const paidOnValue = read(row, 'Amount Sent Date', 'Payment Date');\n  const status = paymentStatus(read(row, 'Status', 'Payment Status'), paidOnValue);\n  const paidOn = status === 'disbursed' ? isoDate(paidOnValue) : null;\n  const tdsAmount = amount(read(row, 'TDS Deducted', 'TDS'));\n  const grossFromSheet = amount(read(row, 'Payable Amt', 'Payable Amount'));\n  const grossAmount = grossFromSheet ?? finalAmount + (tdsAmount || 0);\n  let quantity = amount(read(row, 'Total Task completed', 'Total Task complete', 'Approved Task', 'Approved Review'));\n  let rateAmount = amount(read(row, 'Candidate Rate', 'Candidates Rate Amt', 'Candidate Rate Amt'));\n  let rateCurrency = rateAmount === null ? null : 'INR';\n  const breakdown = [];\n\n  if (sourceKey === 'mojave') {\n    quantity = null;\n    rateAmount = null;\n    rateCurrency = null;\n    const taskQuantity = amount(read(row, 'Total Task completed', 'Total Task complete'));\n    const taskRate = amount(read(row, 'Candidates Rate Task USD', 'Candidate Rate Task', 'Candidates Rate Task'));\n    const reviewQuantity = amount(read(row, 'Total Approved', 'Approved Review'));\n    const reviewRate = amount(read(row, 'Candidates Rate USD', 'Candidate Rate Review', 'Candidates Rate Review'));\n    if (taskQuantity !== null && taskRate !== null) {\n      breakdown.push({ key: 'task', label: 'Approved Tasks', quantity: taskQuantity, rate_amount: taskRate, rate_currency: 'USD' });\n    }\n    if (reviewQuantity !== null && reviewRate !== null) {\n      breakdown.push({ key: 'review', label: 'Approved Reviews', quantity: reviewQuantity, rate_amount: reviewRate, rate_currency: 'USD' });\n    }\n  }\n\n  const groupKey = [email, sourceKey].join('|');\n  const current = grouped.get(groupKey);\n  if (!current) {\n    grouped.set(groupKey, {\n      email, source, status, paidOn, amount: finalAmount, grossAmount, tdsAmount,\n      quantity, rateAmount, rateCurrency, breakdown,\n    });\n    continue;\n  }\n\n  current.amount += finalAmount;\n  current.grossAmount = addNullable(current.grossAmount, grossAmount);\n  current.tdsAmount = addNullable(current.tdsAmount, tdsAmount);\n  current.quantity = addNullable(current.quantity, quantity);\n  if (current.rateAmount !== rateAmount || current.rateCurrency !== rateCurrency) {\n    current.rateAmount = null;\n    current.rateCurrency = null;\n  }\n  current.status = combineStatus(current.status, status);\n  if (paidOn && (!current.paidOn || paidOn > current.paidOn)) current.paidOn = paidOn;\n  mergeDetails(current.breakdown, breakdown);\n}\n\nconst syncRunId = String($execution.id);\nconst pRows = [...grouped.values()]\n  .sort((left, right) => [left.source.project, left.email, left.source.componentKey].join('|')\n    .localeCompare([right.source.project, right.email, right.source.componentKey].join('|')))\n  .map((payment) => ({\n    p_email: payment.email,\n    p_client: 'Snorkel',\n    p_vertical: payment.source.vertical,\n    p_project: payment.source.project,\n    p_component_key: payment.source.componentKey,\n    p_component_label: payment.source.componentLabel,\n    p_amount: payment.amount,\n    p_currency: 'INR',\n    p_status: payment.status,\n    p_paid_on: payment.paidOn,\n    p_quantity: payment.quantity,\n    p_rate_amount: payment.rateAmount,\n    p_rate_currency: payment.rateCurrency,\n    p_gross_amount: payment.grossAmount,\n    p_tds_amount: payment.tdsAmount,\n    p_breakdown: payment.breakdown,\n    p_reference: ['Snorkel', payment.source.project, 'July 2026', payment.source.componentLabel].join(' / '),\n    p_source_key: 'project-payments-july-2026',\n    p_source_sheet: payment.source.sourceSheet,\n    p_sync_run_id: syncRunId,\n    p_observed_components: observedComponents,\n  }));\n\nreturn [{ json: { p_rows: pRows } }];"
+      },
+      "id": "5d32b1b7-df6a-4a56-95e1-1390024ef276",
+      "name": "Normalize Project July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        1960
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/sync_project_july_2026_payments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fcae1ab7-cbe0-4902-8f73-d7eed75607a8",
+      "name": "Sync Project July Payments - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4560,
+        1960
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "acd8a025-a812-40c3-ace9-2b0a9721d83d",
+      "name": "Validate Project July Payments - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4800,
+        1960
       ]
     }
   ],
@@ -849,6 +1753,26 @@
             "node": "Read Sentinel Task Pull - Unified",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Read Riga July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Rainier July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sequoia July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Starfish July Payments - Unified",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -990,6 +1914,470 @@
         [
           {
             "node": "Validate PaperBench Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Riga July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Riga July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rainier July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Rainier July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sequoia July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sequoia July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Starfish July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Starfish July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Riga July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Riga + Rainier Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Rainier July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Riga + Rainier Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Riga + Rainier Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sequoia Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sequoia July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sequoia Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sequoia Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Starfish Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Starfish July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Starfish Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Starfish Payments": {
+      "main": [
+        [
+          {
+            "node": "Normalize STEM July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize STEM July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Sync STEM July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync STEM July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate STEM July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate STEM July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Read Mojave July Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Task Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Review Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Workflow A Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Workflow B Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Assessment Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Fixable Payments - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Sentinel Non Fixable Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Mojave July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Mojave July Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Task Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Terminus Task Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Review Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Terminus Review Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Otter Workflow A Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Otter Workflow A Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Otter Workflow B Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Otter Workflow B Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Assessment Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sentinel Assessment Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Fixable Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sentinel Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Sentinel Non Fixable Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Sentinel Non Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Mojave July Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Mojave + Terminus Task Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Terminus Task Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge Mojave + Terminus Task Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Mojave + Terminus Task Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Terminus Review Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Terminus Review Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Terminus Review Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Terminus Review Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow A Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Otter Workflow A Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow A Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Otter Workflow A Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow B Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Otter Workflow B Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Otter Workflow B Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Otter Workflow B Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Assessment Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sentinel Assessment Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Assessment Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sentinel Assessment Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sentinel Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Fixable Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sentinel Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Non Fixable Payments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Sentinel Non Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Merge + Sentinel Non Fixable Payments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + Sentinel Non Fixable Payments": {
+      "main": [
+        [
+          {
+            "node": "Normalize Project July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Project July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Sync Project July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync Project July Payments - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate Project July Payments - Unified",
             "type": "main",
             "index": 0
           }
