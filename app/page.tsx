@@ -1196,10 +1196,27 @@ export default async function Home({
             </Card>
 
             {paymentBreakdown.length ? (
-              <Card className="h-auto p-[24px] sm:p-[26px] xl:h-[227px]">
+              <Card className="relative h-auto overflow-visible p-[24px] sm:p-[26px] xl:h-[227px]">
                 <h2 className="text-[20px] font-semibold leading-[26px] text-[#1b1b24] sm:text-[18px] sm:leading-[23px]">
                   Payments Overview
                 </h2>
+                <div className="group absolute right-[24px] top-[24px] z-20 sm:right-[26px] sm:top-[26px]">
+                  <button
+                    type="button"
+                    aria-describedby="payments-update-note"
+                    aria-label="Payments update schedule"
+                    className="inline-flex size-[22px] items-center justify-center rounded-full text-[#625f72] transition-colors duration-150 hover:text-[#4035d1] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6257dd]/40 sm:size-[19px]"
+                  >
+                    <MaterialIcon name="info" className="text-[18px] sm:text-[16px]" />
+                  </button>
+                  <div
+                    id="payments-update-note"
+                    role="tooltip"
+                    className="pointer-events-none absolute bottom-full right-0 z-20 w-max max-w-[calc(100vw-32px)] translate-y-px rounded-[8px] border border-[#e2e1e8] bg-white px-[10px] py-[7px] text-[11px] font-medium leading-[15px] text-[#464555] opacity-0 shadow-[0px_4px_12px_rgba(0,0,0,0.08)] transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 sm:px-[9px] sm:py-[6px] sm:text-[10px] sm:leading-[13px]"
+                  >
+                    Details are updated on a monthly cycle
+                  </div>
+                </div>
                 <div className="mt-[24px] flex flex-col gap-[20px] sm:mt-[18px] sm:gap-[15px]">
                   <PaymentBreakdownTrigger
                     projectName={projectName}
