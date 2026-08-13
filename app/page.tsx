@@ -188,7 +188,7 @@ function getVerifiedTaskIds(
   }
 
   const taskIds = taskEvents.map((taskEvent) => taskEvent.task_external_id.trim());
-  if (taskIds.some((taskId) => !taskId) || new Set(taskIds).size !== taskIds.length) {
+  if (taskIds.some((taskId) => !taskId)) {
     return null;
   }
 

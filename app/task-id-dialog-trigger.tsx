@@ -133,7 +133,7 @@ export default function TaskIdDialogTrigger({
             <ol className="min-h-0 overflow-y-auto px-5 py-3">
               {taskIds.map((taskId, index) => (
                 <li
-                  key={taskId}
+                  key={`${taskId}-${index}`}
                   className="flex min-h-[38px] items-center gap-3 border-b border-[#efedf3] py-2 last:border-b-0"
                 >
                   <span className="w-6 shrink-0 text-right text-[11px] font-medium tabular-nums text-[#898697]">

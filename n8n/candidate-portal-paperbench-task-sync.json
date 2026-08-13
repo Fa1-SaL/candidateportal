@@ -7,7 +7,10 @@
       "name": "Manual run",
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
-      "position": [-720, 120]
+      "position": [
+        -720,
+        120
+      ]
     },
     {
       "parameters": {
@@ -24,18 +27,21 @@
       "name": "Every 5 minutes",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [-720, -40]
+      "position": [
+        -720,
+        -40
+      ]
     },
     {
       "parameters": {
         "documentId": {
           "__rl": true,
-            "value": "1Tzgi8zIZddLkllQ5bYI6z8UNNdJTD8F1pbHACcygYuc",
+          "value": "1Tzgi8zIZddLkllQ5bYI6z8UNNdJTD8F1pbHACcygYuc",
           "mode": "id"
         },
         "sheetName": {
           "__rl": true,
-            "value": "Activity Tracker",
+          "value": "CH-auto-import",
           "mode": "name"
         },
         "options": {}
@@ -44,7 +50,10 @@
       "name": "Read PaperBench Activity Tracker",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [-480, 40],
+      "position": [
+        -480,
+        40
+      ],
       "credentials": {
         "googleSheetsOAuth2Api": {
           "id": "Fwum6c17KC1w1Elo",
@@ -54,13 +63,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nfunction text(value) {\n  return String(value ?? '').trim();\n}\n\nfunction read(row, ...names) {\n  const keys = Object.keys(row || {});\n  for (const name of names) {\n    const key = keys.find((candidate) => candidate.trim().toLowerCase() === name.toLowerCase());\n    if (key && row[key] !== null && row[key] !== undefined) return row[key];\n  }\n  return '';\n}\n\nfunction count(value) {\n  const raw = text(value);\n  if (!raw) return null;\n  const parsed = Number(raw.replace(/[,\\s]/g, ''));\n  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : null;\n}\n\nconst asOf = new Date().toISOString().slice(0, 10);\nconst output = [];\n\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'email', 'Email')).toLowerCase();\n  if (!EMAIL_RE.test(email)) continue;\n\n  output.push({\n    json: {\n      p_email: email,\n      p_project_slug: 'paperbench',\n      p_as_of: asOf,\n      p_submitted: count(read(row, 'Task Count (All-Time)', 'Task Count (All Time)', 'Submitted')),\n      p_accepted: count(read(row, 'Accepted')),\n      p_rejected: count(read(row, 'Rejected')),\n      p_rework: count(read(row, 'Needs Revision', 'Requiring Rework', 'Rework')),\n      p_evaluation_pending: count(read(row, 'To Be Reviewed', 'Evaluation Pending')),\n      p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / Activity Tracker',\n      p_metric_kind: 'cumulative',\n    },\n  });\n}\n\nreturn output;"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst output = [];\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'Assignee', 'Email')).trim().toLowerCase();\n  const taskId = String(read(row, 'Task ID')).trim();\n  if (!EMAIL_RE.test(email) || !taskId) continue;\n  output.push({ json: {\n    p_event_key: ['paperbench', email, taskId].join('|'),\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'PaperBench',\n    p_project_name_raw: String(read(row, 'Project Name')).trim() || 'PaperBench',\n    p_task_type: String(read(row, 'Task Type')).trim() || null,\n    p_status: String(read(row, 'Task Status', 'Status')).trim(),\n    p_created_at_source: String(read(row, 'Created At')).trim() || null,\n    p_submitted_at_source: String(read(row, 'Last Submitted At')).trim() || null,\n    p_bpo_source: String(read(row, 'BPO Source')).trim() || null,\n    p_final_outcome: String(read(row, 'Final Outcome')).trim() || null,\n    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / CH-auto-import',\n    p_allow_missing_assignment: true,\n  } });\n}\nreturn output;"
       },
       "id": "208a3f48-75dd-42c2-bf02-ff1e85f6d5a1",
       "name": "Normalize PaperBench Task Metrics",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-220, 40]
+      "position": [
+        -220,
+        40
+      ]
     },
     {
       "parameters": {
@@ -70,12 +82,15 @@
       "name": "Batch PaperBench Task Metrics",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [40, 40]
+      "position": [
+        40,
+        40
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
@@ -95,7 +110,10 @@
       "name": "Upsert PaperBench Task Metrics",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [300, 40],
+      "position": [
+        300,
+        40
+      ],
       "credentials": {
         "supabaseApi": {
           "id": "6brp0rQoBpo3lhkv",
