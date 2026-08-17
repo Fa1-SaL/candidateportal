@@ -77,7 +77,7 @@ export default function ProjectSwitcher({
       >
         {projects.map((project) => {
           const selected = project.id === selectedProjectId;
-          const label = `${project.verticalName} / ${project.projectName}`;
+          const label = `${project.projectName} / ${project.verticalName}`;
 
           return (
             <button

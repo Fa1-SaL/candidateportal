@@ -657,6 +657,845 @@
     },
     {
       "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_unified_rosters_and_refresh",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_assignment_ids\": null } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "09d14236-d5d0-47b8-a6ea-54ce648bdb7e",
+      "name": "Refresh Task Metrics From Events - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        1220
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 3,
+              "triggerAtHour": 0,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "id": "7539cd31-c6fe-4740-b840-2643c7a91ed5",
+      "name": "Schedule Trigger - Coding Project Sources",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        5280,
+        2680
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Terminus 2nd Edition Live",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "d07c59d9-e2b7-4b39-ae75-cfd8ca261ea2",
+      "name": "Read Terminus Live Candidates - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5520,
+        2440
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12OAfJTXkFvY6ti-WCPxzHBpbPcRW-8Tc-Fusz159m_k",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "MainOtter Live Candidates",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "54bc97ab-d901-4cfd-a0e0-49516c03d68c",
+      "name": "Read Otter Live Candidates - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5520,
+        2560
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1QVqmfGC39n9UooI1u32ltz3kiU1s7N06Ucz4-ECS5YM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "SuiteLife Live Candidates",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "7a9d81d3-63fb-4219-99a8-75837c35418d",
+      "name": "Read SuiteLife Live Candidates - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5520,
+        2680
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yuda2He61MSoIQnd63-dn3lr83z4pzrBrjTZ3oL3TIs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Rudder Live Candidates",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "07234b46-776f-4be7-88af-7133a49c4eba",
+      "name": "Read Rudder Live Candidates - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5520,
+        2800
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Terminus Task Pull",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "6318cbe7-4332-43c8-8e38-7fd36a481997",
+      "name": "Read Terminus Task Evidence - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        5520,
+        2920
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4d9f0183-1480-4fc2-aac7-eca14b6a5537",
+              "name": "_source",
+              "value": "terminus",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "beeac5c0-5ed9-42d9-9a0a-69d064b0fbf7",
+      "name": "Tag Terminus Roster",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5760,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f3997991-d111-4ab1-9f86-df4931eba5f2",
+              "name": "_source",
+              "value": "otter",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "d56aaaf0-77b1-4003-b42e-7e95009adffb",
+      "name": "Tag Otter Roster",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5760,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1447697-7258-42f7-833f-40267c11ef44",
+              "name": "_source",
+              "value": "suitelife",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b015cf5d-3bfb-45a3-bd20-65a8792bfc57",
+      "name": "Tag SuiteLife Roster",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5760,
+        2680
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5cf821b2-2f71-401e-9c31-f3963a18fca6",
+              "name": "_source",
+              "value": "rudder",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5462a619-8e13-4bba-954d-89abfe74af61",
+      "name": "Tag Rudder Roster",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5760,
+        2800
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "70516069-613d-4a6c-b88d-78bd905e6349",
+              "name": "_source",
+              "value": "terminus_task",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "a33a1bfa-05cd-432b-9836-a4adf88fd630",
+      "name": "Tag Terminus Task Evidence",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        5760,
+        2920
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "231a78fc-faa7-4ccd-bfc8-3f54fe034403",
+      "name": "Merge Terminus + Otter Rosters",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        6000,
+        2500
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "c0001176-a820-460a-8fd7-375d86f308e2",
+      "name": "Merge + SuiteLife Roster",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        6240,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "0f9d1849-5dc0-45b6-9e68-ff154f7c6b77",
+      "name": "Merge + Rudder Roster",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        6480,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  terminus: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-roster:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus 2nd Edition Live',\n  },\n  otter: {\n    project: 'Otter',\n    sourceKey: 'coding-project-roster:otter',\n    sourceSheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / MainOtter Live Candidates',\n  },\n  suitelife: {\n    project: 'SuiteLife',\n    sourceKey: 'coding-project-roster:suitelife',\n    sourceSheet: 'Snorkel MainSuiteLife Internal / SuiteLife Live Candidates',\n  },\n  rudder: {\n    project: 'Rudder',\n    sourceKey: 'coding-project-roster:rudder',\n    sourceSheet: 'Snorkel MainRudder Internal / Rudder Live Candidates',\n  },\n  terminus_task: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-task-evidence:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n    taskEvidence: true,\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && text(value) !== '');\n    if (exact) return exact[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('exception')) return 'exception';\n  if (/complete|verified|approved|green|done/.test(status)) return 'done';\n  if (/pending|progress|await|not started|triggered|sent/.test(status)) return 'awaited';\n  return null;\n}\nfunction verificationFromRow(row) {\n  const acceptedKeys = ['chbackgroundcheck', 'springverifycheck', 'springverifypull', 'bgv'];\n  for (const [column, value] of Object.entries(row || {})) {\n    const columnKey = key(column);\n    if (!acceptedKeys.some((candidate) => columnKey === candidate || columnKey.startsWith(candidate))) continue;\n    const normalized = verification(value);\n    if (normalized) return normalized;\n  }\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (/approved|verified|complete/.test(status)) return 'approved';\n  if (/not started|not received|rejected/.test(status)) return 'not_received';\n  if (/pending|sent|progress/.test(status)) return 'pending';\n  return null;\n}\nfunction contract(signedValue, sentValue) {\n  const signed = text(signedValue).toLowerCase();\n  const sent = text(sentValue).toLowerCase();\n  if (/signed|complete|completed|yes|true/.test(signed)) return 'signed';\n  if (/not sent|not started|no/.test(sent)) return 'not_signed';\n  if (/sent|shared/.test(sent)) return 'sent';\n  return null;\n}\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = SOURCES[text(row._source).toLowerCase()];\n  if (!source) throw new Error('Unknown coding roster source: ' + JSON.stringify(row._source));\n\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n  const bpo = source.taskEvidence\n    ? key(row.SOURCE ?? row.Source ?? row.source)\n    : key(read(row, 'BPO'));\n  if (!candidateEmail && !status && !bpo) continue;\n  if (source.taskEvidence) {\n    if (bpo !== 'crossinghurdles') continue;\n  } else if (status !== 'active' || bpo !== 'crossinghurdles') {\n    continue;\n  }\n  if (!EMAIL_RE.test(candidateEmail)) {\n    throw new Error(source.project + ': invalid active candidate email ' + JSON.stringify(candidateEmail));\n  }\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const assignment = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project: source.project,\n    p_domain: /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain || null,\n    p_bgv_id_status: verificationFromRow(row),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(\n      read(row, 'Contract Signed', 'Contracts Signed', 'Contract'),\n      read(row, 'Contract Sent', 'Contracts Sent'),\n    ),\n    p_source_key: source.sourceKey,\n    p_source_priority: source.taskEvidence ? 90 : 100,\n    p_source_sheet: source.sourceSheet,\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  const assignmentKey = source.sourceKey + '|' + candidateEmail;\n  const existing = assignments.get(assignmentKey);\n  if (!existing) {\n    assignments.set(assignmentKey, assignment);\n  } else {\n    for (const field of ['p_full_name', 'p_domain', 'p_bgv_id_status', 'p_remofirst_status', 'p_contract_status']) {\n      if (!existing[field] && assignment[field]) existing[field] = assignment[field];\n    }\n  }\n}\n\nfor (const source of Object.values(SOURCES)) {\n  const count = [...assignments.values()].filter((row) => row.p_source_key === source.sourceKey).length;\n  if (count === 0) throw new Error('No active Crossing Hurdles rows found for ' + source.project);\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => [left.p_project, left.p_email].join('|').localeCompare([right.p_project, right.p_email].join('|')))\n  .map((row) => ({ json: row }));"
+      },
+      "id": "267b2933-1156-4b69-b22e-d179102f1ec6",
+      "name": "Normalize Coding Project Rosters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6720,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
+      },
+      "id": "dfaed137-29a8-4e1d-a6ff-3c14862a96fa",
+      "name": "Batch Coding Project Rosters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        6960,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_portal_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "825cb262-2034-4791-948d-2ef94302d8c3",
+      "name": "Upsert Coding Project Rosters",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7200,
+        2620
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "bd0350e8-4cd2-438b-8b01-01618ee73e80",
+      "name": "Validate Coding Project Rosters",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7440,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $('Normalize Coding Project Rosters').all().map((item) => item.json);\nconst expectedSources = [\n  'coding-project-roster:terminus',\n  'coding-project-roster:otter',\n  'coding-project-roster:suitelife',\n  'coding-project-roster:rudder',\n  'coding-project-task-evidence:terminus',\n];\nreturn expectedSources.map((sourceKey) => {\n  const sourceRows = rows.filter((row) => row.p_source_key === sourceKey);\n  if (!sourceRows.length) throw new Error('Cannot finalize empty roster snapshot: ' + sourceKey);\n  const syncRunIds = [...new Set(sourceRows.map((row) => row.p_sync_run_id))];\n  if (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Roster snapshot has inconsistent run IDs: ' + sourceKey);\n  return { json: {\n    p_source_key: sourceKey,\n    p_sync_run_id: syncRunIds[0],\n    p_expected_count: sourceRows.length,\n  } };\n});"
+      },
+      "id": "3809a120-1fe5-4242-9a04-21b5688c12c9",
+      "name": "Prepare Coding Roster Finalizers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7680,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_portal_assignment_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "c7fcd556-f361-4720-948e-8c07f3536564",
+      "name": "Finalize Coding Roster Snapshots",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        7920,
+        2620
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "80fb86fd-3437-4506-9dca-288c8eef5de5",
+      "name": "Validate Coding Roster Snapshots",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8160,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Terminus Task Pull",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "544156db-437f-4c63-8c80-040c9de8f609",
+      "name": "Read Terminus Task Pull - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        8400,
+        2440
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(email + ': invalid ' + label + ' count ' + JSON.stringify(value));\n  return parsed;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  if (key(read(row, 'SOURCE')) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'EMAIL')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Terminus Task Pull: invalid email ' + JSON.stringify(email));\n  if (metrics.has(email)) throw new Error('Terminus Task Pull: duplicate email ' + email);\n\n  const submitted = count(read(row, 'TOTAL SUBMISSIONS'), 'submitted', email);\n  const accepted = count(read(row, 'TOTAL ACCEPTED'), 'accepted', email);\n  const rejected = count(read(row, 'REJECTED'), 'rejected', email);\n  const rework = count(read(row, 'NEEDS REVISION'), 'rework', email);\n  const evaluationPending = count(read(row, 'EVAL PENDING'), 'evaluation pending', email)\n    + count(read(row, 'PENDING REVIEW'), 'pending review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error(email + ': Terminus totals do not reconcile');\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\nif (!metrics.size) throw new Error('Terminus Task Pull returned no Crossing Hurdles rows');\nreturn [...metrics.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Terminus',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluationPending,\n  p_source_sheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: true,\n} }));"
+      },
+      "id": "e77d72a4-1fe2-4233-a1a7-3819826445a8",
+      "name": "Normalize Terminus Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8640,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "7a9778e8-0771-46ca-b46a-9986508d0d07",
+      "name": "Batch Terminus Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8880,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "7c8e8635-ad74-4c13-8bff-777b6f5d0c88",
+      "name": "Upsert Terminus Tasks - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9120,
+        2440
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "61798b3a-80bd-4b39-8c81-6a6c3ba13149",
+      "name": "Validate Terminus Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9360,
+        2440
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12OAfJTXkFvY6ti-WCPxzHBpbPcRW-8Tc-Fusz159m_k",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Task ID Tracking",
+          "mode": "name"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "A2:O"
+            }
+          }
+        }
+      },
+      "id": "1f3ca072-fc04-412c-8bdd-969a9cad0e19",
+      "name": "Read Otter Task IDs - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        8400,
+        2620
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n    const partial = entries.find(([column, value]) => key(column).includes(name) && value !== null && value !== undefined);\n    if (partial) return partial[1];\n  }\n  return '';\n}\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Contributor Email')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Otter Task ID Tracking: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Otter Task ID Tracking: invalid email ' + JSON.stringify(email));\n  const eventKey = 'otter|' + taskId;\n  if (events.has(eventKey)) throw new Error('Otter Task ID Tracking: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Otter',\n    p_project_name_raw: 'Otter',\n    p_task_type: text(read(row, 'Workflow')) || null,\n    p_status: text(read(row, 'Current Status')),\n    p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,\n    p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',\n    p_allow_missing_assignment: true,\n  });\n}\nif (!events.size) throw new Error('Otter Task ID Tracking returned no task rows');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
+      },
+      "id": "59a2c6b5-e02b-4b8a-ae13-2166d069bc22",
+      "name": "Normalize Otter Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8640,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "e86b597f-4c55-426a-bbbc-c264134ced45",
+      "name": "Batch Otter Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8880,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "28f77640-a385-4cc9-b618-c2448f37e21b",
+      "name": "Upsert Otter Tasks - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9120,
+        2620
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "094286a3-67cd-49d0-b5c8-258413127aa5",
+      "name": "Validate Otter Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9360,
+        2620
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1yuda2He61MSoIQnd63-dn3lr83z4pzrBrjTZ3oL3TIs",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Task Raw Pull",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "efc73ba4-b612-4c37-9035-f74885a4fbc2",
+      "name": "Read Rudder Task Raw Pull - Unified",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        8400,
+        2800
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst events = new Map();\nconst hasBpoSourceColumn = items.some((item) =>\n  Object.keys(item.json || {}).some((column) => key(column) === 'bposource')\n);\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  if (!taskId) continue;\n  const bpoSource = text(read(row, 'BPO Source'));\n  if (hasBpoSourceColumn && key(bpoSource) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'Assignee', 'User Email', 'Email')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Rudder Task Raw Pull: invalid email ' + JSON.stringify(email));\n  const eventKey = 'rudder|' + taskId;\n  if (events.has(eventKey)) throw new Error('Rudder Task Raw Pull: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Rudder',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: text(read(row, 'Task Status', 'State Enum', 'Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,\n    p_bpo_source: bpoSource || null,\n    p_source_sheet: 'Snorkel MainRudder Internal / Task Raw Pull',\n    p_allow_missing_assignment: true,\n  });\n}\nif (!events.size) throw new Error('Rudder Task Raw Pull returned no Crossing Hurdles task rows');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
+      },
+      "id": "32480019-4528-44ad-8b36-91d71a06c2e2",
+      "name": "Normalize Rudder Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8640,
+        2800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "0aff9e79-7706-40de-90d2-172322de2cd8",
+      "name": "Batch Rudder Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        8880,
+        2800
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "2b111686-9e0c-48e7-9418-c527e81886ed",
+      "name": "Upsert Rudder Tasks - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9120,
+        2800
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "87fd64b4-eb83-4266-92d7-68afdd5a8d45",
+      "name": "Validate Rudder Tasks - Unified",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9360,
+        2800
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/refresh_task_metrics_from_events",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_assignment_ids\": null } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "1b317439-0b91-4c40-bb3f-69601be95294",
+      "name": "Refresh Coding Task Metrics - Unified",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9600,
+        2710
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
         "documentId": {
           "__rl": true,
           "value": "1yvitEtjut8zweM_FnXZNIMxRe6dcIS66A63aggYL1Xw",
@@ -1558,37 +2397,6 @@
         4800,
         1960
       ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/refresh_task_metrics_from_events",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "supabaseApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { \"p_assignment_ids\": null } }}",
-        "options": {
-          "timeout": 30000
-        }
-      },
-      "id": "09d14236-d5d0-47b8-a6ea-54ce648bdb7e",
-      "name": "Refresh Task Metrics From Events - Unified",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        2640,
-        1220
-      ],
-      "credentials": {
-        "supabaseApi": {
-          "id": "6brp0rQoBpo3lhkv",
-          "name": "Supabase Snorkel"
-        }
-      },
-      "retryOnFail": true,
-      "maxTries": 4,
-      "waitBetweenTries": 3000
     }
   ],
   "connections": {
@@ -1896,17 +2704,6 @@
         ]
       ]
     },
-    "Validate Sentinel Tasks - Unified": {
-      "main": [
-        [
-          {
-            "node": "Refresh Task Metrics From Events - Unified",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Validate PaperBench Status - Unified": {
       "main": [
         [
@@ -1962,11 +2759,437 @@
         ]
       ]
     },
+    "Validate Sentinel Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Refresh Task Metrics From Events - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Validate PaperBench Tasks - Unified": {
       "main": [
         [
           {
             "node": "Refresh Task Metrics From Events - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Coding Project Sources": {
+      "main": [
+        [
+          {
+            "node": "Read Terminus Live Candidates - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Live Candidates - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read SuiteLife Live Candidates - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Rudder Live Candidates - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Terminus Task Evidence - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Live Candidates - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Terminus Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Otter Live Candidates - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Otter Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read SuiteLife Live Candidates - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag SuiteLife Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rudder Live Candidates - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Rudder Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Task Evidence - Unified": {
+      "main": [
+        [
+          {
+            "node": "Tag Terminus Task Evidence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Terminus Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge Terminus + Otter Rosters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Otter Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge Terminus + Otter Rosters",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Terminus + Otter Rosters": {
+      "main": [
+        [
+          {
+            "node": "Merge + SuiteLife Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag SuiteLife Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge + SuiteLife Roster",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge + SuiteLife Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge + Rudder Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Rudder Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge + Rudder Roster",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Tag Terminus Task Evidence": {
+      "main": [
+        [
+          {
+            "node": "Merge + Rudder Roster",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge + Rudder Roster": {
+      "main": [
+        [
+          {
+            "node": "Normalize Coding Project Rosters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Coding Project Rosters": {
+      "main": [
+        [
+          {
+            "node": "Batch Coding Project Rosters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Coding Project Rosters": {
+      "main": [
+        [
+          {
+            "node": "Upsert Coding Project Rosters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Coding Project Rosters": {
+      "main": [
+        [
+          {
+            "node": "Validate Coding Project Rosters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Coding Project Rosters": {
+      "main": [
+        [
+          {
+            "node": "Prepare Coding Roster Finalizers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Coding Roster Finalizers": {
+      "main": [
+        [
+          {
+            "node": "Finalize Coding Roster Snapshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Coding Roster Snapshots": {
+      "main": [
+        [
+          {
+            "node": "Validate Coding Roster Snapshots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Coding Roster Snapshots": {
+      "main": [
+        [
+          {
+            "node": "Read Terminus Task Pull - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Otter Task IDs - Unified",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Rudder Task Raw Pull - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Terminus Task Pull - Unified": {
+      "main": [
+        [
+          {
+            "node": "Normalize Terminus Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Terminus Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Batch Terminus Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Terminus Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Upsert Terminus Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Terminus Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate Terminus Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Otter Task IDs - Unified": {
+      "main": [
+        [
+          {
+            "node": "Normalize Otter Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Otter Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Batch Otter Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Otter Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Upsert Otter Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Otter Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate Otter Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Rudder Task Raw Pull - Unified": {
+      "main": [
+        [
+          {
+            "node": "Normalize Rudder Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Rudder Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Batch Rudder Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Rudder Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Upsert Rudder Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Rudder Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Validate Rudder Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Otter Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Refresh Coding Task Metrics - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Rudder Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Refresh Coding Task Metrics - Unified",
             "type": "main",
             "index": 0
           }

@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function LoginPage() {
+export default function LoginPage({
+    searchParams,
+}: {
+    searchParams: Promise<{ auth_error?: string | string[] }>;
+}) {
+    const resolvedSearchParams = use(searchParams);
+    const initialAuthError = Array.isArray(resolvedSearchParams.auth_error)
+        ? resolvedSearchParams.auth_error[0] ?? ""
+        : resolvedSearchParams.auth_error ?? "";
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(() => {
-        if (typeof window === "undefined") {
-            return "";
-        }
-
-        return new URLSearchParams(window.location.search).get("auth_error") ?? "";
-    });
+    const [message, setMessage] = useState(initialAuthError);
     const siteUrl =
         typeof window !== "undefined"
             ? window.location.origin
@@ -28,7 +30,7 @@ export default function LoginPage() {
         const supabase = createClient();
 
         const { error } = await supabase.auth.signInWithOtp({
-            email,
+            email: email.trim().toLowerCase(),
             options: {
                 emailRedirectTo: `${siteUrl}/auth/callback`,
             },

@@ -1,5 +1,34 @@
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
+
+const unifiedOutputUrl = new URL("../n8n/unified-portal-branches.selection.json", import.meta.url);
+let existingNodes = [];
+try {
+  existingNodes = JSON.parse(readFileSync(unifiedOutputUrl, "utf8")).nodes ?? [];
+} catch {
+  existingNodes = [];
+}
+const existingNodeIds = new Map(existingNodes.map((node) => [node.name, node.id]));
+const existingAssignmentIds = new Map(
+  existingNodes.flatMap((node) =>
+    (node.parameters?.assignments?.assignments ?? []).map((assignment) => [
+      `${node.name}\u0000${assignment.name}`,
+      assignment.id,
+    ]),
+  ),
+);
+const existingStandaloneIds = new Map();
+for (const relativePath of [
+  "../n8n/stem-july-2026-payments.selection.json",
+  "../n8n/project-july-2026-payments.selection.json",
+]) {
+  try {
+    const standalone = JSON.parse(readFileSync(new URL(relativePath, import.meta.url), "utf8"));
+    for (const node of standalone.nodes ?? []) existingStandaloneIds.set(node.name, node.id);
+  } catch {
+    // The standalone files are generated on the first run.
+  }
+}
 
 const googleCredential = {
   googleSheetsOAuth2Api: {
@@ -21,7 +50,7 @@ const connections = {};
 function addNode(name, type, typeVersion, position, parameters, credentials) {
   const node = {
     parameters,
-    id: randomUUID(),
+    id: existingNodeIds.get(name) ?? randomUUID(),
     name,
     type,
     typeVersion,
@@ -47,7 +76,7 @@ function connect(from, to, input = 0) {
   connections[from].main[0].push({ node: to, type: "main", index: input });
 }
 
-function sheets(name, documentId, sheetName, position) {
+function sheets(name, documentId, sheetName, position, options = {}) {
   return addNode(
     name,
     "n8n-nodes-base.googleSheets",
@@ -56,7 +85,7 @@ function sheets(name, documentId, sheetName, position) {
     {
       documentId: { __rl: true, value: documentId, mode: "id" },
       sheetName: { __rl: true, value: sheetName, mode: "name" },
-      options: {},
+      options,
     },
     googleCredential,
   );
@@ -66,7 +95,12 @@ function tag(name, source, position) {
   return addNode(name, "n8n-nodes-base.set", 3.4, position, {
     assignments: {
       assignments: [
-        { id: randomUUID(), name: "_source", value: source, type: "string" },
+        {
+          id: existingAssignmentIds.get(`${name}\u0000_source`) ?? randomUUID(),
+          name: "_source",
+          value: source,
+          type: "string",
+        },
       ],
     },
     includeOtherFields: true,
@@ -78,7 +112,7 @@ function code(name, jsCode, position) {
   return addNode(name, "n8n-nodes-base.code", 2, position, { jsCode });
 }
 
-function http(name, rpc, position, timeout = 120000) {
+function httpBody(name, rpc, jsonBody, position, timeout = 120000) {
   return addNode(
     name,
     "n8n-nodes-base.httpRequest",
@@ -91,10 +125,20 @@ function http(name, rpc, position, timeout = 120000) {
       nodeCredentialType: "supabaseApi",
       sendBody: true,
       specifyBody: "json",
-      jsonBody: '={{ { "p_rows": $json.p_rows } }}',
+      jsonBody,
       options: { timeout },
     },
     supabaseCredential,
+  );
+}
+
+function http(name, rpc, position, timeout = 120000) {
+  return httpBody(
+    name,
+    rpc,
+    '={{ { "p_rows": $json.p_rows } }}',
+    position,
+    timeout,
   );
 }
 
@@ -314,36 +358,30 @@ function read(row, ...names) {
   }
   return '';
 }
-const byEmail = new Map();
+const output = [];
 for (const item of items) {
   const row = item.json;
   const email = String(read(row, 'Email')).trim().toLowerCase();
-  if (!EMAIL_RE.test(email)) continue;
-  const status = String(read(row, 'Status')).trim().toLowerCase();
-  const metric = byEmail.get(email) || { submitted: 0, accepted: 0, rejected: 0, rework: 0, evaluation_pending: 0 };
-  metric.submitted += 1;
-  if (status === 'accepted' || status === 'approved') metric.accepted += 1;
-  else if (status === 'rejected') metric.rejected += 1;
-  else if (status === 'needs revision' || status === 'rework') metric.rework += 1;
-  else metric.evaluation_pending += 1;
-  byEmail.set(email, metric);
+  const taskId = String(read(row, 'Task ID')).trim();
+  const submissionId = String(read(row, 'Submission ID')).trim();
+  if (!EMAIL_RE.test(email) || !taskId) continue;
+  output.push({ json: {
+    p_event_key: ['sentinel-ultra', email, taskId, submissionId || 'no-submission'].join('|'),
+    p_task_external_id: taskId,
+    p_submission_external_id: submissionId || null,
+    p_email: email,
+    p_client: 'Snorkel',
+    p_vertical: 'Coding',
+    p_project_slug: 'Sentinel Ultra',
+    p_project_name_raw: 'Sentinel Ultra',
+    p_task_type: String(read(row, 'Task Type')).trim() || null,
+    p_status: String(read(row, 'Status')).trim(),
+    p_final_outcome: String(read(row, 'EC Valid (Fixable/Invalid/Valid-as-is)')).trim() || null,
+    p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',
+    p_allow_missing_assignment: true,
+  } });
 }
-const asOf = new Date().toISOString().slice(0, 10);
-return [...byEmail.entries()].map(([email, metric]) => ({ json: {
-  p_email: email,
-  p_client: 'Snorkel',
-  p_vertical: 'Coding',
-  p_project_slug: 'Sentinel Ultra',
-  p_as_of: asOf,
-  p_submitted: metric.submitted,
-  p_accepted: metric.accepted,
-  p_rejected: metric.rejected,
-  p_rework: metric.rework,
-  p_evaluation_pending: metric.evaluation_pending,
-  p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',
-  p_metric_kind: 'cumulative',
-  p_allow_missing_assignment: true,
-} }));`;
+return output;`;
 
 const paperTaskNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }
@@ -355,35 +393,337 @@ function read(row, ...names) {
   }
   return '';
 }
-function count(value) {
-  const raw = String(value ?? '').trim();
-  if (!raw) return null;
-  const parsed = Number(raw.replace(/[,\s]/g, ''));
-  return Number.isFinite(parsed) ? Math.max(0, Math.trunc(parsed)) : null;
-}
-const asOf = new Date().toISOString().slice(0, 10);
 const output = [];
 for (const item of items) {
   const row = item.json;
-  const email = String(read(row, 'email', 'Email')).trim().toLowerCase();
-  if (!EMAIL_RE.test(email)) continue;
+  const email = String(read(row, 'Assignee', 'Email')).trim().toLowerCase();
+  const taskId = String(read(row, 'Task ID')).trim();
+  if (!EMAIL_RE.test(email) || !taskId) continue;
   output.push({ json: {
+    p_event_key: ['paperbench', email, taskId].join('|'),
+    p_task_external_id: taskId,
     p_email: email,
     p_client: 'Snorkel',
     p_vertical: 'Coding',
     p_project_slug: 'PaperBench',
-    p_as_of: asOf,
-    p_submitted: count(read(row, 'Task Count (All-Time)', 'Task Count (All Time)', 'Submitted')),
-    p_accepted: count(read(row, 'Accepted')),
-    p_rejected: count(read(row, 'Rejected')),
-    p_rework: count(read(row, 'Needs Revision', 'Requiring Rework', 'Rework')),
-    p_evaluation_pending: count(read(row, 'To Be Reviewed', 'Evaluation Pending')),
-    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / Activity Tracker',
-    p_metric_kind: 'cumulative',
+    p_project_name_raw: String(read(row, 'Project Name')).trim() || 'PaperBench',
+    p_task_type: String(read(row, 'Task Type')).trim() || null,
+    p_status: String(read(row, 'Task Status', 'Status')).trim(),
+    p_created_at_source: String(read(row, 'Created At')).trim() || null,
+    p_submitted_at_source: String(read(row, 'Last Submitted At')).trim() || null,
+    p_bpo_source: String(read(row, 'BPO Source')).trim() || null,
+    p_final_outcome: String(read(row, 'Final Outcome')).trim() || null,
+    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / CH-auto-import',
     p_allow_missing_assignment: true,
   } });
 }
 return output;`;
+
+const codingRosterNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SOURCES = {
+  terminus: {
+    project: 'Terminus',
+    sourceKey: 'coding-project-roster:terminus',
+    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus 2nd Edition Live',
+  },
+  otter: {
+    project: 'Otter',
+    sourceKey: 'coding-project-roster:otter',
+    sourceSheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / MainOtter Live Candidates',
+  },
+  suitelife: {
+    project: 'SuiteLife',
+    sourceKey: 'coding-project-roster:suitelife',
+    sourceSheet: 'Snorkel MainSuiteLife Internal / SuiteLife Live Candidates',
+  },
+  rudder: {
+    project: 'Rudder',
+    sourceKey: 'coding-project-roster:rudder',
+    sourceSheet: 'Snorkel MainRudder Internal / Rudder Live Candidates',
+  },
+  terminus_task: {
+    project: 'Terminus',
+    sourceKey: 'coding-project-task-evidence:terminus',
+    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',
+    taskEvidence: true,
+  },
+};
+
+function key(value) {
+  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function text(value) {
+  return String(value ?? '').trim();
+}
+function read(row, ...names) {
+  const entries = Object.entries(row || {});
+  for (const name of names.map(key)) {
+    const exact = entries.find(([column, value]) => key(column) === name && text(value) !== '');
+    if (exact) return exact[1];
+  }
+  return '';
+}
+function verification(value) {
+  const status = text(value).toLowerCase();
+  if (!status) return null;
+  if (status.includes('exception')) return 'exception';
+  if (/complete|verified|approved|green|done/.test(status)) return 'done';
+  if (/pending|progress|await|not started|triggered|sent/.test(status)) return 'awaited';
+  return null;
+}
+function verificationFromRow(row) {
+  const acceptedKeys = ['chbackgroundcheck', 'springverifycheck', 'springverifypull', 'bgv'];
+  for (const [column, value] of Object.entries(row || {})) {
+    const columnKey = key(column);
+    if (!acceptedKeys.some((candidate) => columnKey === candidate || columnKey.startsWith(candidate))) continue;
+    const normalized = verification(value);
+    if (normalized) return normalized;
+  }
+  return null;
+}
+function remofirst(value) {
+  const status = text(value).toLowerCase();
+  if (!status) return null;
+  if (/approved|verified|complete/.test(status)) return 'approved';
+  if (/not started|not received|rejected/.test(status)) return 'not_received';
+  if (/pending|sent|progress/.test(status)) return 'pending';
+  return null;
+}
+function contract(signedValue, sentValue) {
+  const signed = text(signedValue).toLowerCase();
+  const sent = text(sentValue).toLowerCase();
+  if (/signed|complete|completed|yes|true/.test(signed)) return 'signed';
+  if (/not sent|not started|no/.test(sent)) return 'not_signed';
+  if (/sent|shared/.test(sent)) return 'sent';
+  return null;
+}
+
+const syncRunId = String($execution.id);
+const assignments = new Map();
+for (const item of items) {
+  const row = item.json;
+  const source = SOURCES[text(row._source).toLowerCase()];
+  if (!source) throw new Error('Unknown coding roster source: ' + JSON.stringify(row._source));
+
+  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();
+  const status = text(read(row, 'Status')).toLowerCase();
+  const bpo = source.taskEvidence
+    ? key(row.SOURCE ?? row.Source ?? row.source)
+    : key(read(row, 'BPO'));
+  if (!candidateEmail && !status && !bpo) continue;
+  if (source.taskEvidence) {
+    if (bpo !== 'crossinghurdles') continue;
+  } else if (status !== 'active' || bpo !== 'crossinghurdles') {
+    continue;
+  }
+  if (!EMAIL_RE.test(candidateEmail)) {
+    throw new Error(source.project + ': invalid active candidate email ' + JSON.stringify(candidateEmail));
+  }
+
+  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]
+    .filter(Boolean)
+    .join(' ');
+  const sourceDomain = text(read(row, 'Domain'));
+  const assignment = {
+    p_email: candidateEmail,
+    p_full_name: fullName || null,
+    p_client: 'Snorkel',
+    p_vertical: 'Coding',
+    p_project: source.project,
+    p_domain: /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain || null,
+    p_bgv_id_status: verificationFromRow(row),
+    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),
+    p_contract_status: contract(
+      read(row, 'Contract Signed', 'Contracts Signed', 'Contract'),
+      read(row, 'Contract Sent', 'Contracts Sent'),
+    ),
+    p_source_key: source.sourceKey,
+    p_source_priority: source.taskEvidence ? 90 : 100,
+    p_source_sheet: source.sourceSheet,
+    p_source_row: row.row_number || null,
+    p_sync_run_id: syncRunId,
+    p_membership_authoritative: true,
+  };
+  const assignmentKey = source.sourceKey + '|' + candidateEmail;
+  const existing = assignments.get(assignmentKey);
+  if (!existing) {
+    assignments.set(assignmentKey, assignment);
+  } else {
+    for (const field of ['p_full_name', 'p_domain', 'p_bgv_id_status', 'p_remofirst_status', 'p_contract_status']) {
+      if (!existing[field] && assignment[field]) existing[field] = assignment[field];
+    }
+  }
+}
+
+for (const source of Object.values(SOURCES)) {
+  const count = [...assignments.values()].filter((row) => row.p_source_key === source.sourceKey).length;
+  if (count === 0) throw new Error('No active Crossing Hurdles rows found for ' + source.project);
+}
+
+return [...assignments.values()]
+  .sort((left, right) => [left.p_project, left.p_email].join('|').localeCompare([right.p_project, right.p_email].join('|')))
+  .map((row) => ({ json: row }));`;
+
+const rosterSnapshotNormalizer = String.raw`const rows = $('Normalize Coding Project Rosters').all().map((item) => item.json);
+const expectedSources = [
+  'coding-project-roster:terminus',
+  'coding-project-roster:otter',
+  'coding-project-roster:suitelife',
+  'coding-project-roster:rudder',
+  'coding-project-task-evidence:terminus',
+];
+return expectedSources.map((sourceKey) => {
+  const sourceRows = rows.filter((row) => row.p_source_key === sourceKey);
+  if (!sourceRows.length) throw new Error('Cannot finalize empty roster snapshot: ' + sourceKey);
+  const syncRunIds = [...new Set(sourceRows.map((row) => row.p_sync_run_id))];
+  if (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Roster snapshot has inconsistent run IDs: ' + sourceKey);
+  return { json: {
+    p_source_key: sourceKey,
+    p_sync_run_id: syncRunIds[0],
+    p_expected_count: sourceRows.length,
+  } };
+});`;
+
+const terminusTaskNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function text(value) { return String(value ?? '').trim(); }
+function read(row, ...names) {
+  const entries = Object.entries(row || {});
+  for (const name of names.map(key)) {
+    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);
+    if (match) return match[1];
+  }
+  return '';
+}
+function count(value, label, email) {
+  const raw = text(value).replace(/[,\s]/g, '');
+  if (!raw) return 0;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(email + ': invalid ' + label + ' count ' + JSON.stringify(value));
+  return parsed;
+}
+const asOf = new Date().toISOString().slice(0, 10);
+const metrics = new Map();
+for (const item of items) {
+  const row = item.json;
+  if (key(read(row, 'SOURCE')) !== 'crossinghurdles') continue;
+  const email = text(read(row, 'EMAIL')).toLowerCase();
+  if (!EMAIL_RE.test(email)) throw new Error('Terminus Task Pull: invalid email ' + JSON.stringify(email));
+  if (metrics.has(email)) throw new Error('Terminus Task Pull: duplicate email ' + email);
+
+  const submitted = count(read(row, 'TOTAL SUBMISSIONS'), 'submitted', email);
+  const accepted = count(read(row, 'TOTAL ACCEPTED'), 'accepted', email);
+  const rejected = count(read(row, 'REJECTED'), 'rejected', email);
+  const rework = count(read(row, 'NEEDS REVISION'), 'rework', email);
+  const evaluationPending = count(read(row, 'EVAL PENDING'), 'evaluation pending', email)
+    + count(read(row, 'PENDING REVIEW'), 'pending review', email);
+  if (submitted !== accepted + rejected + rework + evaluationPending) {
+    throw new Error(email + ': Terminus totals do not reconcile');
+  }
+  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });
+}
+if (!metrics.size) throw new Error('Terminus Task Pull returned no Crossing Hurdles rows');
+return [...metrics.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([email, metric]) => ({ json: {
+  p_email: email,
+  p_client: 'Snorkel',
+  p_vertical: 'Coding',
+  p_project_slug: 'Terminus',
+  p_as_of: asOf,
+  p_submitted: metric.submitted,
+  p_accepted: metric.accepted,
+  p_rejected: metric.rejected,
+  p_rework: metric.rework,
+  p_evaluation_pending: metric.evaluationPending,
+  p_source_sheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',
+  p_metric_kind: 'cumulative',
+  p_allow_missing_assignment: true,
+} }));`;
+
+const otterTaskNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function text(value) { return String(value ?? '').trim(); }
+function read(row, ...names) {
+  const entries = Object.entries(row || {});
+  for (const name of names.map(key)) {
+    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);
+    if (exact) return exact[1];
+    const partial = entries.find(([column, value]) => key(column).includes(name) && value !== null && value !== undefined);
+    if (partial) return partial[1];
+  }
+  return '';
+}
+const events = new Map();
+for (const item of items) {
+  const row = item.json;
+  const taskId = text(read(row, 'Task ID'));
+  const email = text(read(row, 'Contributor Email')).toLowerCase();
+  if (!taskId && !email) continue;
+  if (!taskId) throw new Error('Otter Task ID Tracking: missing task ID for ' + email);
+  if (!EMAIL_RE.test(email)) throw new Error('Otter Task ID Tracking: invalid email ' + JSON.stringify(email));
+  const eventKey = 'otter|' + taskId;
+  if (events.has(eventKey)) throw new Error('Otter Task ID Tracking: duplicate task ID ' + taskId);
+  events.set(eventKey, {
+    p_event_key: eventKey,
+    p_task_external_id: taskId,
+    p_email: email,
+    p_client: 'Snorkel',
+    p_vertical: 'Coding',
+    p_project_slug: 'Otter',
+    p_project_name_raw: 'Otter',
+    p_task_type: text(read(row, 'Workflow')) || null,
+    p_status: text(read(row, 'Current Status')),
+    p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,
+    p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',
+    p_allow_missing_assignment: true,
+  });
+}
+if (!events.size) throw new Error('Otter Task ID Tracking returned no task rows');
+return [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));`;
+
+const rudderTaskNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function text(value) { return String(value ?? '').trim(); }
+function read(row, ...names) {
+  const entries = Object.entries(row || {});
+  for (const name of names.map(key)) {
+    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);
+    if (match) return match[1];
+  }
+  return '';
+}
+const events = new Map();
+const hasBpoSourceColumn = items.some((item) =>
+  Object.keys(item.json || {}).some((column) => key(column) === 'bposource')
+);
+for (const item of items) {
+  const row = item.json;
+  const taskId = text(read(row, 'Task ID'));
+  if (!taskId) continue;
+  const bpoSource = text(read(row, 'BPO Source'));
+  if (hasBpoSourceColumn && key(bpoSource) !== 'crossinghurdles') continue;
+  const email = text(read(row, 'Assignee', 'User Email', 'Email')).toLowerCase();
+  if (!EMAIL_RE.test(email)) throw new Error('Rudder Task Raw Pull: invalid email ' + JSON.stringify(email));
+  const eventKey = 'rudder|' + taskId;
+  if (events.has(eventKey)) throw new Error('Rudder Task Raw Pull: duplicate task ID ' + taskId);
+  events.set(eventKey, {
+    p_event_key: eventKey,
+    p_task_external_id: taskId,
+    p_email: email,
+    p_client: 'Snorkel',
+    p_vertical: 'Coding',
+    p_project_slug: 'Rudder',
+    p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',
+    p_task_type: text(read(row, 'Task Type')) || null,
+    p_status: text(read(row, 'Task Status', 'State Enum', 'Status')),
+    p_created_at_source: text(read(row, 'Created At')) || null,
+    p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,
+    p_bpo_source: bpoSource || null,
+    p_source_sheet: 'Snorkel MainRudder Internal / Task Raw Pull',
+    p_allow_missing_assignment: true,
+  });
+}
+if (!events.size) throw new Error('Rudder Task Raw Pull returned no Crossing Hurdles task rows');
+return [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));`;
 
 const stemPaymentNormalizer = String.raw`const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PROJECTS = {
@@ -743,16 +1083,165 @@ connect(validateMaster, paperCandidates); connect(paperCandidates, normalizePape
 const sentinelTasks = sheets("Read Sentinel Task Pull - Unified", "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk", "Sentinel Task Pull", [240, 1320]);
 const normalizeSentinelTasks = code("Normalize Sentinel Tasks - Unified", sentinelTaskNormalizer, [480, 1320]);
 const batchSentinelTasks = code("Batch Sentinel Tasks - Unified", metricBatchCode, [720, 1320]);
-const upsertSentinelTasks = http("Upsert Sentinel Tasks - Unified", "upsert_task_metrics_batch", [960, 1320], 30000);
+const upsertSentinelTasks = http("Upsert Sentinel Tasks - Unified", "upsert_task_events_batch", [960, 1320], 30000);
 const validateSentinelTasks = code("Validate Sentinel Tasks - Unified", validateCode, [1200, 1320]);
 connect(validateMaster, sentinelTasks); connect(sentinelTasks, normalizeSentinelTasks); connect(normalizeSentinelTasks, batchSentinelTasks); connect(batchSentinelTasks, upsertSentinelTasks); connect(upsertSentinelTasks, validateSentinelTasks);
 
-const paperTasks = sheets("Read PaperBench Activity - Unified", "1Tzgi8zIZddLkllQ5bYI6z8UNNdJTD8F1pbHACcygYuc", "Activity Tracker", [1440, 1120]);
+const paperTasks = sheets("Read PaperBench Activity - Unified", "1Tzgi8zIZddLkllQ5bYI6z8UNNdJTD8F1pbHACcygYuc", "CH-auto-import", [1440, 1120]);
 const normalizePaperTasks = code("Normalize PaperBench Tasks - Unified", paperTaskNormalizer, [1680, 1120]);
 const batchPaperTasks = code("Batch PaperBench Tasks - Unified", metricBatchCode, [1920, 1120]);
-const upsertPaperTasks = http("Upsert PaperBench Tasks - Unified", "upsert_task_metrics_batch", [2160, 1120], 30000);
+const upsertPaperTasks = http("Upsert PaperBench Tasks - Unified", "upsert_task_events_batch", [2160, 1120], 30000);
 const validatePaperTasks = code("Validate PaperBench Tasks - Unified", validateCode, [2400, 1120]);
 connect(validatePaperCandidates, paperTasks); connect(paperTasks, normalizePaperTasks); connect(normalizePaperTasks, batchPaperTasks); connect(batchPaperTasks, upsertPaperTasks); connect(upsertPaperTasks, validatePaperTasks);
+
+const refreshExistingTaskMetrics = httpBody(
+  "Refresh Task Metrics From Events - Unified",
+  "finalize_unified_rosters_and_refresh",
+  '={{ { "p_assignment_ids": null } }}',
+  [2640, 1220],
+  30000,
+);
+connect(validateSentinelTasks, refreshExistingTaskMetrics);
+connect(validatePaperTasks, refreshExistingTaskMetrics);
+
+const codingSourcesTrigger = addNode(
+  "Schedule Trigger - Coding Project Sources",
+  "n8n-nodes-base.scheduleTrigger",
+  1.2,
+  [5280, 2680],
+  { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 30 }] } },
+);
+
+const terminusRoster = sheets(
+  "Read Terminus Live Candidates - Unified",
+  "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
+  "Terminus 2nd Edition Live",
+  [5520, 2440],
+);
+const otterRoster = sheets(
+  "Read Otter Live Candidates - Unified",
+  "12OAfJTXkFvY6ti-WCPxzHBpbPcRW-8Tc-Fusz159m_k",
+  "MainOtter Live Candidates",
+  [5520, 2560],
+);
+const suiteLifeRoster = sheets(
+  "Read SuiteLife Live Candidates - Unified",
+  "1QVqmfGC39n9UooI1u32ltz3kiU1s7N06Ucz4-ECS5YM",
+  "SuiteLife Live Candidates",
+  [5520, 2680],
+);
+const rudderRoster = sheets(
+  "Read Rudder Live Candidates - Unified",
+  "1yuda2He61MSoIQnd63-dn3lr83z4pzrBrjTZ3oL3TIs",
+  "Rudder Live Candidates",
+  [5520, 2800],
+);
+const terminusTaskEvidence = sheets(
+  "Read Terminus Task Evidence - Unified",
+  "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
+  "Terminus Task Pull",
+  [5520, 2920],
+);
+const tagTerminusRoster = tag("Tag Terminus Roster", "terminus", [5760, 2440]);
+const tagOtterRoster = tag("Tag Otter Roster", "otter", [5760, 2560]);
+const tagSuiteLifeRoster = tag("Tag SuiteLife Roster", "suitelife", [5760, 2680]);
+const tagRudderRoster = tag("Tag Rudder Roster", "rudder", [5760, 2800]);
+const tagTerminusTaskEvidence = tag("Tag Terminus Task Evidence", "terminus_task", [5760, 2920]);
+const mergeTerminusOtterRosters = addNode("Merge Terminus + Otter Rosters", "n8n-nodes-base.merge", 3, [6000, 2500], {});
+const mergeSuiteLifeRoster = addNode("Merge + SuiteLife Roster", "n8n-nodes-base.merge", 3, [6240, 2560], {});
+const mergeRudderRoster = addNode(
+  "Merge + Rudder Roster",
+  "n8n-nodes-base.merge",
+  3,
+  [6480, 2620],
+  { numberInputs: 3 },
+);
+const normalizeCodingRosters = code("Normalize Coding Project Rosters", codingRosterNormalizer, [6720, 2620]);
+const batchCodingRosters = code("Batch Coding Project Rosters", assignmentBatchCode, [6960, 2620]);
+const upsertCodingRosters = http("Upsert Coding Project Rosters", "upsert_portal_assignments_batch", [7200, 2620]);
+const validateCodingRosters = code("Validate Coding Project Rosters", validateCode, [7440, 2620]);
+const summarizeRosterSnapshots = code("Prepare Coding Roster Finalizers", rosterSnapshotNormalizer, [7680, 2620]);
+const finalizeCodingRosters = httpBody(
+  "Finalize Coding Roster Snapshots",
+  "finalize_portal_assignment_snapshot",
+  '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_expected_count": $json.p_expected_count } }}',
+  [7920, 2620],
+  30000,
+);
+const validateRosterFinalizers = code("Validate Coding Roster Snapshots", validateCode, [8160, 2620]);
+
+for (const source of [terminusRoster, otterRoster, suiteLifeRoster, rudderRoster, terminusTaskEvidence]) {
+  connect(codingSourcesTrigger, source);
+}
+connect(terminusRoster, tagTerminusRoster); connect(otterRoster, tagOtterRoster);
+connect(suiteLifeRoster, tagSuiteLifeRoster); connect(rudderRoster, tagRudderRoster);
+connect(terminusTaskEvidence, tagTerminusTaskEvidence);
+connect(tagTerminusRoster, mergeTerminusOtterRosters, 0); connect(tagOtterRoster, mergeTerminusOtterRosters, 1);
+connect(mergeTerminusOtterRosters, mergeSuiteLifeRoster, 0); connect(tagSuiteLifeRoster, mergeSuiteLifeRoster, 1);
+connect(mergeSuiteLifeRoster, mergeRudderRoster, 0); connect(tagRudderRoster, mergeRudderRoster, 1);
+connect(tagTerminusTaskEvidence, mergeRudderRoster, 2);
+connect(mergeRudderRoster, normalizeCodingRosters); connect(normalizeCodingRosters, batchCodingRosters);
+connect(batchCodingRosters, upsertCodingRosters); connect(upsertCodingRosters, validateCodingRosters);
+connect(validateCodingRosters, summarizeRosterSnapshots); connect(summarizeRosterSnapshots, finalizeCodingRosters);
+connect(finalizeCodingRosters, validateRosterFinalizers);
+
+const terminusTasks = sheets(
+  "Read Terminus Task Pull - Unified",
+  "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
+  "Terminus Task Pull",
+  [8400, 2440],
+);
+const normalizeTerminusTasks = code("Normalize Terminus Tasks - Unified", terminusTaskNormalizer, [8640, 2440]);
+const batchTerminusTasks = code("Batch Terminus Tasks - Unified", metricBatchCode, [8880, 2440]);
+const upsertTerminusTasks = http("Upsert Terminus Tasks - Unified", "upsert_task_metrics_batch", [9120, 2440], 30000);
+const validateTerminusTasks = code("Validate Terminus Tasks - Unified", validateCode, [9360, 2440]);
+
+const otterTasks = sheets(
+  "Read Otter Task IDs - Unified",
+  "12OAfJTXkFvY6ti-WCPxzHBpbPcRW-8Tc-Fusz159m_k",
+  "Task ID Tracking",
+  [8400, 2620],
+  {
+    dataLocationOnSheet: {
+      values: {
+        rangeDefinition: "specifyRangeA1",
+        range: "A2:O",
+      },
+    },
+  },
+);
+const normalizeOtterTasks = code("Normalize Otter Tasks - Unified", otterTaskNormalizer, [8640, 2620]);
+const batchOtterTasks = code("Batch Otter Tasks - Unified", metricBatchCode, [8880, 2620]);
+const upsertOtterTasks = http("Upsert Otter Tasks - Unified", "upsert_task_events_batch", [9120, 2620], 30000);
+const validateOtterTasks = code("Validate Otter Tasks - Unified", validateCode, [9360, 2620]);
+
+const rudderTasks = sheets(
+  "Read Rudder Task Raw Pull - Unified",
+  "1yuda2He61MSoIQnd63-dn3lr83z4pzrBrjTZ3oL3TIs",
+  "Task Raw Pull",
+  [8400, 2800],
+);
+const normalizeRudderTasks = code("Normalize Rudder Tasks - Unified", rudderTaskNormalizer, [8640, 2800]);
+const batchRudderTasks = code("Batch Rudder Tasks - Unified", metricBatchCode, [8880, 2800]);
+const upsertRudderTasks = http("Upsert Rudder Tasks - Unified", "upsert_task_events_batch", [9120, 2800], 30000);
+const validateRudderTasks = code("Validate Rudder Tasks - Unified", validateCode, [9360, 2800]);
+const refreshCodingTaskMetrics = httpBody(
+  "Refresh Coding Task Metrics - Unified",
+  "refresh_task_metrics_from_events",
+  '={{ { "p_assignment_ids": null } }}',
+  [9600, 2710],
+  30000,
+);
+
+for (const source of [terminusTasks, otterTasks, rudderTasks]) connect(validateRosterFinalizers, source);
+connect(terminusTasks, normalizeTerminusTasks); connect(normalizeTerminusTasks, batchTerminusTasks);
+connect(batchTerminusTasks, upsertTerminusTasks); connect(upsertTerminusTasks, validateTerminusTasks);
+connect(otterTasks, normalizeOtterTasks); connect(normalizeOtterTasks, batchOtterTasks);
+connect(batchOtterTasks, upsertOtterTasks); connect(upsertOtterTasks, validateOtterTasks);
+connect(rudderTasks, normalizeRudderTasks); connect(normalizeRudderTasks, batchRudderTasks);
+connect(batchRudderTasks, upsertRudderTasks); connect(upsertRudderTasks, validateRudderTasks);
+connect(validateOtterTasks, refreshCodingTaskMetrics);
+connect(validateRudderTasks, refreshCodingTaskMetrics);
 
 const rigaPayments = sheets("Read Riga July Payments - Unified", "1yvitEtjut8zweM_FnXZNIMxRe6dcIS66A63aggYL1Xw", "July - 2026", [240, 1540]);
 const rainierPayments = sheets("Read Rainier July Payments - Unified", "18lcLPsPe223WQ-fPxpwEdHY5klAIMn3RWaTowCO-K6A", "July - 2026", [240, 1660]);
@@ -848,7 +1337,59 @@ const selection = {
   meta: { templateCredsSetupCompleted: true },
 };
 
-writeFileSync(new URL("../n8n/unified-portal-branches.selection.json", import.meta.url), `${JSON.stringify(selection, null, 2)}\n`);
+writeFileSync(unifiedOutputUrl, `${JSON.stringify(selection, null, 2)}\n`);
+
+const codingSourceNodeNames = new Set([
+  codingSourcesTrigger,
+  terminusRoster,
+  otterRoster,
+  suiteLifeRoster,
+  rudderRoster,
+  terminusTaskEvidence,
+  tagTerminusRoster,
+  tagOtterRoster,
+  tagSuiteLifeRoster,
+  tagRudderRoster,
+  tagTerminusTaskEvidence,
+  mergeTerminusOtterRosters,
+  mergeSuiteLifeRoster,
+  mergeRudderRoster,
+  normalizeCodingRosters,
+  batchCodingRosters,
+  upsertCodingRosters,
+  validateCodingRosters,
+  summarizeRosterSnapshots,
+  finalizeCodingRosters,
+  validateRosterFinalizers,
+  terminusTasks,
+  normalizeTerminusTasks,
+  batchTerminusTasks,
+  upsertTerminusTasks,
+  validateTerminusTasks,
+  otterTasks,
+  normalizeOtterTasks,
+  batchOtterTasks,
+  upsertOtterTasks,
+  validateOtterTasks,
+  rudderTasks,
+  normalizeRudderTasks,
+  batchRudderTasks,
+  upsertRudderTasks,
+  validateRudderTasks,
+  refreshCodingTaskMetrics,
+]);
+const codingSourceSelection = {
+  nodes: nodes.filter((node) => codingSourceNodeNames.has(node.name)),
+  connections: Object.fromEntries(
+    Object.entries(connections).filter(([name]) => codingSourceNodeNames.has(name)),
+  ),
+  pinData: {},
+  meta: { templateCredsSetupCompleted: true },
+};
+writeFileSync(
+  new URL("../n8n/coding-project-sources.selection.json", import.meta.url),
+  `${JSON.stringify(codingSourceSelection, null, 2)}\n`,
+);
 
 const stemPaymentNodeNames = new Set([
   rigaPayments,
@@ -868,7 +1409,7 @@ const stemPaymentNodeNames = new Set([
 ]);
 const standaloneStemTrigger = {
   parameters: { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 0 }] } },
-  id: randomUUID(),
+  id: existingStandaloneIds.get("Schedule Trigger - STEM July Payments") ?? randomUUID(),
   name: "Schedule Trigger - STEM July Payments",
   type: "n8n-nodes-base.scheduleTrigger",
   typeVersion: 1.2,
@@ -925,7 +1466,7 @@ const projectPaymentNodeNames = new Set([
 ]);
 const standaloneProjectPaymentTrigger = {
   parameters: { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 15 }] } },
-  id: randomUUID(),
+  id: existingStandaloneIds.get("Schedule Trigger - Project July Payments") ?? randomUUID(),
   name: "Schedule Trigger - Project July Payments",
   type: "n8n-nodes-base.scheduleTrigger",
   typeVersion: 1.2,

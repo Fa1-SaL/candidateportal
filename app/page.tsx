@@ -90,6 +90,15 @@ type Vertical = NamedRecord & {
   client_id: string;
 };
 
+function assertQuerySucceeded(
+  error: { message: string } | null,
+  resource: string,
+) {
+  if (error) {
+    throw new Error(`Unable to load ${resource}: ${error.message}`);
+  }
+}
+
 function formatStatus(value: string | boolean | null | undefined) {
   if (typeof value === "boolean") {
     return value ? "Yes" : "No";
@@ -687,11 +696,13 @@ export default async function Home({
     redirect("/login");
   }
 
-  const { data: candidate } = await supabase
+  const { data: candidate, error: candidateError } = await supabase
     .from("candidates")
     .select("id,email,full_name")
-    .eq("email", user.email)
+    .eq("email", user.email.trim().toLowerCase())
     .maybeSingle<Candidate>();
+
+  assertQuerySucceeded(candidateError, "candidate profile");
 
   if (!candidate) {
     return (
@@ -712,7 +723,7 @@ export default async function Home({
     );
   }
 
-  const { data: assignments } = await supabase
+  const { data: assignments, error: assignmentsError } = await supabase
     .from("assignments")
     .select(
       "id,candidate_id,subproject_id,domain,remofirst_status,contract_status,rate_amount,rate_currency,rate_unit,last_seen_at,updated_at,is_offboarded_heuristic,has_flagged_task,source_sheet,source_row",
@@ -722,6 +733,8 @@ export default async function Home({
     .order("last_seen_at", { ascending: false })
     .order("updated_at", { ascending: false })
     .returns<Assignment[]>();
+
+  assertQuerySucceeded(assignmentsError, "candidate projects");
 
   const activeAssignments = assignments ?? [];
   const assignment =
@@ -751,13 +764,15 @@ export default async function Home({
     activeAssignments.map((activeAssignment) => activeAssignment.subproject_id),
   );
 
-  const { data: subprojects } = subprojectIds.length
+  const { data: subprojects, error: subprojectsError } = subprojectIds.length
     ? await supabase
       .from("subprojects")
       .select("id,vertical_id,display_name,active")
       .in("id", subprojectIds)
       .returns<Subproject[]>()
-    : { data: [] };
+    : { data: [] as Subproject[], error: null };
+
+  assertQuerySucceeded(subprojectsError, "project details");
 
   const subprojectById = new Map(
     (subprojects ?? []).map((subproject) => [subproject.id, subproject]),
@@ -766,13 +781,15 @@ export default async function Home({
     (subprojects ?? []).map((subproject) => subproject.vertical_id),
   );
 
-  const { data: verticals } = verticalIds.length
+  const { data: verticals, error: verticalsError } = verticalIds.length
     ? await supabase
       .from("verticals")
       .select("id,client_id,display_name")
       .in("id", verticalIds)
       .returns<Vertical[]>()
-    : { data: [] };
+    : { data: [] as Vertical[], error: null };
+
+  assertQuerySucceeded(verticalsError, "vertical details");
 
   const verticalById = new Map(
     (verticals ?? []).map((vertical) => [vertical.id, vertical]),
@@ -781,13 +798,15 @@ export default async function Home({
     (verticals ?? []).map((vertical) => vertical.client_id),
   );
 
-  const { data: clients } = clientIds.length
+  const { data: clients, error: clientsError } = clientIds.length
     ? await supabase
       .from("clients")
       .select("id,display_name")
       .in("id", clientIds)
       .returns<NamedRecord[]>()
-    : { data: [] };
+    : { data: [] as NamedRecord[], error: null };
+
+  assertQuerySucceeded(clientsError, "client details");
 
   const clientById = new Map(
     (clients ?? []).map((client) => [client.id, client]),
@@ -822,9 +841,9 @@ export default async function Home({
     ) ?? assignmentSummaries[0];
 
   const [
-    { data: backgroundVerification },
-    { data: taskMetrics },
-    { data: payments },
+    { data: backgroundVerification, error: backgroundVerificationError },
+    { data: taskMetrics, error: taskMetricsError },
+    { data: payments, error: paymentsError },
     { data: taskEvents, error: taskEventsError },
   ] = await Promise.all([
     supabase
@@ -856,6 +875,11 @@ export default async function Home({
       .order("updated_at", { ascending: false })
       .returns<TaskEvent[]>(),
   ]);
+
+  assertQuerySucceeded(backgroundVerificationError, "background verification");
+  assertQuerySucceeded(taskMetricsError, "task summary");
+  assertQuerySucceeded(paymentsError, "payment details");
+  assertQuerySucceeded(taskEventsError, "task IDs");
 
   const assignmentStatus = assignment.is_offboarded_heuristic ? "Offboarded" : "Active";
   const clientName = selectedAssignmentSummary?.clientName ?? "Not available";
@@ -951,7 +975,7 @@ export default async function Home({
     evaluationPending: taskEvaluationPending,
   };
   const verifiedTaskIds = getVerifiedTaskIds(
-    taskEventsError ? null : taskEvents,
+    taskEvents,
     taskCounts,
   );
   const rate = getRateParts(assignment);
