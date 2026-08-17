@@ -47,6 +47,7 @@ type TaskMetrics = {
 type TaskEvent = {
   task_external_id: string;
   status: string | null;
+  updated_at: string;
 };
 
 type TaskIdLists = {
@@ -187,10 +188,29 @@ function getVerifiedTaskIds(
     return null;
   }
 
-  const taskIds = taskEvents.map((taskEvent) => taskEvent.task_external_id.trim());
-  if (taskIds.some((taskId) => !taskId)) {
-    return null;
+  const uniqueTaskEvents = new Map<string, TaskEvent>();
+  for (const taskEvent of taskEvents) {
+    const taskId = taskEvent.task_external_id.trim();
+    if (!taskId) {
+      return null;
+    }
+
+    const identity = taskId.toLowerCase();
+    const existingTaskEvent = uniqueTaskEvents.get(identity);
+    if (
+      !existingTaskEvent ||
+      new Date(taskEvent.updated_at).getTime() >
+        new Date(existingTaskEvent.updated_at).getTime()
+    ) {
+      uniqueTaskEvents.set(identity, {
+        ...taskEvent,
+        task_external_id: taskId,
+      });
+    }
   }
+
+  const canonicalTaskEvents = [...uniqueTaskEvents.values()];
+  const taskIds = canonicalTaskEvents.map((taskEvent) => taskEvent.task_external_id);
 
   const lists: TaskIdLists = {
     submitted: taskIds,
@@ -200,7 +220,7 @@ function getVerifiedTaskIds(
     evaluationPending: [],
   };
 
-  taskEvents.forEach((taskEvent, index) => {
+  canonicalTaskEvents.forEach((taskEvent, index) => {
     const status = taskEvent.status?.trim().toLowerCase();
     const taskId = taskIds[index];
 
@@ -830,9 +850,10 @@ export default async function Home({
       .returns<Payment[]>(),
     supabase
       .from("task_events")
-      .select("task_external_id,status")
+      .select("task_external_id,status,updated_at")
       .eq("assignment_id", assignment.id)
       .order("task_external_id", { ascending: true })
+      .order("updated_at", { ascending: false })
       .returns<TaskEvent[]>(),
   ]);
 
