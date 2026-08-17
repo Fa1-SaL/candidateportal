@@ -5,9 +5,8 @@
         "rule": {
           "interval": [
             {
-              "field": "days",
-              "daysInterval": 3,
-              "triggerAtHour": 0,
+              "field": "hours",
+              "hoursInterval": 1,
               "triggerAtMinute": 0
             }
           ]
@@ -691,9 +690,8 @@
         "rule": {
           "interval": [
             {
-              "field": "days",
-              "daysInterval": 3,
-              "triggerAtHour": 0,
+              "field": "hours",
+              "hoursInterval": 1,
               "triggerAtMinute": 30
             }
           ]

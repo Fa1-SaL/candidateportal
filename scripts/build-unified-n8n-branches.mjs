@@ -1047,7 +1047,7 @@ const trigger = addNode(
   "n8n-nodes-base.scheduleTrigger",
   1.2,
   [-2160, 1260],
-  { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 0 }] } },
+  { rule: { interval: [{ field: "hours", hoursInterval: 1, triggerAtMinute: 0 }] } },
 );
 
 const master = sheets("Read Snorkel Master User", "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk", "Master User - Snorkel", [-1920, 1120]);
@@ -1109,7 +1109,7 @@ const codingSourcesTrigger = addNode(
   "n8n-nodes-base.scheduleTrigger",
   1.2,
   [5280, 2680],
-  { rule: { interval: [{ field: "days", daysInterval: 3, triggerAtHour: 0, triggerAtMinute: 30 }] } },
+  { rule: { interval: [{ field: "hours", hoursInterval: 1, triggerAtMinute: 30 }] } },
 );
 
 const terminusRoster = sheets(
