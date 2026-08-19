@@ -48,9 +48,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               .
             </p>
             <nav className="flex items-center justify-end gap-[34px] text-[12px] font-medium leading-[16px] text-[#5f5d6d]">
-              <a className="transition-colors hover:text-[#3525cd]" href="mailto:stem.support@crossinghurdles.com">
-                Contact us
-              </a>
               <a className="transition-colors hover:text-[#3525cd]" href="https://experts.snorkel-ai.com/">
                 Snorkel
               </a>
