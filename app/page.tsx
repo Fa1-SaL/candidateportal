@@ -1171,7 +1171,7 @@ export default async function Home({
                   role="tooltip"
                   className="pointer-events-none absolute bottom-full right-0 z-20 w-max max-w-[calc(100vw-32px)] translate-y-px rounded-[8px] border border-[#e2e1e8] bg-white px-[10px] py-[7px] text-[11px] font-medium leading-[15px] text-[#464555] opacity-0 shadow-[0px_4px_12px_rgba(0,0,0,0.08)] transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100 sm:px-[9px] sm:py-[6px] sm:text-[10px] sm:leading-[13px]"
                 >
-                  Details are updated on a 72hr cycle.
+                  Details are updated on a 6hr cycle.
                 </div>
               </div>
               <div className="mt-[24px] grid grid-cols-2 gap-[9px] sm:mt-[18px] sm:gap-[7px]">
