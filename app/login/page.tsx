@@ -3,18 +3,22 @@
 import { use, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+    verification_failed: "Unable to verify your login link. Please request a new link.",
+};
+
 export default function LoginPage({
     searchParams,
 }: {
     searchParams: Promise<{ auth_error?: string | string[] }>;
 }) {
     const resolvedSearchParams = use(searchParams);
-    const initialAuthError = Array.isArray(resolvedSearchParams.auth_error)
+    const authErrorCode = Array.isArray(resolvedSearchParams.auth_error)
         ? resolvedSearchParams.auth_error[0] ?? ""
         : resolvedSearchParams.auth_error ?? "";
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState(initialAuthError);
+    const [message, setMessage] = useState(AUTH_ERROR_MESSAGES[authErrorCode] ?? "");
     const siteUrl =
         typeof window !== "undefined"
             ? window.location.origin
@@ -37,7 +41,7 @@ export default function LoginPage({
         });
 
         if (error) {
-            setMessage(error.message);
+            setMessage("We could not send a sign-in link. Please wait a moment and try again.");
         } else {
             setMessage("Check your email for your login link.");
         }
