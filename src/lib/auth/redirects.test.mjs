@@ -19,7 +19,7 @@ test("uses the configured canonical site instead of request host headers", () =>
   const requestUrl = new URL("https://attacker.example/auth/callback");
 
   assert.equal(
-    getAppOrigin(requestUrl, "https://candidate.crossinghurdles.com/path", "production"),
+    getAppOrigin(requestUrl, "https://crossing-hurdles-candidate-portal.netlify.app", "production"),
     "https://candidate.crossinghurdles.com",
   );
   assert.equal(

@@ -18,10 +18,12 @@ export function getAppOrigin(
   configuredSiteUrl = process.env.NEXT_PUBLIC_SITE_URL,
   environment = process.env.NODE_ENV,
 ) {
+  if (environment === "production") return PRODUCTION_SITE_ORIGIN;
+
   const configuredOrigin = parseHttpOrigin(configuredSiteUrl);
   if (configuredOrigin) return configuredOrigin;
 
-  if (environment !== "production" && LOCAL_HOSTS.has(requestUrl.hostname)) {
+  if (LOCAL_HOSTS.has(requestUrl.hostname)) {
     return requestUrl.origin;
   }
 
