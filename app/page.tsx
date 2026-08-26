@@ -871,6 +871,7 @@ export default async function Home({
       .from("task_events")
       .select("task_external_id,status,updated_at")
       .eq("assignment_id", assignment.id)
+      .eq("active", true)
       .order("task_external_id", { ascending: true })
       .order("updated_at", { ascending: false })
       .returns<TaskEvent[]>(),

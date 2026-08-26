@@ -6,7 +6,7 @@
           "interval": [
             {
               "field": "hours",
-              "hoursInterval": 1,
+              "hoursInterval": 6,
               "triggerAtMinute": 0
             }
           ]
@@ -280,7 +280,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  mojave: { vertical: 'Mojave', project: 'Mojave' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  otter: { vertical: 'Coding', project: 'Otter' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'suite life': { vertical: 'Coding', project: 'SuiteLife' },\n  suitelife: { vertical: 'Coding', project: 'SuiteLife' },\n  rudder: { vertical: 'Coding', project: 'Rudder' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key);\n  for (const name of wanted) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction email(row, ...names) {\n  const value = text(read(row, ...names)).toLowerCase();\n  return EMAIL_RE.test(value) ? value : '';\n}\n\nconst masterRows = items.filter((item) => item.json._source === 'master').map((item) => item.json);\nconst sent = new Set(items.filter((item) => item.json._source === 'contract_sent').map((item) => email(item.json, 'Email', 'Recipient Email')).filter(Boolean));\nconst signed = new Set(items.filter((item) => item.json._source === 'contract_signed').map((item) => email(item.json, 'Recipient Email', 'Email')).filter(Boolean));\nconst spring = new Map();\n\nfor (const item of items.filter((entry) => entry.json._source === 'springverify')) {\n  const row = item.json;\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail) continue;\n  const status = text(read(row, 'Overall Status')).toLowerCase();\n  spring.set(candidateEmail,\n    status === 'completed' ? 'done' :\n    status === 'completed with exception' ? 'exception' :\n    status ? 'awaited' : null\n  );\n}\n\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const row of masterRows) {\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const contractStatus = signed.has(candidateEmail) ? 'signed' : sent.has(candidateEmail) ? 'sent' : null;\n  const projects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))\n    .filter(Boolean);\n\n  for (const token of projects) {\n    const project = PROJECTS[token];\n    if (!project) continue;\n    output.push({ json: {\n      p_email: candidateEmail,\n      p_full_name: fullName || null,\n      p_client: 'Snorkel',\n      p_vertical: project.vertical,\n      p_project: project.project,\n      p_domain: domain || null,\n      p_bgv_id_status: spring.get(candidateEmail) || null,\n      p_contract_status: contractStatus,\n      p_source_key: 'snorkel-master-user',\n      p_source_priority: 90,\n      p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Master User - Snorkel',\n      p_source_row: row.row_number || null,\n      p_sync_run_id: syncRunId,\n      p_membership_authoritative: true,\n    } });\n  }\n}\n\nreturn output;"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n// Project membership must come from one authoritative roster. The Snorkel\n// master owns Sentinel Ultra and Mojave; STEM, PaperBench, and the remaining\n// coding projects are finalized from their dedicated live rosters.\nconst PROJECTS = {\n  mojave: { vertical: 'Mojave', project: 'Mojave' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinel ultra terminus': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra terminus': { vertical: 'Coding', project: 'Sentinel Ultra' },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  const wanted = names.map(key);\n  for (const name of wanted) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction email(row, ...names) {\n  const value = text(read(row, ...names)).toLowerCase();\n  return EMAIL_RE.test(value) ? value : '';\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (/approved|verified|complete|completed|signed/.test(status)) return 'approved';\n  if (/not started|not received|rejected|declined/.test(status)) return 'not_received';\n  if (/pending|sent|progress|processing|action required/.test(status)) return 'pending';\n  return null;\n}\nfunction directContract(row) {\n  const status = text(read(row, 'Contract Status', 'Contract Signed', 'Contracts Signed', 'Contract')).toLowerCase();\n  if (/signed|complete|completed|yes|true/.test(status) && !/not signed/.test(status)) return 'signed';\n  if (/not signed|not sent|not started|no/.test(status)) return 'not_signed';\n  if (/sent|shared/.test(status)) return 'sent';\n  return null;\n}\n\n// Read each completed branch directly. This prevents a partial Merge payload from\n// silently downgrading signed candidates when the source sheets grow large.\nconst masterRows = $('Tag Snorkel Master').all().map((item) => item.json);\nconst sentRows = $('Tag Contracts Sent').all().map((item) => item.json);\nconst signedRows = $('Tag Contracts Signed').all().map((item) => item.json);\nconst springRows = $('Tag SpringVerify').all().map((item) => item.json);\nif (!masterRows.length) throw new Error('Master User - Snorkel returned no rows');\nif (!sentRows.length) throw new Error('Contracts Sent returned no rows');\nif (!signedRows.length) throw new Error('contract signed returned no rows');\nif (!springRows.length) throw new Error('SpringVerify Pull returned no rows');\n\nconst sent = new Set();\nfor (const row of sentRows) {\n  const candidateEmail = email(row, 'Email', 'Recipient Email', 'Candidate Email', 'Email Address');\n  const status = text(read(row, 'Action', 'Status', 'Contract Status')).toLowerCase();\n  if (candidateEmail && (!status || /sent|shared/.test(status))) sent.add(candidateEmail);\n}\nconst signed = new Set();\nfor (const row of signedRows) {\n  const candidateEmail = email(row, 'Recipient Email', 'Email', 'Candidate Email', 'Email Address');\n  const action = text(read(row, 'Action', 'Status', 'Contract Status')).toLowerCase();\n  if (candidateEmail && (!action || /signed|complete|completed/.test(action))) signed.add(candidateEmail);\n}\nconst spring = new Map();\n\nfor (const row of springRows) {\n  const candidateEmail = email(row, 'Email', 'Candidate Email', 'Email Address');\n  if (!candidateEmail) continue;\n  const status = text(read(row, 'Overall Status')).toLowerCase();\n  spring.set(candidateEmail,\n    status === 'completed' ? 'done' :\n    status === 'completed with exception' ? 'exception' :\n    status ? 'awaited' : null\n  );\n}\n\nconst activeMasterEmails = new Set(\n  masterRows\n    .filter((row) => text(read(row, 'Status')).toLowerCase() === 'active')\n    .map((row) => email(row, 'Email'))\n    .filter(Boolean),\n);\nif (![...signed].some((candidateEmail) => activeMasterEmails.has(candidateEmail))) {\n  throw new Error('contract signed has no overlap with active Master User candidates');\n}\n\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const row of masterRows) {\n  const candidateEmail = email(row, 'Email');\n  if (!candidateEmail || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const contractStatus = signed.has(candidateEmail)\n    ? 'signed'\n    : sent.has(candidateEmail)\n      ? 'sent'\n      : directContract(row);\n  const remofirstStatus = remofirst(read(\n    row,\n    'Snorkel KYC Check',\n    'RemoFirst Check',\n    'Remofirst Status',\n    'RemoFirst Verification',\n  ));\n  const projects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))\n    .filter(Boolean);\n\n  for (const token of projects) {\n    const project = PROJECTS[token];\n    if (!project) continue;\n    output.push({ json: {\n      p_email: candidateEmail,\n      p_full_name: fullName || null,\n      p_client: 'Snorkel',\n      p_vertical: project.vertical,\n      p_project: project.project,\n      p_domain: domain || null,\n      p_bgv_id_status: spring.get(candidateEmail) || null,\n      p_remofirst_status: remofirstStatus,\n      p_contract_status: contractStatus,\n      p_source_key: 'snorkel-master-user',\n      p_source_priority: 90,\n      p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Master User - Snorkel; Contracts Sent; contract signed; SpringVerify Pull',\n      p_source_row: row.row_number || null,\n      p_sync_run_id: syncRunId,\n      p_membership_authoritative: true,\n    } });\n  }\n}\n\nreturn output;"
       },
       "id": "8c997d14-cd79-4e72-b8af-582293445fde",
       "name": "Normalize Unified Candidate Assignments",
@@ -382,7 +382,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst PROJECTS = {\n  riga: { vertical: 'STEM', project: 'Riga' },\n  rainier: { vertical: 'STEM', project: 'Rainier' },\n  sequoia: { vertical: 'STEM', project: 'Sequoia' },\n  starfish: { vertical: 'STEM', project: 'Starfish' },\n  terminus: { vertical: 'Coding', project: 'Terminus' },\n  paperbench: { vertical: 'Coding', project: 'PaperBench' },\n  'paper bench': { vertical: 'Coding', project: 'PaperBench' },\n  'sentinel ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n  'sentinal ultra': { vertical: 'Coding', project: 'Sentinel Ultra' },\n};\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) { return String(value ?? '').trim(); }\nfunction springverify(value) {\n  const status = text(value).toLowerCase();\n  if (status === 'complete' || status === 'completed' || status === 'verified' || status === 'approved') return 'done';\n  if (status.includes('exception')) return 'exception';\n  if (status) return 'awaited';\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (status.includes('approved') || status.includes('verified')) return 'approved';\n  if (status.includes('not started') || status.includes('not received') || status.includes('rejected')) return 'not_received';\n  if (status.includes('pending') || status.includes('sent')) return 'pending';\n  return null;\n}\nfunction contract(signed, sent) {\n  const signedStatus = text(signed).toLowerCase();\n  const sentStatus = text(sent).toLowerCase();\n  if (/signed|complete|yes|true/.test(signedStatus)) return 'signed';\n  if (/sent|shared/.test(sentStatus)) return 'sent';\n  if (/not sent|not started|no/.test(sentStatus)) return 'not_signed';\n  return null;\n}\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const item of items) {\n  const row = item.json;\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  if (!EMAIL_RE.test(candidateEmail) || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const common = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_domain: domain || null,\n    p_bgv_id_status: springverify(read(row, 'CH Background Check')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(read(row, 'Contracts Signed'), read(row, 'Contract Sent')),\n    p_source_key: 'paperbench-live-candidates',\n    p_source_priority: 80,\n    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates',\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  for (const token of text(read(row, 'Project')).split(/[,;/]+/).map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '))) {\n    const project = PROJECTS[token];\n    if (project) output.push({ json: { ...common, p_vertical: project.vertical, p_project: project.project } });\n  }\n}\nreturn output;"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction text(value) { return String(value ?? '').trim(); }\nfunction springverify(value) {\n  const status = text(value).toLowerCase();\n  if (status === 'complete' || status === 'completed' || status === 'verified' || status === 'approved') return 'done';\n  if (status.includes('exception')) return 'exception';\n  if (status) return 'awaited';\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (status.includes('approved') || status.includes('verified')) return 'approved';\n  if (status.includes('not started') || status.includes('not received') || status.includes('rejected')) return 'not_received';\n  if (status.includes('pending') || status.includes('sent') || status.includes('action required')) return 'pending';\n  return null;\n}\nfunction contract(signed, sent) {\n  const signedStatus = text(signed).toLowerCase();\n  const sentStatus = text(sent).toLowerCase();\n  if (/signed|complete|yes|true/.test(signedStatus)) return 'signed';\n  if (/not sent|not started|no/.test(sentStatus)) return 'not_signed';\n  if (/sent|shared/.test(sentStatus)) return 'sent';\n  return null;\n}\nconst output = [];\nconst syncRunId = String($execution.id);\nfor (const item of items) {\n  const row = item.json;\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  if (!EMAIL_RE.test(candidateEmail) || text(read(row, 'Status')).toLowerCase() !== 'active') continue;\n  const projects = text(read(row, 'Project'))\n    .split(/[,;/]+/)\n    .map((value) => value.trim().toLowerCase().replace(/\\s+/g, ' '));\n  if (!projects.some((project) => project === 'paperbench' || project === 'paper bench')) continue;\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;\n  const common = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_domain: domain || null,\n    p_bgv_id_status: springverify(read(row, 'CH Background Check')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(read(row, 'Contracts Signed'), read(row, 'Contract Sent')),\n    p_source_key: 'paperbench-live-candidates',\n    p_source_priority: 100,\n    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates',\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  output.push({ json: { ...common, p_vertical: 'Coding', p_project: 'PaperBench' } });\n}\nif (!output.length) throw new Error('PaperBench Live Candidates returned no active PaperBench candidates');\nreturn output;"
       },
       "id": "e3a81a31-d3a2-4e67-91c9-cbd18cb96065",
       "name": "Normalize PaperBench Status - Unified",
@@ -484,7 +484,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst output = [];\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'Email')).trim().toLowerCase();\n  const taskId = String(read(row, 'Task ID')).trim();\n  const submissionId = String(read(row, 'Submission ID')).trim();\n  if (!EMAIL_RE.test(email) || !taskId) continue;\n  output.push({ json: {\n    p_event_key: ['sentinel-ultra', email, taskId, submissionId || 'no-submission'].join('|'),\n    p_task_external_id: taskId,\n    p_submission_external_id: submissionId || null,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Sentinel Ultra',\n    p_project_name_raw: 'Sentinel Ultra',\n    p_task_type: String(read(row, 'Task Type')).trim() || null,\n    p_status: String(read(row, 'Status')).trim(),\n    p_final_outcome: String(read(row, 'EC Valid (Fixable/Invalid/Valid-as-is)')).trim() || null,\n    p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',\n    p_allow_missing_assignment: true,\n  } });\n}\nreturn output;"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction status(value) {\n  const normalized = text(value).toLowerCase();\n  if (['accepted', 'approved', 'provisionally accepted', 'completed'].includes(normalized)) return 'accepted';\n  if (['rejected', 'invalid'].includes(normalized)) return 'rejected';\n  if (['needs revision', 'needs_revision', 'rework', 'requiring rework'].includes(normalized)) return 'rework';\n  if (['waiting for review', 'pending review', 'pending eval', 'pending evaluation', 'evaluation pending', 'evaluation_pending', 'submitted', 'in progress', 'assigned'].includes(normalized)) return 'evaluation_pending';\n  if (['expired', 'skipped', 'offered'].includes(normalized)) return null;\n  throw new Error('Sentinel Task Pull: unsupported status ' + JSON.stringify(value));\n}\nfunction timestamp(value) {\n  const raw = text(value);\n  if (!raw) return 0;\n  const parsed = Date.parse(raw);\n  if (!Number.isFinite(parsed)) throw new Error('Sentinel Task Pull: invalid Last Action At ' + JSON.stringify(value));\n  return parsed;\n}\nconst assignedEmails = new Set(\n  $('Normalize Unified Candidate Assignments').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_vertical === 'Coding' && row.p_project === 'Sentinel Ultra')\n    .map((row) => row.p_email),\n);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'Email')).toLowerCase();\n  const taskId = text(read(row, 'Task ID'));\n  const submissionId = text(read(row, 'Submission ID'));\n  if (!email && !taskId) continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Sentinel Task Pull: invalid email ' + JSON.stringify(email));\n  if (!taskId) throw new Error('Sentinel Task Pull: missing task ID for ' + email);\n  if (!assignedEmails.has(email)) continue;\n  const eventKey = ['sentinel-ultra', email, taskId.toLowerCase()].join('|');\n  const actionAt = text(read(row, 'Last Action At'));\n  const normalizedStatus = status(read(row, 'Status', 'Task Status'));\n  const candidate = {\n    _include: normalizedStatus !== null,\n    _sort_at: timestamp(actionAt),\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_submission_external_id: submissionId || null,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Sentinel Ultra',\n    p_project_name_raw: 'Sentinel Ultra',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: normalizedStatus,\n    p_submitted_at_source: actionAt || null,\n    p_final_outcome: text(read(row, 'EC Valid (Fixable/Invalid/Valid-as-is)')) || null,\n    p_source_sheet: 'Snorkel MainSentinel Ultra Coding Projects (Internal) / Sentinel Task Pull',\n    p_source_key: 'task-source:sentinel-ultra',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  };\n  const existing = events.get(eventKey);\n  if (!existing || candidate._sort_at > existing._sort_at) {\n    events.set(eventKey, candidate);\n  } else if (candidate._sort_at === existing._sort_at) {\n    if (candidate._include && !existing._include) {\n      events.set(eventKey, candidate);\n    } else if (candidate._include === existing._include && candidate.p_status !== existing.p_status) {\n      throw new Error('Sentinel Task Pull: ambiguous latest status for ' + eventKey);\n    }\n  }\n}\nconst activeEvents = [...events.values()].filter((row) => row._include);\nif (!activeEvents.length) throw new Error('Sentinel Task Pull returned no submitted tasks for active Sentinel Ultra candidates');\nreturn activeEvents\n  .sort((left, right) => left.p_event_key.localeCompare(right.p_event_key))\n  .map(({ _include, _sort_at, ...row }) => ({ json: row }));"
       },
       "id": "9a389654-0318-4bc6-b984-0d8555af7f4b",
       "name": "Normalize Sentinel Tasks - Unified",
@@ -497,7 +497,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
       },
       "id": "dfa78c07-206c-4b2d-9de1-6e824f94c952",
       "name": "Batch Sentinel Tasks - Unified",
@@ -511,12 +511,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
           "timeout": 30000
         }
@@ -541,7 +541,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
       },
       "id": "072ea7fd-b2bb-4bd7-ae2a-365f5eb8a326",
       "name": "Validate Sentinel Tasks - Unified",
@@ -549,6 +549,63 @@
       "typeVersion": 2,
       "position": [
         1200,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Sentinel Tasks - Unified\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "fedea9f3-a4b7-4687-8622-eb23fd15d0b3",
+      "name": "Prepare Sentinel Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        1320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "837800e5-4cea-4232-90a6-cff3c599608d",
+      "name": "Finalize Sentinel Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1680,
+        1320
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "01dd7c16-e901-4ad5-8f3b-151968dccedb",
+      "name": "Validate Sentinel Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
         1320
       ]
     },
@@ -586,7 +643,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst output = [];\nfor (const item of items) {\n  const row = item.json;\n  const email = String(read(row, 'Assignee', 'Email')).trim().toLowerCase();\n  const taskId = String(read(row, 'Task ID')).trim();\n  if (!EMAIL_RE.test(email) || !taskId) continue;\n  output.push({ json: {\n    p_event_key: ['paperbench', email, taskId].join('|'),\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'PaperBench',\n    p_project_name_raw: String(read(row, 'Project Name')).trim() || 'PaperBench',\n    p_task_type: String(read(row, 'Task Type')).trim() || null,\n    p_status: String(read(row, 'Task Status', 'Status')).trim(),\n    p_created_at_source: String(read(row, 'Created At')).trim() || null,\n    p_submitted_at_source: String(read(row, 'Last Submitted At')).trim() || null,\n    p_bpo_source: String(read(row, 'BPO Source')).trim() || null,\n    p_final_outcome: String(read(row, 'Final Outcome')).trim() || null,\n    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / CH-auto-import',\n    p_allow_missing_assignment: true,\n  } });\n}\nreturn output;"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction status(value) {\n  const normalized = text(value).toLowerCase();\n  if (['accepted', 'approved', 'provisionally accepted'].includes(normalized)) return 'accepted';\n  if (['rejected', 'invalid'].includes(normalized)) return 'rejected';\n  if (['needs revision', 'needs_revision', 'rework', 'requiring rework'].includes(normalized)) return 'rework';\n  if (['waiting for review', 'pending review', 'evaluation pending', 'evaluation_pending'].includes(normalized)) return 'evaluation_pending';\n  throw new Error('PaperBench CH-auto-import: unsupported status ' + JSON.stringify(value));\n}\nconst assignedEmails = new Set(\n  $('Normalize PaperBench Status - Unified').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_vertical === 'Coding' && row.p_project === 'PaperBench')\n    .map((row) => row.p_email),\n);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'Assignee', 'Email')).toLowerCase();\n  const taskId = text(read(row, 'Task ID'));\n  if (!email && !taskId) continue;\n  if (!EMAIL_RE.test(email)) throw new Error('PaperBench CH-auto-import: invalid email ' + JSON.stringify(email));\n  if (!taskId) throw new Error('PaperBench CH-auto-import: missing task ID for ' + email);\n  if (!assignedEmails.has(email)) continue;\n  const eventKey = ['paperbench', email, taskId.toLowerCase()].join('|');\n  if (events.has(eventKey)) throw new Error('PaperBench CH-auto-import: duplicate candidate/task pair ' + eventKey);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'PaperBench',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'PaperBench',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: status(read(row, 'Task Status', 'Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At')) || null,\n    p_bpo_source: text(read(row, 'BPO Source')) || null,\n    p_final_outcome: text(read(row, 'Final Outcome')) || null,\n    p_source_sheet: 'v.2 [EXTERNAL] Paperbench <> Crossing Hurdles Tracker / CH-auto-import',\n    p_source_key: 'task-source:paperbench',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('PaperBench CH-auto-import returned no tasks for active PaperBench candidates');\nreturn [...events.values()]\n  .sort((left, right) => left.p_event_key.localeCompare(right.p_event_key))\n  .map((row) => ({ json: row }));"
       },
       "id": "5f49a0c3-1c9b-4f74-85a7-4fb13000eade",
       "name": "Normalize PaperBench Tasks - Unified",
@@ -599,7 +656,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
       },
       "id": "8e6db0a1-fb02-4d82-ac85-f03c355e1090",
       "name": "Batch PaperBench Tasks - Unified",
@@ -613,12 +670,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
           "timeout": 30000
         }
@@ -643,7 +700,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
       },
       "id": "c2417d68-c868-425e-b200-faeaf472cb85",
       "name": "Validate PaperBench Tasks - Unified",
@@ -651,6 +708,63 @@
       "typeVersion": 2,
       "position": [
         2400,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize PaperBench Tasks - Unified\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "a9e12d79-df1a-4d04-90f2-10cccebfc7f3",
+      "name": "Prepare PaperBench Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "b4ea316d-b531-4f4d-af02-d407f0ec2bcb",
+      "name": "Finalize PaperBench Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        1120
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "debada53-7887-413e-bfc1-2459d55efca9",
+      "name": "Validate PaperBench Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
         1120
       ]
     },
@@ -672,7 +786,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        2640,
+        3360,
         1220
       ],
       "credentials": {
@@ -691,7 +805,7 @@
           "interval": [
             {
               "field": "hours",
-              "hoursInterval": 1,
+              "hoursInterval": 6,
               "triggerAtMinute": 30
             }
           ]
@@ -836,38 +950,6 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Terminus Task Pull",
-          "mode": "name"
-        },
-        "options": {}
-      },
-      "id": "6318cbe7-4332-43c8-8e38-7fd36a481997",
-      "name": "Read Terminus Task Evidence - Unified",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        5520,
-        2920
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "Fwum6c17KC1w1Elo",
-          "name": "Google Sheets account 2"
-        }
-      },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 15000
-    },
-    {
-      "parameters": {
         "assignments": {
           "assignments": [
             {
@@ -963,30 +1045,6 @@
       ]
     },
     {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "70516069-613d-4a6c-b88d-78bd905e6349",
-              "name": "_source",
-              "value": "terminus_task",
-              "type": "string"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "id": "a33a1bfa-05cd-432b-9836-a4adf88fd630",
-      "name": "Tag Terminus Task Evidence",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        5760,
-        2920
-      ]
-    },
-    {
       "parameters": {},
       "id": "231a78fc-faa7-4ccd-bfc8-3f54fe034403",
       "name": "Merge Terminus + Otter Rosters",
@@ -1023,7 +1081,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  terminus: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-roster:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus 2nd Edition Live',\n  },\n  otter: {\n    project: 'Otter',\n    sourceKey: 'coding-project-roster:otter',\n    sourceSheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / MainOtter Live Candidates',\n  },\n  suitelife: {\n    project: 'SuiteLife',\n    sourceKey: 'coding-project-roster:suitelife',\n    sourceSheet: 'Snorkel MainSuiteLife Internal / SuiteLife Live Candidates',\n  },\n  rudder: {\n    project: 'Rudder',\n    sourceKey: 'coding-project-roster:rudder',\n    sourceSheet: 'Snorkel MainRudder Internal / Rudder Live Candidates',\n  },\n  terminus_task: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-task-evidence:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n    taskEvidence: true,\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && text(value) !== '');\n    if (exact) return exact[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('exception')) return 'exception';\n  if (/complete|verified|approved|green|done/.test(status)) return 'done';\n  if (/pending|progress|await|not started|triggered|sent/.test(status)) return 'awaited';\n  return null;\n}\nfunction verificationFromRow(row) {\n  const acceptedKeys = ['chbackgroundcheck', 'springverifycheck', 'springverifypull', 'bgv'];\n  for (const [column, value] of Object.entries(row || {})) {\n    const columnKey = key(column);\n    if (!acceptedKeys.some((candidate) => columnKey === candidate || columnKey.startsWith(candidate))) continue;\n    const normalized = verification(value);\n    if (normalized) return normalized;\n  }\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (/approved|verified|complete/.test(status)) return 'approved';\n  if (/not started|not received|rejected/.test(status)) return 'not_received';\n  if (/pending|sent|progress/.test(status)) return 'pending';\n  return null;\n}\nfunction contract(signedValue, sentValue) {\n  const signed = text(signedValue).toLowerCase();\n  const sent = text(sentValue).toLowerCase();\n  if (/signed|complete|completed|yes|true/.test(signed)) return 'signed';\n  if (/not sent|not started|no/.test(sent)) return 'not_signed';\n  if (/sent|shared/.test(sent)) return 'sent';\n  return null;\n}\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = SOURCES[text(row._source).toLowerCase()];\n  if (!source) throw new Error('Unknown coding roster source: ' + JSON.stringify(row._source));\n\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n  const bpo = source.taskEvidence\n    ? key(row.SOURCE ?? row.Source ?? row.source)\n    : key(read(row, 'BPO'));\n  if (!candidateEmail && !status && !bpo) continue;\n  if (source.taskEvidence) {\n    if (bpo !== 'crossinghurdles') continue;\n  } else if (status !== 'active' || bpo !== 'crossinghurdles') {\n    continue;\n  }\n  if (!EMAIL_RE.test(candidateEmail)) {\n    throw new Error(source.project + ': invalid active candidate email ' + JSON.stringify(candidateEmail));\n  }\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const assignment = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project: source.project,\n    p_domain: /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain || null,\n    p_bgv_id_status: verificationFromRow(row),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(\n      read(row, 'Contract Signed', 'Contracts Signed', 'Contract'),\n      read(row, 'Contract Sent', 'Contracts Sent'),\n    ),\n    p_source_key: source.sourceKey,\n    p_source_priority: source.taskEvidence ? 90 : 100,\n    p_source_sheet: source.sourceSheet,\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  const assignmentKey = source.sourceKey + '|' + candidateEmail;\n  const existing = assignments.get(assignmentKey);\n  if (!existing) {\n    assignments.set(assignmentKey, assignment);\n  } else {\n    for (const field of ['p_full_name', 'p_domain', 'p_bgv_id_status', 'p_remofirst_status', 'p_contract_status']) {\n      if (!existing[field] && assignment[field]) existing[field] = assignment[field];\n    }\n  }\n}\n\nfor (const source of Object.values(SOURCES)) {\n  const count = [...assignments.values()].filter((row) => row.p_source_key === source.sourceKey).length;\n  if (count === 0) throw new Error('No active Crossing Hurdles rows found for ' + source.project);\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => [left.p_project, left.p_email].join('|').localeCompare([right.p_project, right.p_email].join('|')))\n  .map((row) => ({ json: row }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  terminus: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-roster:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus 2nd Edition Live',\n  },\n  otter: {\n    project: 'Otter',\n    sourceKey: 'coding-project-roster:otter',\n    sourceSheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / MainOtter Live Candidates',\n  },\n  suitelife: {\n    project: 'SuiteLife',\n    sourceKey: 'coding-project-roster:suitelife',\n    sourceSheet: 'Snorkel MainSuiteLife Internal / SuiteLife Live Candidates',\n  },\n  rudder: {\n    project: 'Rudder',\n    sourceKey: 'coding-project-roster:rudder',\n    sourceSheet: 'Snorkel MainRudder Internal / Rudder Live Candidates',\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && text(value) !== '');\n    if (exact) return exact[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('exception')) return 'exception';\n  if (/complete|verified|approved|green|done/.test(status)) return 'done';\n  if (/pending|progress|await|not started|triggered|sent/.test(status)) return 'awaited';\n  return null;\n}\nfunction verificationFromRow(row) {\n  const acceptedKeys = ['chbackgroundcheck', 'springverifycheck', 'springverifypull', 'bgv'];\n  for (const [column, value] of Object.entries(row || {})) {\n    const columnKey = key(column);\n    if (!acceptedKeys.some((candidate) => columnKey === candidate || columnKey.startsWith(candidate))) continue;\n    const normalized = verification(value);\n    if (normalized) return normalized;\n  }\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (/approved|verified|complete/.test(status)) return 'approved';\n  if (/not started|not received|rejected/.test(status)) return 'not_received';\n  if (/pending|sent|progress/.test(status)) return 'pending';\n  return null;\n}\nfunction contract(signedValue, sentValue) {\n  const signed = text(signedValue).toLowerCase();\n  const sent = text(sentValue).toLowerCase();\n  if (/signed|complete|completed|yes|true/.test(signed)) return 'signed';\n  if (/not sent|not started|no/.test(sent)) return 'not_signed';\n  if (/sent|shared/.test(sent)) return 'sent';\n  return null;\n}\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = SOURCES[text(row._source).toLowerCase()];\n  if (!source) throw new Error('Unknown coding roster source: ' + JSON.stringify(row._source));\n\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n  const bpo = key(read(row, 'BPO'));\n  if (!candidateEmail && !status && !bpo) continue;\n  if (status !== 'active' || bpo !== 'crossinghurdles') {\n    continue;\n  }\n  if (!EMAIL_RE.test(candidateEmail)) {\n    throw new Error(source.project + ': invalid active candidate email ' + JSON.stringify(candidateEmail));\n  }\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const assignment = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project: source.project,\n    p_domain: /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain || null,\n    p_bgv_id_status: verificationFromRow(row),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(\n      read(row, 'Contract Signed', 'Contracts Signed', 'Contract'),\n      read(row, 'Contract Sent', 'Contracts Sent', 'Contract'),\n    ),\n    p_source_key: source.sourceKey,\n    p_source_priority: 100,\n    p_source_sheet: source.sourceSheet,\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  const assignmentKey = source.sourceKey + '|' + candidateEmail;\n  const existing = assignments.get(assignmentKey);\n  if (!existing) {\n    assignments.set(assignmentKey, assignment);\n  } else {\n    for (const field of ['p_full_name', 'p_domain', 'p_bgv_id_status', 'p_remofirst_status', 'p_contract_status']) {\n      if (!existing[field] && assignment[field]) existing[field] = assignment[field];\n    }\n  }\n}\n\nfor (const source of Object.values(SOURCES)) {\n  const count = [...assignments.values()].filter((row) => row.p_source_key === source.sourceKey).length;\n  if (count === 0) throw new Error('No active Crossing Hurdles rows found for ' + source.project);\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => [left.p_project, left.p_email].join('|').localeCompare([right.p_project, right.p_email].join('|')))\n  .map((row) => ({ json: row }));"
       },
       "id": "267b2933-1156-4b69-b22e-d179102f1ec6",
       "name": "Normalize Coding Project Rosters",
@@ -1093,7 +1151,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $('Normalize Coding Project Rosters').all().map((item) => item.json);\nconst expectedSources = [\n  'coding-project-roster:terminus',\n  'coding-project-roster:otter',\n  'coding-project-roster:suitelife',\n  'coding-project-roster:rudder',\n  'coding-project-task-evidence:terminus',\n];\nreturn expectedSources.map((sourceKey) => {\n  const sourceRows = rows.filter((row) => row.p_source_key === sourceKey);\n  if (!sourceRows.length) throw new Error('Cannot finalize empty roster snapshot: ' + sourceKey);\n  const syncRunIds = [...new Set(sourceRows.map((row) => row.p_sync_run_id))];\n  if (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Roster snapshot has inconsistent run IDs: ' + sourceKey);\n  return { json: {\n    p_source_key: sourceKey,\n    p_sync_run_id: syncRunIds[0],\n    p_expected_count: sourceRows.length,\n  } };\n});"
+        "jsCode": "const rows = $('Normalize Coding Project Rosters').all().map((item) => item.json);\nconst expectedSources = [\n  'coding-project-roster:terminus',\n  'coding-project-roster:otter',\n  'coding-project-roster:suitelife',\n  'coding-project-roster:rudder',\n];\nreturn expectedSources.map((sourceKey) => {\n  const sourceRows = rows.filter((row) => row.p_source_key === sourceKey);\n  if (!sourceRows.length) throw new Error('Cannot finalize empty roster snapshot: ' + sourceKey);\n  const syncRunIds = [...new Set(sourceRows.map((row) => row.p_sync_run_id))];\n  if (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Roster snapshot has inconsistent run IDs: ' + sourceKey);\n  return { json: {\n    p_source_key: sourceKey,\n    p_sync_run_id: syncRunIds[0],\n    p_expected_count: sourceRows.length,\n  } };\n});"
       },
       "id": "3809a120-1fe5-4242-9a04-21b5688c12c9",
       "name": "Prepare Coding Roster Finalizers",
@@ -1182,7 +1240,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(email + ': invalid ' + label + ' count ' + JSON.stringify(value));\n  return parsed;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  if (key(read(row, 'SOURCE')) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'EMAIL')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Terminus Task Pull: invalid email ' + JSON.stringify(email));\n  if (metrics.has(email)) throw new Error('Terminus Task Pull: duplicate email ' + email);\n\n  const submitted = count(read(row, 'TOTAL SUBMISSIONS'), 'submitted', email);\n  const accepted = count(read(row, 'TOTAL ACCEPTED'), 'accepted', email);\n  const rejected = count(read(row, 'REJECTED'), 'rejected', email);\n  const rework = count(read(row, 'NEEDS REVISION'), 'rework', email);\n  const evaluationPending = count(read(row, 'EVAL PENDING'), 'evaluation pending', email)\n    + count(read(row, 'PENDING REVIEW'), 'pending review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error(email + ': Terminus totals do not reconcile');\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\nif (!metrics.size) throw new Error('Terminus Task Pull returned no Crossing Hurdles rows');\nreturn [...metrics.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Terminus',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluationPending,\n  p_source_sheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: true,\n} }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(email + ': invalid ' + label + ' count ' + JSON.stringify(value));\n  return parsed;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst assignedEmails = new Set(\n  $('Normalize Coding Project Rosters').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_source_key === 'coding-project-roster:terminus')\n    .map((row) => row.p_email),\n);\nif (!assignedEmails.size) throw new Error('Terminus live roster returned no active candidates');\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  if (key(read(row, 'SOURCE')) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'EMAIL')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Terminus Task Pull: invalid email ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  if (metrics.has(email)) throw new Error('Terminus Task Pull: duplicate email ' + email);\n\n  const submitted = count(read(row, 'TOTAL SUBMISSIONS'), 'submitted', email);\n  const accepted = count(read(row, 'TOTAL ACCEPTED'), 'accepted', email);\n  const rejected = count(read(row, 'REJECTED'), 'rejected', email);\n  const rework = count(read(row, 'NEEDS REVISION'), 'rework', email);\n  const evaluationPending = count(read(row, 'EVAL PENDING'), 'evaluation pending', email)\n    + count(read(row, 'PENDING REVIEW'), 'pending review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error(email + ': Terminus totals do not reconcile');\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\nfor (const email of assignedEmails) {\n  if (!metrics.has(email)) {\n    metrics.set(email, { submitted: 0, accepted: 0, rejected: 0, rework: 0, evaluationPending: 0 });\n  }\n}\nreturn [...metrics.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Terminus',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluationPending,\n  p_source_sheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: false,\n} }));"
       },
       "id": "e77d72a4-1fe2-4233-a1a7-3819826445a8",
       "name": "Normalize Terminus Tasks - Unified",
@@ -1291,7 +1349,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n    const partial = entries.find(([column, value]) => key(column).includes(name) && value !== null && value !== undefined);\n    if (partial) return partial[1];\n  }\n  return '';\n}\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Contributor Email')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Otter Task ID Tracking: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Otter Task ID Tracking: invalid email ' + JSON.stringify(email));\n  const eventKey = 'otter|' + taskId;\n  if (events.has(eventKey)) throw new Error('Otter Task ID Tracking: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Otter',\n    p_project_name_raw: 'Otter',\n    p_task_type: text(read(row, 'Workflow')) || null,\n    p_status: text(read(row, 'Current Status')),\n    p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,\n    p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',\n    p_allow_missing_assignment: true,\n  });\n}\nif (!events.size) throw new Error('Otter Task ID Tracking returned no task rows');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n    const partial = entries.find(([column, value]) => key(column).includes(name) && value !== null && value !== undefined);\n    if (partial) return partial[1];\n  }\n  return '';\n}\nfunction status(value) {\n  const normalized = text(value).toLowerCase();\n  if (['accepted', 'approved', 'provisionally accepted', 'completed'].includes(normalized)) return 'accepted';\n  if (['rejected', 'invalid', 'non fixable', 'non-fixable'].includes(normalized)) return 'rejected';\n  if (['needs revision', 'needs_revision', 'rework', 'requiring rework', 'fixable'].includes(normalized)) return 'rework';\n  if (['', 'waiting for review', 'pending review', 'evaluation pending', 'evaluation_pending', 'submitted', 'in progress', 'assigned'].includes(normalized)) return 'evaluation_pending';\n  throw new Error('Otter Task ID Tracking: unsupported status ' + JSON.stringify(value));\n}\nconst assignedEmails = new Set(\n  $('Normalize Coding Project Rosters').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_source_key === 'coding-project-roster:otter')\n    .map((row) => row.p_email),\n);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Contributor Email')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Otter Task ID Tracking: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Otter Task ID Tracking: invalid email ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  const eventKey = ['otter', email, taskId.toLowerCase()].join('|');\n  if (events.has(eventKey)) throw new Error('Otter Task ID Tracking: duplicate candidate/task pair ' + eventKey);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Otter',\n    p_project_name_raw: 'Otter',\n    p_task_type: text(read(row, 'Workflow')) || null,\n    p_status: status(read(row, 'Current Status')),\n    p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,\n    p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',\n    p_source_key: 'task-source:otter',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('Otter Task ID Tracking returned no tasks for active Otter candidates');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
       },
       "id": "59a2c6b5-e02b-4b8a-ae13-2166d069bc22",
       "name": "Normalize Otter Tasks - Unified",
@@ -1304,7 +1362,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
       },
       "id": "e86b597f-4c55-426a-bbbc-c264134ced45",
       "name": "Batch Otter Tasks - Unified",
@@ -1318,12 +1376,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
           "timeout": 30000
         }
@@ -1348,7 +1406,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
       },
       "id": "094286a3-67cd-49d0-b5c8-258413127aa5",
       "name": "Validate Otter Tasks - Unified",
@@ -1357,6 +1415,63 @@
       "position": [
         9360,
         2620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Otter Tasks - Unified\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "bd49c173-5585-4937-8bad-16847bb68822",
+      "name": "Prepare Otter Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9600,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "6ad61d68-5d3f-4756-839a-ac710ed9219a",
+      "name": "Finalize Otter Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9840,
+        2560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "e7596ab5-cd63-4e68-b1c6-90b8e29ab7e3",
+      "name": "Validate Otter Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10080,
+        2560
       ]
     },
     {
@@ -1393,7 +1508,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst events = new Map();\nconst hasBpoSourceColumn = items.some((item) =>\n  Object.keys(item.json || {}).some((column) => key(column) === 'bposource')\n);\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  if (!taskId) continue;\n  const bpoSource = text(read(row, 'BPO Source'));\n  if (hasBpoSourceColumn && key(bpoSource) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'Assignee', 'User Email', 'Email')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Rudder Task Raw Pull: invalid email ' + JSON.stringify(email));\n  const eventKey = 'rudder|' + taskId;\n  if (events.has(eventKey)) throw new Error('Rudder Task Raw Pull: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Rudder',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: text(read(row, 'Task Status', 'State Enum', 'Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,\n    p_bpo_source: bpoSource || null,\n    p_source_sheet: 'Snorkel MainRudder Internal / Task Raw Pull',\n    p_allow_missing_assignment: true,\n  });\n}\nif (!events.size) throw new Error('Rudder Task Raw Pull returned no Crossing Hurdles task rows');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction status(value) {\n  const normalized = text(value).toLowerCase();\n  if (['accepted', 'approved', 'provisionally accepted', 'completed'].includes(normalized)) return 'accepted';\n  if (['rejected', 'invalid', 'non fixable', 'non-fixable'].includes(normalized)) return 'rejected';\n  if (['needs revision', 'needs_revision', 'rework', 'requiring rework', 'fixable'].includes(normalized)) return 'rework';\n  if (['', 'waiting for review', 'pending review', 'evaluation pending', 'evaluation_pending', 'submitted', 'in progress', 'assigned'].includes(normalized)) return 'evaluation_pending';\n  throw new Error('Rudder Task Raw Pull: unsupported status ' + JSON.stringify(value));\n}\nconst assignedEmails = new Set(\n  $('Normalize Coding Project Rosters').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_source_key === 'coding-project-roster:rudder')\n    .map((row) => row.p_email),\n);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nconst hasBpoSourceColumn = items.some((item) =>\n  Object.keys(item.json || {}).some((column) => key(column) === 'bposource')\n);\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  if (!taskId) continue;\n  const bpoSource = text(read(row, 'BPO Source'));\n  if (hasBpoSourceColumn && key(bpoSource) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'Assignee', 'User Email', 'Email')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Rudder Task Raw Pull: invalid email ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  const eventKey = ['rudder', email, taskId.toLowerCase()].join('|');\n  if (events.has(eventKey)) throw new Error('Rudder Task Raw Pull: duplicate candidate/task pair ' + eventKey);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Rudder',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: status(read(row, 'Task Status', 'State Enum', 'Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,\n    p_bpo_source: bpoSource || null,\n    p_source_sheet: 'Snorkel MainRudder Internal / Task Raw Pull',\n    p_source_key: 'task-source:rudder',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('Rudder Task Raw Pull returned no tasks for active Rudder candidates');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
       },
       "id": "32480019-4528-44ad-8b36-91d71a06c2e2",
       "name": "Normalize Rudder Tasks - Unified",
@@ -1406,7 +1521,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
       },
       "id": "0aff9e79-7706-40de-90d2-172322de2cd8",
       "name": "Batch Rudder Tasks - Unified",
@@ -1420,12 +1535,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
           "timeout": 30000
         }
@@ -1450,7 +1565,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
       },
       "id": "87fd64b4-eb83-4266-92d7-68afdd5a8d45",
       "name": "Validate Rudder Tasks - Unified",
@@ -1459,6 +1574,63 @@
       "position": [
         9360,
         2800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Rudder Tasks - Unified\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "f2e84878-055e-4be6-87a0-95e5ae0979e4",
+      "name": "Prepare Rudder Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9600,
+        2860
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "faa8064a-b560-44d5-847a-2d6de6d401a6",
+      "name": "Finalize Rudder Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9840,
+        2860
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "8b34f321-d7dc-426d-bb75-725d252632c7",
+      "name": "Validate Rudder Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10080,
+        2860
       ]
     },
     {
@@ -1479,7 +1651,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        9600,
+        10320,
         2710
       ],
       "credentials": {
@@ -2395,6 +2567,549 @@
         4800,
         1960
       ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6,
+              "triggerAtMinute": 45
+            }
+          ]
+        }
+      },
+      "id": "aa38c11a-c8d5-48d0-ab2a-1eab4d83f301",
+      "name": "Schedule Trigger - Geranium Portal Data",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        10080,
+        3600
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Z1_5ShwWLN3wMg5fEZuTqFfUtLHZ_UCn-MJU3QGbHpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Allocation Roster",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b0fd6714-6bca-4b1d-b0cc-e52ca8391776",
+      "name": "Read Geranium Allocation Roster",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        10320,
+        3480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1aHldihxZXYNAc1IVCbxfP9x51gR31cC4i7PK-rr60yk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Allocated ECs",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "fd5bc28f-3ed2-44d7-a95d-14d6ab7b5c85",
+      "name": "Read Geranium Allocated ECs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        10320,
+        3660
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2508ddb-3eba-4e02-a59a-6ca44b6f0a2c",
+              "name": "_source",
+              "value": "allocation_roster",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ee22a205-3cfd-47e6-a15d-5ebaa1dc5b75",
+      "name": "Tag Geranium Allocation Roster",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10560,
+        3480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c71695f-a899-4c79-a6b3-a4dd06764780",
+              "name": "_source",
+              "value": "allocated_ecs",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c537d179-1a50-4307-a5f5-b28828098f63",
+      "name": "Tag Geranium Allocated ECs",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10560,
+        3660
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "49a6a840-0948-42bb-8981-dad57b770b9a",
+      "name": "Merge Geranium Allocation Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        10800,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (/received and completed|completed|verified|approved/.test(status)) return 'done';\n  if (status.includes('exception')) return 'exception';\n  return 'awaited';\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (/received and completed|completed|verified|approved/.test(status)) return 'approved';\n  if (/not received|not started|rejected/.test(status)) return 'not_received';\n  return 'pending';\n}\nfunction contract(value) {\n  const status = text(value).toLowerCase();\n  if (status && !/not signed/.test(status) && /signed|completed/.test(status)) return 'signed';\n  if (!status || /not signed|not received|not sent|not started/.test(status)) return 'not_signed';\n  if (/received|sent|shared/.test(status)) return 'sent';\n  return 'not_signed';\n}\n\nconst roster = new Map();\nfor (const item of items.filter((entry) => text(entry.json._source) === 'allocation_roster')) {\n  const row = item.json;\n  const email = text(read(row, 'Email')).toLowerCase();\n  const sector = text(read(row, 'Sector'));\n  if (!email && !sector) continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Allocation Roster: invalid email ' + JSON.stringify(email));\n  if (!sector) throw new Error('Allocation Roster: missing Sector for ' + email);\n  if (roster.has(email) && roster.get(email) !== sector) {\n    throw new Error('Allocation Roster: conflicting sectors for ' + email);\n  }\n  roster.set(email, sector);\n}\nif (!roster.size) throw new Error('Allocation Roster returned no candidates');\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items.filter((entry) => text(entry.json._source) === 'allocated_ecs')) {\n  const row = item.json;\n  const email = text(read(row, 'Email')).toLowerCase();\n  const project = text(read(row, 'Project'));\n  const projectStatus = text(read(row, 'Project Status')).toLowerCase();\n  if (!email && !project && !projectStatus) continue;\n  if (project.toLowerCase() !== 'geranium' || projectStatus !== 'active') continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Allocated ECs: invalid active candidate email ' + JSON.stringify(email));\n  if (assignments.has(email)) throw new Error('Allocated ECs: duplicate active candidate ' + email);\n\n  const fullName = text(read(row, 'Name'));\n  if (!fullName) throw new Error('Allocated ECs: missing candidate name for ' + email);\n  const domain = roster.get(email) || text(read(row, 'Sector'));\n  if (!domain) throw new Error('Geranium: missing domain for ' + email);\n\n  assignments.set(email, {\n    p_email: email,\n    p_full_name: fullName,\n    p_client: 'Snorkel',\n    p_vertical: 'Geranium',\n    p_project: 'Geranium',\n    p_domain: domain,\n    p_bgv_id_status: verification(read(row, 'Spring Verify')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Verification')),\n    p_contract_status: contract(read(row, 'Contract')),\n    p_source_key: 'geranium-allocated-ecs',\n    p_source_priority: 120,\n    p_source_sheet: 'Project Geranium / Allocated ECs; Geranium - Crossing Hurdles Tracker / Allocation Roster',\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  });\n}\nif (!assignments.size) throw new Error('Allocated ECs returned no active Geranium candidates');\n\nconst orphanedRosterEmails = [...roster.keys()].filter((email) => !assignments.has(email));\nif (orphanedRosterEmails.length) {\n  throw new Error('Allocation Roster contains candidates missing from active Allocated ECs: ' + orphanedRosterEmails.slice(0, 20).join(', '));\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => left.p_email.localeCompare(right.p_email))\n  .map((row) => ({ json: row }));"
+      },
+      "id": "6b5e28ed-3886-4f8d-b5d1-63aaf7a08727",
+      "name": "Normalize Geranium Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11040,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
+      },
+      "id": "b0642820-c6aa-48f1-9dfa-2c6283b7116a",
+      "name": "Batch Geranium Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11280,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_portal_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "789a2302-508d-48c1-8d20-95c730dc4215",
+      "name": "Upsert Geranium Assignments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        11520,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "2fdf061b-6b73-4aba-9c2f-f4298ec37dba",
+      "name": "Validate Geranium Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11760,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $('Normalize Geranium Assignments').all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty Geranium roster');\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id))];\nif (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Geranium roster has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: 'geranium-allocated-ecs',\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "532e3447-eeff-42fe-9306-e028b50272be",
+      "name": "Prepare Geranium Roster Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12000,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_portal_assignment_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "2ff5c3ec-6d8d-4961-bb3d-e72030f51297",
+      "name": "Finalize Geranium Roster Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        12240,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "0d01ea36-79eb-48fd-8241-b5c3c0aba427",
+      "name": "Validate Geranium Roster Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12480,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Z1_5ShwWLN3wMg5fEZuTqFfUtLHZ_UCn-MJU3QGbHpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Task Breakdown",
+          "mode": "name"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "A1:H"
+            }
+          }
+        }
+      },
+      "id": "03391391-100b-4007-865c-cd8de1acf645",
+      "name": "Read Geranium Task Breakdown",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        12720,
+        3570
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\n\nconst assignedEmails = new Set($('Normalize Geranium Assignments').all().map((item) => item.json.p_email));\nconst supportedStatuses = new Set(['provisionally accepted', 'waiting for review', 'needs revision', 'rejected']);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Assignee')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Task Breakdown: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Task Breakdown: invalid assignee ' + JSON.stringify(email));\n  const hasActiveAssignment = assignedEmails.has(email);\n  if (!hasActiveAssignment) continue;\n  const status = text(read(row, 'Task Status')).toLowerCase();\n  if (!supportedStatuses.has(status)) throw new Error('Task Breakdown: unsupported status ' + JSON.stringify(status));\n\n  const eventKey = 'geranium|' + taskId.toLowerCase();\n  if (events.has(eventKey)) throw new Error('Task Breakdown: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Geranium',\n    p_project_slug: 'Geranium',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Geranium',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: text(read(row, 'Task Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At')) || null,\n    p_bpo_source: text(read(row, 'BPO Source')) || null,\n    p_source_sheet: 'Geranium - Crossing Hurdles Tracker / Task Breakdown',\n    p_source_key: 'task-source:geranium',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('Task Breakdown returned no tasks for active Geranium candidates');\nreturn [...events.values()]\n  .sort((left, right) => left.p_event_key.localeCompare(right.p_event_key))\n  .map((row) => ({ json: row }));"
+      },
+      "id": "370545cb-a486-49fb-b770-baa5ee6bb40f",
+      "name": "Normalize Geranium Task Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12960,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
+      },
+      "id": "b955782e-a14d-4a5a-ba91-1d7a728ecd96",
+      "name": "Batch Geranium Task Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13200,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "8f2ef90e-91ca-4e84-ac26-1c70d7d424f4",
+      "name": "Upsert Geranium Task Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        13440,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "a9bdfe8d-6e2a-4cef-ab3f-bb991e1718b4",
+      "name": "Validate Geranium Task Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13680,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Geranium Task Events\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "41f338fa-2f94-4773-a1da-e54f0bf60134",
+      "name": "Prepare Geranium Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13920,
+        3510
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "81ea7671-7ab8-4d4a-a3d5-7ce138fed429",
+      "name": "Finalize Geranium Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        14160,
+        3510
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "7909b2d9-5418-4b96-87f5-04ce2cd98e8a",
+      "name": "Validate Geranium Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14400,
+        3510
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Z1_5ShwWLN3wMg5fEZuTqFfUtLHZ_UCn-MJU3QGbHpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Metrics per EC",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "eb84727b-7726-4d66-aefe-0a45af5d7980",
+      "name": "Read Geranium Metrics per EC",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        14640,
+        3570
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) {\n    throw new Error('Metrics per EC: invalid ' + label + ' for ' + email + ': ' + JSON.stringify(value));\n  }\n  return parsed;\n}\n\nconst assignedEmails = new Set($('Normalize Geranium Assignments').all().map((item) => item.json.p_email));\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'Assignee')).toLowerCase();\n  if (!email) continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Metrics per EC: invalid assignee ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  if (metrics.has(email)) throw new Error('Metrics per EC: duplicate candidate ' + email);\n\n  const submitted = count(read(row, 'Total Tasks', 'Total Task'), 'Total Tasks', email);\n  const accepted = count(read(row, 'Provisionally Accepted'), 'Provisionally Accepted', email);\n  const rejected = count(read(row, 'Rejected'), 'Rejected', email);\n  const rework = count(read(row, 'Needs Revision', 'Need Revision'), 'Needs Revision', email);\n  const evaluationPending = count(read(row, 'Waiting For Review', 'Waiting for review'), 'Waiting For Review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error('Metrics per EC: task totals do not reconcile for ' + email);\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\n\nconst taskEmails = new Set(\n  $('Normalize Geranium Task Events').all().map((item) => item.json.p_email),\n);\nconst missingMetrics = [...assignedEmails].filter((email) => !metrics.has(email));\nconst missingWithTasks = missingMetrics.filter((email) => taskEmails.has(email));\nif (missingWithTasks.length) {\n  throw new Error(\n    'Metrics per EC is missing ' + missingWithTasks.length +\n    ' active candidate(s) that have Task Breakdown records',\n  );\n}\nfor (const email of missingMetrics) {\n  metrics.set(email, {\n    submitted: 0,\n    accepted: 0,\n    rejected: 0,\n    rework: 0,\n    evaluationPending: 0,\n  });\n}\n\nconst asOf = new Date().toISOString().slice(0, 10);\nreturn [...metrics.entries()]\n  .sort(([left], [right]) => left.localeCompare(right))\n  .map(([email, metric]) => ({ json: {\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Geranium',\n    p_project_slug: 'Geranium',\n    p_as_of: asOf,\n    p_submitted: metric.submitted,\n    p_accepted: metric.accepted,\n    p_rejected: metric.rejected,\n    p_rework: metric.rework,\n    p_evaluation_pending: metric.evaluationPending,\n    p_source_sheet: 'Geranium - Crossing Hurdles Tracker / Metrics per EC',\n    p_metric_kind: 'cumulative',\n    p_allow_missing_assignment: false,\n  } }));"
+      },
+      "id": "caa7b78b-ae03-4a4b-9e9c-33493355c48f",
+      "name": "Normalize Geranium Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14880,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "608402be-ebb3-4cb0-9cfb-15ee92537956",
+      "name": "Batch Geranium Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15120,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "283ca664-2895-4c9b-8a39-78cf95424c3c",
+      "name": "Upsert Geranium Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15360,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "6291e579-f0aa-47c2-a0a2-4fd8ba888eaa",
+      "name": "Validate Geranium Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15600,
+        3570
+      ]
     }
   ],
   "connections": {
@@ -2702,6 +3417,39 @@
         ]
       ]
     },
+    "Validate Sentinel Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Prepare Sentinel Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Sentinel Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Sentinel Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Sentinel Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Sentinel Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Validate PaperBench Status - Unified": {
       "main": [
         [
@@ -2757,7 +3505,40 @@
         ]
       ]
     },
-    "Validate Sentinel Tasks - Unified": {
+    "Validate PaperBench Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Prepare PaperBench Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare PaperBench Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize PaperBench Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize PaperBench Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate PaperBench Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Sentinel Task Snapshot": {
       "main": [
         [
           {
@@ -2768,7 +3549,7 @@
         ]
       ]
     },
-    "Validate PaperBench Tasks - Unified": {
+    "Validate PaperBench Task Snapshot": {
       "main": [
         [
           {
@@ -2799,11 +3580,6 @@
           },
           {
             "node": "Read Rudder Live Candidates - Unified",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Terminus Task Evidence - Unified",
             "type": "main",
             "index": 0
           }
@@ -2848,17 +3624,6 @@
         [
           {
             "node": "Tag Rudder Roster",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Terminus Task Evidence - Unified": {
-      "main": [
-        [
-          {
-            "node": "Tag Terminus Task Evidence",
             "type": "main",
             "index": 0
           }
@@ -2927,17 +3692,6 @@
             "node": "Merge + Rudder Roster",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Tag Terminus Task Evidence": {
-      "main": [
-        [
-          {
-            "node": "Merge + Rudder Roster",
-            "type": "main",
-            "index": 2
           }
         ]
       ]
@@ -3176,7 +3930,29 @@
       "main": [
         [
           {
-            "node": "Refresh Coding Task Metrics - Unified",
+            "node": "Prepare Otter Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Otter Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Otter Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Otter Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Otter Task Snapshot",
             "type": "main",
             "index": 0
           }
@@ -3184,6 +3960,50 @@
       ]
     },
     "Validate Rudder Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Prepare Rudder Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Rudder Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Rudder Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Rudder Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Rudder Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Otter Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Refresh Coding Task Metrics - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Rudder Task Snapshot": {
       "main": [
         [
           {
@@ -3652,6 +4472,286 @@
         [
           {
             "node": "Validate Project July Payments - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger - Geranium Portal Data": {
+      "main": [
+        [
+          {
+            "node": "Read Geranium Allocation Roster",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Geranium Allocated ECs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Allocation Roster": {
+      "main": [
+        [
+          {
+            "node": "Tag Geranium Allocation Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Allocated ECs": {
+      "main": [
+        [
+          {
+            "node": "Tag Geranium Allocated ECs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Geranium Allocation Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge Geranium Allocation Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Geranium Allocated ECs": {
+      "main": [
+        [
+          {
+            "node": "Merge Geranium Allocation Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Geranium Allocation Sources": {
+      "main": [
+        [
+          {
+            "node": "Normalize Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Batch Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Upsert Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Prepare Geranium Roster Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Geranium Roster Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Geranium Roster Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Geranium Roster Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Roster Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Roster Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Read Geranium Task Breakdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Task Breakdown": {
+      "main": [
+        [
+          {
+            "node": "Normalize Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Batch Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Upsert Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Prepare Geranium Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Geranium Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Geranium Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Geranium Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Read Geranium Metrics per EC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Metrics per EC": {
+      "main": [
+        [
+          {
+            "node": "Normalize Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Geranium Metrics": {
+      "main": [
+        [
+          {
+            "node": "Batch Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Geranium Metrics": {
+      "main": [
+        [
+          {
+            "node": "Upsert Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Geranium Metrics": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Metrics",
             "type": "main",
             "index": 0
           }

@@ -6,7 +6,7 @@
           "interval": [
             {
               "field": "hours",
-              "hoursInterval": 1,
+              "hoursInterval": 6,
               "triggerAtMinute": 30
             }
           ]
@@ -151,38 +151,6 @@
     },
     {
       "parameters": {
-        "documentId": {
-          "__rl": true,
-          "value": "1R1A2wt0MGYjrbEwQOZRXV9LK_A_wN9QI1sUBdYbfBwI",
-          "mode": "id"
-        },
-        "sheetName": {
-          "__rl": true,
-          "value": "Terminus Task Pull",
-          "mode": "name"
-        },
-        "options": {}
-      },
-      "id": "6318cbe7-4332-43c8-8e38-7fd36a481997",
-      "name": "Read Terminus Task Evidence - Unified",
-      "type": "n8n-nodes-base.googleSheets",
-      "typeVersion": 4.5,
-      "position": [
-        5520,
-        2920
-      ],
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "Fwum6c17KC1w1Elo",
-          "name": "Google Sheets account 2"
-        }
-      },
-      "retryOnFail": true,
-      "maxTries": 5,
-      "waitBetweenTries": 15000
-    },
-    {
-      "parameters": {
         "assignments": {
           "assignments": [
             {
@@ -278,30 +246,6 @@
       ]
     },
     {
-      "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "70516069-613d-4a6c-b88d-78bd905e6349",
-              "name": "_source",
-              "value": "terminus_task",
-              "type": "string"
-            }
-          ]
-        },
-        "includeOtherFields": true,
-        "options": {}
-      },
-      "id": "a33a1bfa-05cd-432b-9836-a4adf88fd630",
-      "name": "Tag Terminus Task Evidence",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
-      "position": [
-        5760,
-        2920
-      ]
-    },
-    {
       "parameters": {},
       "id": "231a78fc-faa7-4ccd-bfc8-3f54fe034403",
       "name": "Merge Terminus + Otter Rosters",
@@ -338,7 +282,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  terminus: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-roster:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus 2nd Edition Live',\n  },\n  otter: {\n    project: 'Otter',\n    sourceKey: 'coding-project-roster:otter',\n    sourceSheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / MainOtter Live Candidates',\n  },\n  suitelife: {\n    project: 'SuiteLife',\n    sourceKey: 'coding-project-roster:suitelife',\n    sourceSheet: 'Snorkel MainSuiteLife Internal / SuiteLife Live Candidates',\n  },\n  rudder: {\n    project: 'Rudder',\n    sourceKey: 'coding-project-roster:rudder',\n    sourceSheet: 'Snorkel MainRudder Internal / Rudder Live Candidates',\n  },\n  terminus_task: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-task-evidence:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n    taskEvidence: true,\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && text(value) !== '');\n    if (exact) return exact[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('exception')) return 'exception';\n  if (/complete|verified|approved|green|done/.test(status)) return 'done';\n  if (/pending|progress|await|not started|triggered|sent/.test(status)) return 'awaited';\n  return null;\n}\nfunction verificationFromRow(row) {\n  const acceptedKeys = ['chbackgroundcheck', 'springverifycheck', 'springverifypull', 'bgv'];\n  for (const [column, value] of Object.entries(row || {})) {\n    const columnKey = key(column);\n    if (!acceptedKeys.some((candidate) => columnKey === candidate || columnKey.startsWith(candidate))) continue;\n    const normalized = verification(value);\n    if (normalized) return normalized;\n  }\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (/approved|verified|complete/.test(status)) return 'approved';\n  if (/not started|not received|rejected/.test(status)) return 'not_received';\n  if (/pending|sent|progress/.test(status)) return 'pending';\n  return null;\n}\nfunction contract(signedValue, sentValue) {\n  const signed = text(signedValue).toLowerCase();\n  const sent = text(sentValue).toLowerCase();\n  if (/signed|complete|completed|yes|true/.test(signed)) return 'signed';\n  if (/not sent|not started|no/.test(sent)) return 'not_signed';\n  if (/sent|shared/.test(sent)) return 'sent';\n  return null;\n}\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = SOURCES[text(row._source).toLowerCase()];\n  if (!source) throw new Error('Unknown coding roster source: ' + JSON.stringify(row._source));\n\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n  const bpo = source.taskEvidence\n    ? key(row.SOURCE ?? row.Source ?? row.source)\n    : key(read(row, 'BPO'));\n  if (!candidateEmail && !status && !bpo) continue;\n  if (source.taskEvidence) {\n    if (bpo !== 'crossinghurdles') continue;\n  } else if (status !== 'active' || bpo !== 'crossinghurdles') {\n    continue;\n  }\n  if (!EMAIL_RE.test(candidateEmail)) {\n    throw new Error(source.project + ': invalid active candidate email ' + JSON.stringify(candidateEmail));\n  }\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const assignment = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project: source.project,\n    p_domain: /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain || null,\n    p_bgv_id_status: verificationFromRow(row),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(\n      read(row, 'Contract Signed', 'Contracts Signed', 'Contract'),\n      read(row, 'Contract Sent', 'Contracts Sent'),\n    ),\n    p_source_key: source.sourceKey,\n    p_source_priority: source.taskEvidence ? 90 : 100,\n    p_source_sheet: source.sourceSheet,\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  const assignmentKey = source.sourceKey + '|' + candidateEmail;\n  const existing = assignments.get(assignmentKey);\n  if (!existing) {\n    assignments.set(assignmentKey, assignment);\n  } else {\n    for (const field of ['p_full_name', 'p_domain', 'p_bgv_id_status', 'p_remofirst_status', 'p_contract_status']) {\n      if (!existing[field] && assignment[field]) existing[field] = assignment[field];\n    }\n  }\n}\n\nfor (const source of Object.values(SOURCES)) {\n  const count = [...assignments.values()].filter((row) => row.p_source_key === source.sourceKey).length;\n  if (count === 0) throw new Error('No active Crossing Hurdles rows found for ' + source.project);\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => [left.p_project, left.p_email].join('|').localeCompare([right.p_project, right.p_email].join('|')))\n  .map((row) => ({ json: row }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nconst SOURCES = {\n  terminus: {\n    project: 'Terminus',\n    sourceKey: 'coding-project-roster:terminus',\n    sourceSheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus 2nd Edition Live',\n  },\n  otter: {\n    project: 'Otter',\n    sourceKey: 'coding-project-roster:otter',\n    sourceSheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / MainOtter Live Candidates',\n  },\n  suitelife: {\n    project: 'SuiteLife',\n    sourceKey: 'coding-project-roster:suitelife',\n    sourceSheet: 'Snorkel MainSuiteLife Internal / SuiteLife Live Candidates',\n  },\n  rudder: {\n    project: 'Rudder',\n    sourceKey: 'coding-project-roster:rudder',\n    sourceSheet: 'Snorkel MainRudder Internal / Rudder Live Candidates',\n  },\n};\n\nfunction key(value) {\n  return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');\n}\nfunction text(value) {\n  return String(value ?? '').trim();\n}\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && text(value) !== '');\n    if (exact) return exact[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (status.includes('exception')) return 'exception';\n  if (/complete|verified|approved|green|done/.test(status)) return 'done';\n  if (/pending|progress|await|not started|triggered|sent/.test(status)) return 'awaited';\n  return null;\n}\nfunction verificationFromRow(row) {\n  const acceptedKeys = ['chbackgroundcheck', 'springverifycheck', 'springverifypull', 'bgv'];\n  for (const [column, value] of Object.entries(row || {})) {\n    const columnKey = key(column);\n    if (!acceptedKeys.some((candidate) => columnKey === candidate || columnKey.startsWith(candidate))) continue;\n    const normalized = verification(value);\n    if (normalized) return normalized;\n  }\n  return null;\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (!status) return null;\n  if (/approved|verified|complete/.test(status)) return 'approved';\n  if (/not started|not received|rejected/.test(status)) return 'not_received';\n  if (/pending|sent|progress/.test(status)) return 'pending';\n  return null;\n}\nfunction contract(signedValue, sentValue) {\n  const signed = text(signedValue).toLowerCase();\n  const sent = text(sentValue).toLowerCase();\n  if (/signed|complete|completed|yes|true/.test(signed)) return 'signed';\n  if (/not sent|not started|no/.test(sent)) return 'not_signed';\n  if (/sent|shared/.test(sent)) return 'sent';\n  return null;\n}\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const source = SOURCES[text(row._source).toLowerCase()];\n  if (!source) throw new Error('Unknown coding roster source: ' + JSON.stringify(row._source));\n\n  const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();\n  const status = text(read(row, 'Status')).toLowerCase();\n  const bpo = key(read(row, 'BPO'));\n  if (!candidateEmail && !status && !bpo) continue;\n  if (status !== 'active' || bpo !== 'crossinghurdles') {\n    continue;\n  }\n  if (!EMAIL_RE.test(candidateEmail)) {\n    throw new Error(source.project + ': invalid active candidate email ' + JSON.stringify(candidateEmail));\n  }\n\n  const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))]\n    .filter(Boolean)\n    .join(' ');\n  const sourceDomain = text(read(row, 'Domain'));\n  const assignment = {\n    p_email: candidateEmail,\n    p_full_name: fullName || null,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project: source.project,\n    p_domain: /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain || null,\n    p_bgv_id_status: verificationFromRow(row),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Check')),\n    p_contract_status: contract(\n      read(row, 'Contract Signed', 'Contracts Signed', 'Contract'),\n      read(row, 'Contract Sent', 'Contracts Sent', 'Contract'),\n    ),\n    p_source_key: source.sourceKey,\n    p_source_priority: 100,\n    p_source_sheet: source.sourceSheet,\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  };\n  const assignmentKey = source.sourceKey + '|' + candidateEmail;\n  const existing = assignments.get(assignmentKey);\n  if (!existing) {\n    assignments.set(assignmentKey, assignment);\n  } else {\n    for (const field of ['p_full_name', 'p_domain', 'p_bgv_id_status', 'p_remofirst_status', 'p_contract_status']) {\n      if (!existing[field] && assignment[field]) existing[field] = assignment[field];\n    }\n  }\n}\n\nfor (const source of Object.values(SOURCES)) {\n  const count = [...assignments.values()].filter((row) => row.p_source_key === source.sourceKey).length;\n  if (count === 0) throw new Error('No active Crossing Hurdles rows found for ' + source.project);\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => [left.p_project, left.p_email].join('|').localeCompare([right.p_project, right.p_email].join('|')))\n  .map((row) => ({ json: row }));"
       },
       "id": "267b2933-1156-4b69-b22e-d179102f1ec6",
       "name": "Normalize Coding Project Rosters",
@@ -408,7 +352,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $('Normalize Coding Project Rosters').all().map((item) => item.json);\nconst expectedSources = [\n  'coding-project-roster:terminus',\n  'coding-project-roster:otter',\n  'coding-project-roster:suitelife',\n  'coding-project-roster:rudder',\n  'coding-project-task-evidence:terminus',\n];\nreturn expectedSources.map((sourceKey) => {\n  const sourceRows = rows.filter((row) => row.p_source_key === sourceKey);\n  if (!sourceRows.length) throw new Error('Cannot finalize empty roster snapshot: ' + sourceKey);\n  const syncRunIds = [...new Set(sourceRows.map((row) => row.p_sync_run_id))];\n  if (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Roster snapshot has inconsistent run IDs: ' + sourceKey);\n  return { json: {\n    p_source_key: sourceKey,\n    p_sync_run_id: syncRunIds[0],\n    p_expected_count: sourceRows.length,\n  } };\n});"
+        "jsCode": "const rows = $('Normalize Coding Project Rosters').all().map((item) => item.json);\nconst expectedSources = [\n  'coding-project-roster:terminus',\n  'coding-project-roster:otter',\n  'coding-project-roster:suitelife',\n  'coding-project-roster:rudder',\n];\nreturn expectedSources.map((sourceKey) => {\n  const sourceRows = rows.filter((row) => row.p_source_key === sourceKey);\n  if (!sourceRows.length) throw new Error('Cannot finalize empty roster snapshot: ' + sourceKey);\n  const syncRunIds = [...new Set(sourceRows.map((row) => row.p_sync_run_id))];\n  if (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Roster snapshot has inconsistent run IDs: ' + sourceKey);\n  return { json: {\n    p_source_key: sourceKey,\n    p_sync_run_id: syncRunIds[0],\n    p_expected_count: sourceRows.length,\n  } };\n});"
       },
       "id": "3809a120-1fe5-4242-9a04-21b5688c12c9",
       "name": "Prepare Coding Roster Finalizers",
@@ -497,7 +441,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(email + ': invalid ' + label + ' count ' + JSON.stringify(value));\n  return parsed;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  if (key(read(row, 'SOURCE')) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'EMAIL')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Terminus Task Pull: invalid email ' + JSON.stringify(email));\n  if (metrics.has(email)) throw new Error('Terminus Task Pull: duplicate email ' + email);\n\n  const submitted = count(read(row, 'TOTAL SUBMISSIONS'), 'submitted', email);\n  const accepted = count(read(row, 'TOTAL ACCEPTED'), 'accepted', email);\n  const rejected = count(read(row, 'REJECTED'), 'rejected', email);\n  const rework = count(read(row, 'NEEDS REVISION'), 'rework', email);\n  const evaluationPending = count(read(row, 'EVAL PENDING'), 'evaluation pending', email)\n    + count(read(row, 'PENDING REVIEW'), 'pending review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error(email + ': Terminus totals do not reconcile');\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\nif (!metrics.size) throw new Error('Terminus Task Pull returned no Crossing Hurdles rows');\nreturn [...metrics.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Terminus',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluationPending,\n  p_source_sheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: true,\n} }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) throw new Error(email + ': invalid ' + label + ' count ' + JSON.stringify(value));\n  return parsed;\n}\nconst asOf = new Date().toISOString().slice(0, 10);\nconst assignedEmails = new Set(\n  $('Normalize Coding Project Rosters').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_source_key === 'coding-project-roster:terminus')\n    .map((row) => row.p_email),\n);\nif (!assignedEmails.size) throw new Error('Terminus live roster returned no active candidates');\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  if (key(read(row, 'SOURCE')) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'EMAIL')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Terminus Task Pull: invalid email ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  if (metrics.has(email)) throw new Error('Terminus Task Pull: duplicate email ' + email);\n\n  const submitted = count(read(row, 'TOTAL SUBMISSIONS'), 'submitted', email);\n  const accepted = count(read(row, 'TOTAL ACCEPTED'), 'accepted', email);\n  const rejected = count(read(row, 'REJECTED'), 'rejected', email);\n  const rework = count(read(row, 'NEEDS REVISION'), 'rework', email);\n  const evaluationPending = count(read(row, 'EVAL PENDING'), 'evaluation pending', email)\n    + count(read(row, 'PENDING REVIEW'), 'pending review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error(email + ': Terminus totals do not reconcile');\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\nfor (const email of assignedEmails) {\n  if (!metrics.has(email)) {\n    metrics.set(email, { submitted: 0, accepted: 0, rejected: 0, rework: 0, evaluationPending: 0 });\n  }\n}\nreturn [...metrics.entries()].sort(([left], [right]) => left.localeCompare(right)).map(([email, metric]) => ({ json: {\n  p_email: email,\n  p_client: 'Snorkel',\n  p_vertical: 'Coding',\n  p_project_slug: 'Terminus',\n  p_as_of: asOf,\n  p_submitted: metric.submitted,\n  p_accepted: metric.accepted,\n  p_rejected: metric.rejected,\n  p_rework: metric.rework,\n  p_evaluation_pending: metric.evaluationPending,\n  p_source_sheet: 'Snorkel MainTerminus Coding Projects - Internal Dhruv / Terminus Task Pull',\n  p_metric_kind: 'cumulative',\n  p_allow_missing_assignment: false,\n} }));"
       },
       "id": "e77d72a4-1fe2-4233-a1a7-3819826445a8",
       "name": "Normalize Terminus Tasks - Unified",
@@ -606,7 +550,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n    const partial = entries.find(([column, value]) => key(column).includes(name) && value !== null && value !== undefined);\n    if (partial) return partial[1];\n  }\n  return '';\n}\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Contributor Email')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Otter Task ID Tracking: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Otter Task ID Tracking: invalid email ' + JSON.stringify(email));\n  const eventKey = 'otter|' + taskId;\n  if (events.has(eventKey)) throw new Error('Otter Task ID Tracking: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Otter',\n    p_project_name_raw: 'Otter',\n    p_task_type: text(read(row, 'Workflow')) || null,\n    p_status: text(read(row, 'Current Status')),\n    p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,\n    p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',\n    p_allow_missing_assignment: true,\n  });\n}\nif (!events.size) throw new Error('Otter Task ID Tracking returned no task rows');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const exact = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (exact) return exact[1];\n    const partial = entries.find(([column, value]) => key(column).includes(name) && value !== null && value !== undefined);\n    if (partial) return partial[1];\n  }\n  return '';\n}\nfunction status(value) {\n  const normalized = text(value).toLowerCase();\n  if (['accepted', 'approved', 'provisionally accepted', 'completed'].includes(normalized)) return 'accepted';\n  if (['rejected', 'invalid', 'non fixable', 'non-fixable'].includes(normalized)) return 'rejected';\n  if (['needs revision', 'needs_revision', 'rework', 'requiring rework', 'fixable'].includes(normalized)) return 'rework';\n  if (['', 'waiting for review', 'pending review', 'evaluation pending', 'evaluation_pending', 'submitted', 'in progress', 'assigned'].includes(normalized)) return 'evaluation_pending';\n  throw new Error('Otter Task ID Tracking: unsupported status ' + JSON.stringify(value));\n}\nconst assignedEmails = new Set(\n  $('Normalize Coding Project Rosters').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_source_key === 'coding-project-roster:otter')\n    .map((row) => row.p_email),\n);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Contributor Email')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Otter Task ID Tracking: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Otter Task ID Tracking: invalid email ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  const eventKey = ['otter', email, taskId.toLowerCase()].join('|');\n  if (events.has(eventKey)) throw new Error('Otter Task ID Tracking: duplicate candidate/task pair ' + eventKey);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Otter',\n    p_project_name_raw: 'Otter',\n    p_task_type: text(read(row, 'Workflow')) || null,\n    p_status: status(read(row, 'Current Status')),\n    p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,\n    p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',\n    p_source_key: 'task-source:otter',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('Otter Task ID Tracking returned no tasks for active Otter candidates');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
       },
       "id": "59a2c6b5-e02b-4b8a-ae13-2166d069bc22",
       "name": "Normalize Otter Tasks - Unified",
@@ -619,7 +563,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
       },
       "id": "e86b597f-4c55-426a-bbbc-c264134ced45",
       "name": "Batch Otter Tasks - Unified",
@@ -633,12 +577,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
           "timeout": 30000
         }
@@ -663,7 +607,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
       },
       "id": "094286a3-67cd-49d0-b5c8-258413127aa5",
       "name": "Validate Otter Tasks - Unified",
@@ -672,6 +616,63 @@
       "position": [
         9360,
         2620
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Otter Tasks - Unified\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "bd49c173-5585-4937-8bad-16847bb68822",
+      "name": "Prepare Otter Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9600,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "6ad61d68-5d3f-4756-839a-ac710ed9219a",
+      "name": "Finalize Otter Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9840,
+        2560
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "e7596ab5-cd63-4e68-b1c6-90b8e29ab7e3",
+      "name": "Validate Otter Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10080,
+        2560
       ]
     },
     {
@@ -708,7 +709,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nconst events = new Map();\nconst hasBpoSourceColumn = items.some((item) =>\n  Object.keys(item.json || {}).some((column) => key(column) === 'bposource')\n);\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  if (!taskId) continue;\n  const bpoSource = text(read(row, 'BPO Source'));\n  if (hasBpoSourceColumn && key(bpoSource) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'Assignee', 'User Email', 'Email')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Rudder Task Raw Pull: invalid email ' + JSON.stringify(email));\n  const eventKey = 'rudder|' + taskId;\n  if (events.has(eventKey)) throw new Error('Rudder Task Raw Pull: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Rudder',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: text(read(row, 'Task Status', 'State Enum', 'Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,\n    p_bpo_source: bpoSource || null,\n    p_source_sheet: 'Snorkel MainRudder Internal / Task Raw Pull',\n    p_allow_missing_assignment: true,\n  });\n}\nif (!events.size) throw new Error('Rudder Task Raw Pull returned no Crossing Hurdles task rows');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction status(value) {\n  const normalized = text(value).toLowerCase();\n  if (['accepted', 'approved', 'provisionally accepted', 'completed'].includes(normalized)) return 'accepted';\n  if (['rejected', 'invalid', 'non fixable', 'non-fixable'].includes(normalized)) return 'rejected';\n  if (['needs revision', 'needs_revision', 'rework', 'requiring rework', 'fixable'].includes(normalized)) return 'rework';\n  if (['', 'waiting for review', 'pending review', 'evaluation pending', 'evaluation_pending', 'submitted', 'in progress', 'assigned'].includes(normalized)) return 'evaluation_pending';\n  throw new Error('Rudder Task Raw Pull: unsupported status ' + JSON.stringify(value));\n}\nconst assignedEmails = new Set(\n  $('Normalize Coding Project Rosters').all()\n    .map((item) => item.json)\n    .filter((row) => row.p_source_key === 'coding-project-roster:rudder')\n    .map((row) => row.p_email),\n);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nconst hasBpoSourceColumn = items.some((item) =>\n  Object.keys(item.json || {}).some((column) => key(column) === 'bposource')\n);\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  if (!taskId) continue;\n  const bpoSource = text(read(row, 'BPO Source'));\n  if (hasBpoSourceColumn && key(bpoSource) !== 'crossinghurdles') continue;\n  const email = text(read(row, 'Assignee', 'User Email', 'Email')).toLowerCase();\n  if (!EMAIL_RE.test(email)) throw new Error('Rudder Task Raw Pull: invalid email ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  const eventKey = ['rudder', email, taskId.toLowerCase()].join('|');\n  if (events.has(eventKey)) throw new Error('Rudder Task Raw Pull: duplicate candidate/task pair ' + eventKey);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Coding',\n    p_project_slug: 'Rudder',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: status(read(row, 'Task Status', 'State Enum', 'Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,\n    p_bpo_source: bpoSource || null,\n    p_source_sheet: 'Snorkel MainRudder Internal / Task Raw Pull',\n    p_source_key: 'task-source:rudder',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('Rudder Task Raw Pull returned no tasks for active Rudder candidates');\nreturn [...events.values()].sort((left, right) => left.p_event_key.localeCompare(right.p_event_key)).map((row) => ({ json: row }));"
       },
       "id": "32480019-4528-44ad-8b36-91d71a06c2e2",
       "name": "Normalize Rudder Tasks - Unified",
@@ -721,7 +722,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
       },
       "id": "0aff9e79-7706-40de-90d2-172322de2cd8",
       "name": "Batch Rudder Tasks - Unified",
@@ -735,12 +736,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_events_batch",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "supabaseApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
           "timeout": 30000
         }
@@ -765,7 +766,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
       },
       "id": "87fd64b4-eb83-4266-92d7-68afdd5a8d45",
       "name": "Validate Rudder Tasks - Unified",
@@ -774,6 +775,63 @@
       "position": [
         9360,
         2800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Rudder Tasks - Unified\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "f2e84878-055e-4be6-87a0-95e5ae0979e4",
+      "name": "Prepare Rudder Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        9600,
+        2860
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "faa8064a-b560-44d5-847a-2d6de6d401a6",
+      "name": "Finalize Rudder Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        9840,
+        2860
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "8b34f321-d7dc-426d-bb75-725d252632c7",
+      "name": "Validate Rudder Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        10080,
+        2860
       ]
     },
     {
@@ -794,7 +852,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        9600,
+        10320,
         2710
       ],
       "credentials": {
@@ -829,11 +887,6 @@
           },
           {
             "node": "Read Rudder Live Candidates - Unified",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Terminus Task Evidence - Unified",
             "type": "main",
             "index": 0
           }
@@ -878,17 +931,6 @@
         [
           {
             "node": "Tag Rudder Roster",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Read Terminus Task Evidence - Unified": {
-      "main": [
-        [
-          {
-            "node": "Tag Terminus Task Evidence",
             "type": "main",
             "index": 0
           }
@@ -957,17 +999,6 @@
             "node": "Merge + Rudder Roster",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Tag Terminus Task Evidence": {
-      "main": [
-        [
-          {
-            "node": "Merge + Rudder Roster",
-            "type": "main",
-            "index": 2
           }
         ]
       ]
@@ -1206,7 +1237,29 @@
       "main": [
         [
           {
-            "node": "Refresh Coding Task Metrics - Unified",
+            "node": "Prepare Otter Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Otter Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Otter Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Otter Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Otter Task Snapshot",
             "type": "main",
             "index": 0
           }
@@ -1214,6 +1267,50 @@
       ]
     },
     "Validate Rudder Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Prepare Rudder Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Rudder Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Rudder Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Rudder Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Rudder Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Otter Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Refresh Coding Task Metrics - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Rudder Task Snapshot": {
       "main": [
         [
           {

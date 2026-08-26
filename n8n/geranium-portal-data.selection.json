@@ -1,0 +1,833 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6,
+              "triggerAtMinute": 45
+            }
+          ]
+        }
+      },
+      "id": "aa38c11a-c8d5-48d0-ab2a-1eab4d83f301",
+      "name": "Schedule Trigger - Geranium Portal Data",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        10080,
+        3600
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Z1_5ShwWLN3wMg5fEZuTqFfUtLHZ_UCn-MJU3QGbHpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Allocation Roster",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "b0fd6714-6bca-4b1d-b0cc-e52ca8391776",
+      "name": "Read Geranium Allocation Roster",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        10320,
+        3480
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1aHldihxZXYNAc1IVCbxfP9x51gR31cC4i7PK-rr60yk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Allocated ECs",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "fd5bc28f-3ed2-44d7-a95d-14d6ab7b5c85",
+      "name": "Read Geranium Allocated ECs",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        10320,
+        3660
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2508ddb-3eba-4e02-a59a-6ca44b6f0a2c",
+              "name": "_source",
+              "value": "allocation_roster",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ee22a205-3cfd-47e6-a15d-5ebaa1dc5b75",
+      "name": "Tag Geranium Allocation Roster",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10560,
+        3480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8c71695f-a899-4c79-a6b3-a4dd06764780",
+              "name": "_source",
+              "value": "allocated_ecs",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "c537d179-1a50-4307-a5f5-b28828098f63",
+      "name": "Tag Geranium Allocated ECs",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        10560,
+        3660
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "49a6a840-0948-42bb-8981-dad57b770b9a",
+      "name": "Merge Geranium Allocation Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        10800,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction verification(value) {\n  const status = text(value).toLowerCase();\n  if (/received and completed|completed|verified|approved/.test(status)) return 'done';\n  if (status.includes('exception')) return 'exception';\n  return 'awaited';\n}\nfunction remofirst(value) {\n  const status = text(value).toLowerCase();\n  if (/received and completed|completed|verified|approved/.test(status)) return 'approved';\n  if (/not received|not started|rejected/.test(status)) return 'not_received';\n  return 'pending';\n}\nfunction contract(value) {\n  const status = text(value).toLowerCase();\n  if (status && !/not signed/.test(status) && /signed|completed/.test(status)) return 'signed';\n  if (!status || /not signed|not received|not sent|not started/.test(status)) return 'not_signed';\n  if (/received|sent|shared/.test(status)) return 'sent';\n  return 'not_signed';\n}\n\nconst roster = new Map();\nfor (const item of items.filter((entry) => text(entry.json._source) === 'allocation_roster')) {\n  const row = item.json;\n  const email = text(read(row, 'Email')).toLowerCase();\n  const sector = text(read(row, 'Sector'));\n  if (!email && !sector) continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Allocation Roster: invalid email ' + JSON.stringify(email));\n  if (!sector) throw new Error('Allocation Roster: missing Sector for ' + email);\n  if (roster.has(email) && roster.get(email) !== sector) {\n    throw new Error('Allocation Roster: conflicting sectors for ' + email);\n  }\n  roster.set(email, sector);\n}\nif (!roster.size) throw new Error('Allocation Roster returned no candidates');\n\nconst syncRunId = String($execution.id);\nconst assignments = new Map();\nfor (const item of items.filter((entry) => text(entry.json._source) === 'allocated_ecs')) {\n  const row = item.json;\n  const email = text(read(row, 'Email')).toLowerCase();\n  const project = text(read(row, 'Project'));\n  const projectStatus = text(read(row, 'Project Status')).toLowerCase();\n  if (!email && !project && !projectStatus) continue;\n  if (project.toLowerCase() !== 'geranium' || projectStatus !== 'active') continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Allocated ECs: invalid active candidate email ' + JSON.stringify(email));\n  if (assignments.has(email)) throw new Error('Allocated ECs: duplicate active candidate ' + email);\n\n  const fullName = text(read(row, 'Name'));\n  if (!fullName) throw new Error('Allocated ECs: missing candidate name for ' + email);\n  const domain = roster.get(email) || text(read(row, 'Sector'));\n  if (!domain) throw new Error('Geranium: missing domain for ' + email);\n\n  assignments.set(email, {\n    p_email: email,\n    p_full_name: fullName,\n    p_client: 'Snorkel',\n    p_vertical: 'Geranium',\n    p_project: 'Geranium',\n    p_domain: domain,\n    p_bgv_id_status: verification(read(row, 'Spring Verify')),\n    p_remofirst_status: remofirst(read(row, 'RemoFirst Verification')),\n    p_contract_status: contract(read(row, 'Contract')),\n    p_source_key: 'geranium-allocated-ecs',\n    p_source_priority: 120,\n    p_source_sheet: 'Project Geranium / Allocated ECs; Geranium - Crossing Hurdles Tracker / Allocation Roster',\n    p_source_row: row.row_number || null,\n    p_sync_run_id: syncRunId,\n    p_membership_authoritative: true,\n  });\n}\nif (!assignments.size) throw new Error('Allocated ECs returned no active Geranium candidates');\n\nconst orphanedRosterEmails = [...roster.keys()].filter((email) => !assignments.has(email));\nif (orphanedRosterEmails.length) {\n  throw new Error('Allocation Roster contains candidates missing from active Allocated ECs: ' + orphanedRosterEmails.slice(0, 20).join(', '));\n}\n\nreturn [...assignments.values()]\n  .sort((left, right) => left.p_email.localeCompare(right.p_email))\n  .map((row) => ({ json: row }));"
+      },
+      "id": "6b5e28ed-3886-4f8d-b5d1-63aaf7a08727",
+      "name": "Normalize Geranium Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11040,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nrows.sort((left, right) => [left.p_email, left.p_vertical, left.p_project].join('\\u0000').localeCompare([right.p_email, right.p_vertical, right.p_project].join('\\u0000')));\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 100) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 100) } });\n}\nreturn chunks;"
+      },
+      "id": "b0642820-c6aa-48f1-9dfa-2c6283b7116a",
+      "name": "Batch Geranium Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11280,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_portal_assignments_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "789a2302-508d-48c1-8d20-95c730dc4215",
+      "name": "Upsert Geranium Assignments",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        11520,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "2fdf061b-6b73-4aba-9c2f-f4298ec37dba",
+      "name": "Validate Geranium Assignments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        11760,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $('Normalize Geranium Assignments').all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty Geranium roster');\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id))];\nif (syncRunIds.length !== 1 || !syncRunIds[0]) throw new Error('Geranium roster has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: 'geranium-allocated-ecs',\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "532e3447-eeff-42fe-9306-e028b50272be",
+      "name": "Prepare Geranium Roster Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12000,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_portal_assignment_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "2ff5c3ec-6d8d-4961-bb3d-e72030f51297",
+      "name": "Finalize Geranium Roster Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        12240,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "0d01ea36-79eb-48fd-8241-b5c3c0aba427",
+      "name": "Validate Geranium Roster Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12480,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Z1_5ShwWLN3wMg5fEZuTqFfUtLHZ_UCn-MJU3QGbHpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Task Breakdown",
+          "mode": "name"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "A1:H"
+            }
+          }
+        }
+      },
+      "id": "03391391-100b-4007-865c-cd8de1acf645",
+      "name": "Read Geranium Task Breakdown",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        12720,
+        3570
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\n\nconst assignedEmails = new Set($('Normalize Geranium Assignments').all().map((item) => item.json.p_email));\nconst supportedStatuses = new Set(['provisionally accepted', 'waiting for review', 'needs revision', 'rejected']);\nconst syncRunId = String($execution.id);\nconst events = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const taskId = text(read(row, 'Task ID'));\n  const email = text(read(row, 'Assignee')).toLowerCase();\n  if (!taskId && !email) continue;\n  if (!taskId) throw new Error('Task Breakdown: missing task ID for ' + email);\n  if (!EMAIL_RE.test(email)) throw new Error('Task Breakdown: invalid assignee ' + JSON.stringify(email));\n  const hasActiveAssignment = assignedEmails.has(email);\n  if (!hasActiveAssignment) continue;\n  const status = text(read(row, 'Task Status')).toLowerCase();\n  if (!supportedStatuses.has(status)) throw new Error('Task Breakdown: unsupported status ' + JSON.stringify(status));\n\n  const eventKey = 'geranium|' + taskId.toLowerCase();\n  if (events.has(eventKey)) throw new Error('Task Breakdown: duplicate task ID ' + taskId);\n  events.set(eventKey, {\n    p_event_key: eventKey,\n    p_task_external_id: taskId,\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Geranium',\n    p_project_slug: 'Geranium',\n    p_project_name_raw: text(read(row, 'Project Name')) || 'Geranium',\n    p_task_type: text(read(row, 'Task Type')) || null,\n    p_status: text(read(row, 'Task Status')),\n    p_created_at_source: text(read(row, 'Created At')) || null,\n    p_submitted_at_source: text(read(row, 'Last Submitted At')) || null,\n    p_bpo_source: text(read(row, 'BPO Source')) || null,\n    p_source_sheet: 'Geranium - Crossing Hurdles Tracker / Task Breakdown',\n    p_source_key: 'task-source:geranium',\n    p_sync_run_id: syncRunId,\n    p_allow_missing_assignment: false,\n  });\n}\nif (!events.size) throw new Error('Task Breakdown returned no tasks for active Geranium candidates');\nreturn [...events.values()]\n  .sort((left, right) => left.p_event_key.localeCompare(right.p_event_key))\n  .map((row) => ({ json: row }));"
+      },
+      "id": "370545cb-a486-49fb-b770-baa5ee6bb40f",
+      "name": "Normalize Geranium Task Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        12960,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\nif (!rows.length) throw new Error('Task snapshot returned no active task rows');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot must contain exactly one source key');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot must contain exactly one run ID');\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: {\n    p_source_key: sourceKeys[0],\n    p_sync_run_id: syncRunIds[0],\n    p_rows: rows.slice(index, index + 50),\n  } });\n}\nreturn chunks;"
+      },
+      "id": "b955782e-a14d-4a5a-ba91-1d7a728ecd96",
+      "name": "Batch Geranium Task Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13200,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "8f2ef90e-91ca-4e84-ac26-1c70d7d424f4",
+      "name": "Upsert Geranium Task Events",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        13440,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "a9bdfe8d-6e2a-4cef-ab3f-bb991e1718b4",
+      "name": "Validate Geranium Task Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13680,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $(\"Normalize Geranium Task Events\").all().map((item) => item.json);\nif (!rows.length) throw new Error('Cannot finalize an empty task snapshot');\nconst sourceKeys = [...new Set(rows.map((row) => row.p_source_key).filter(Boolean))];\nconst syncRunIds = [...new Set(rows.map((row) => row.p_sync_run_id).filter(Boolean))];\nif (sourceKeys.length !== 1) throw new Error('Task snapshot has inconsistent source keys');\nif (syncRunIds.length !== 1) throw new Error('Task snapshot has inconsistent run IDs');\nreturn [{ json: {\n  p_source_key: sourceKeys[0],\n  p_sync_run_id: syncRunIds[0],\n  p_expected_count: rows.length,\n} }];"
+      },
+      "id": "41f338fa-2f94-4773-a1da-e54f0bf60134",
+      "name": "Prepare Geranium Task Snapshot Finalizer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        13920,
+        3510
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/finalize_task_event_snapshot",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "81ea7671-7ab8-4d4a-a3d5-7ce138fed429",
+      "name": "Finalize Geranium Task Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        14160,
+        3510
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst rejected = results.filter((row) => row?.out_status !== 'ok');\nif (rejected.length) {\n  throw new Error('Supabase did not accept ' + rejected.length + ' rows: ' + JSON.stringify(rejected.slice(0, 20)));\n}\nreturn [{ json: { processed: results.length, skipped: 0 } }];"
+      },
+      "id": "7909b2d9-5418-4b96-87f5-04ce2cd98e8a",
+      "name": "Validate Geranium Task Snapshot",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14400,
+        3510
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Z1_5ShwWLN3wMg5fEZuTqFfUtLHZ_UCn-MJU3QGbHpk",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Metrics per EC",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "eb84727b-7726-4d66-aefe-0a45af5d7980",
+      "name": "Read Geranium Metrics per EC",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        14640,
+        3570
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Fwum6c17KC1w1Elo",
+          "name": "Google Sheets account 2"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 15000,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfunction key(value) { return String(value ?? '').trim().toLowerCase().replace(/[^a-z0-9]/g, ''); }\nfunction text(value) { return String(value ?? '').trim(); }\nfunction read(row, ...names) {\n  const entries = Object.entries(row || {});\n  for (const name of names.map(key)) {\n    const match = entries.find(([column, value]) => key(column) === name && value !== null && value !== undefined);\n    if (match) return match[1];\n  }\n  return '';\n}\nfunction count(value, label, email) {\n  const raw = text(value).replace(/[,\\s]/g, '');\n  if (!raw) return 0;\n  const parsed = Number(raw);\n  if (!Number.isInteger(parsed) || parsed < 0) {\n    throw new Error('Metrics per EC: invalid ' + label + ' for ' + email + ': ' + JSON.stringify(value));\n  }\n  return parsed;\n}\n\nconst assignedEmails = new Set($('Normalize Geranium Assignments').all().map((item) => item.json.p_email));\nconst metrics = new Map();\nfor (const item of items) {\n  const row = item.json;\n  const email = text(read(row, 'Assignee')).toLowerCase();\n  if (!email) continue;\n  if (!EMAIL_RE.test(email)) throw new Error('Metrics per EC: invalid assignee ' + JSON.stringify(email));\n  if (!assignedEmails.has(email)) continue;\n  if (metrics.has(email)) throw new Error('Metrics per EC: duplicate candidate ' + email);\n\n  const submitted = count(read(row, 'Total Tasks', 'Total Task'), 'Total Tasks', email);\n  const accepted = count(read(row, 'Provisionally Accepted'), 'Provisionally Accepted', email);\n  const rejected = count(read(row, 'Rejected'), 'Rejected', email);\n  const rework = count(read(row, 'Needs Revision', 'Need Revision'), 'Needs Revision', email);\n  const evaluationPending = count(read(row, 'Waiting For Review', 'Waiting for review'), 'Waiting For Review', email);\n  if (submitted !== accepted + rejected + rework + evaluationPending) {\n    throw new Error('Metrics per EC: task totals do not reconcile for ' + email);\n  }\n  metrics.set(email, { submitted, accepted, rejected, rework, evaluationPending });\n}\n\nconst taskEmails = new Set(\n  $('Normalize Geranium Task Events').all().map((item) => item.json.p_email),\n);\nconst missingMetrics = [...assignedEmails].filter((email) => !metrics.has(email));\nconst missingWithTasks = missingMetrics.filter((email) => taskEmails.has(email));\nif (missingWithTasks.length) {\n  throw new Error(\n    'Metrics per EC is missing ' + missingWithTasks.length +\n    ' active candidate(s) that have Task Breakdown records',\n  );\n}\nfor (const email of missingMetrics) {\n  metrics.set(email, {\n    submitted: 0,\n    accepted: 0,\n    rejected: 0,\n    rework: 0,\n    evaluationPending: 0,\n  });\n}\n\nconst asOf = new Date().toISOString().slice(0, 10);\nreturn [...metrics.entries()]\n  .sort(([left], [right]) => left.localeCompare(right))\n  .map(([email, metric]) => ({ json: {\n    p_email: email,\n    p_client: 'Snorkel',\n    p_vertical: 'Geranium',\n    p_project_slug: 'Geranium',\n    p_as_of: asOf,\n    p_submitted: metric.submitted,\n    p_accepted: metric.accepted,\n    p_rejected: metric.rejected,\n    p_rework: metric.rework,\n    p_evaluation_pending: metric.evaluationPending,\n    p_source_sheet: 'Geranium - Crossing Hurdles Tracker / Metrics per EC',\n    p_metric_kind: 'cumulative',\n    p_allow_missing_assignment: false,\n  } }));"
+      },
+      "id": "caa7b78b-ae03-4a4b-9e9c-33493355c48f",
+      "name": "Normalize Geranium Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        14880,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map((item) => item.json).filter((row) => row.p_email);\n\nconst chunks = [];\nfor (let index = 0; index < rows.length; index += 50) {\n  chunks.push({ json: { p_rows: rows.slice(index, index + 50) } });\n}\nreturn chunks;"
+      },
+      "id": "608402be-ebb3-4cb0-9cfb-15ee92537956",
+      "name": "Batch Geranium Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15120,
+        3570
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/upsert_task_metrics_batch",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"p_rows\": $json.p_rows } }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "283ca664-2895-4c9b-8a39-78cf95424c3c",
+      "name": "Upsert Geranium Metrics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        15360,
+        3570
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "6brp0rQoBpo3lhkv",
+          "name": "Supabase Snorkel"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 4,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = items.flatMap((item) => {\n  if (Array.isArray(item.json)) return item.json;\n  if (Array.isArray(item.json?.body)) return item.json.body;\n  if (Array.isArray(item.json?.data)) return item.json.data;\n  return [item.json];\n});\nconst errors = results.filter((row) => row?.out_status === 'error');\nif (errors.length) {\n  throw new Error('Supabase rejected ' + errors.length + ' rows: ' + JSON.stringify(errors.slice(0, 20)));\n}\nreturn [{ json: {\n  processed: results.filter((row) => row?.out_status === 'ok').length,\n  skipped: results.filter((row) => row?.out_status === 'skipped').length,\n  skipped_rows: results\n    .filter((row) => row?.out_status === 'skipped')\n    .map((row) => ({\n      email: row.out_email,\n      project: row.out_project,\n      component: row.out_component,\n      reason: row.out_message,\n      amount: row.out_amount,\n    })),\n} }];"
+      },
+      "id": "6291e579-f0aa-47c2-a0a2-4fd8ba888eaa",
+      "name": "Validate Geranium Metrics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        15600,
+        3570
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger - Geranium Portal Data": {
+      "main": [
+        [
+          {
+            "node": "Read Geranium Allocation Roster",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Geranium Allocated ECs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Allocation Roster": {
+      "main": [
+        [
+          {
+            "node": "Tag Geranium Allocation Roster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Allocated ECs": {
+      "main": [
+        [
+          {
+            "node": "Tag Geranium Allocated ECs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Geranium Allocation Roster": {
+      "main": [
+        [
+          {
+            "node": "Merge Geranium Allocation Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Geranium Allocated ECs": {
+      "main": [
+        [
+          {
+            "node": "Merge Geranium Allocation Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Geranium Allocation Sources": {
+      "main": [
+        [
+          {
+            "node": "Normalize Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Batch Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Upsert Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Assignments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Assignments": {
+      "main": [
+        [
+          {
+            "node": "Prepare Geranium Roster Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Geranium Roster Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Geranium Roster Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Geranium Roster Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Roster Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Roster Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Read Geranium Task Breakdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Task Breakdown": {
+      "main": [
+        [
+          {
+            "node": "Normalize Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Batch Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Upsert Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Task Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Task Events": {
+      "main": [
+        [
+          {
+            "node": "Prepare Geranium Task Snapshot Finalizer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Geranium Task Snapshot Finalizer": {
+      "main": [
+        [
+          {
+            "node": "Finalize Geranium Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Finalize Geranium Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Task Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Geranium Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Read Geranium Metrics per EC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Geranium Metrics per EC": {
+      "main": [
+        [
+          {
+            "node": "Normalize Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Geranium Metrics": {
+      "main": [
+        [
+          {
+            "node": "Batch Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch Geranium Metrics": {
+      "main": [
+        [
+          {
+            "node": "Upsert Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Geranium Metrics": {
+      "main": [
+        [
+          {
+            "node": "Validate Geranium Metrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
