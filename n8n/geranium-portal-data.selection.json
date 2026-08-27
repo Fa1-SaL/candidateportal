@@ -349,7 +349,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 180000
         }
       },
       "id": "8f2ef90e-91ca-4e84-ac26-1c70d7d424f4",
@@ -406,7 +406,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 180000
         }
       },
       "id": "81ea7671-7ab8-4d4a-a3d5-7ce138fed429",

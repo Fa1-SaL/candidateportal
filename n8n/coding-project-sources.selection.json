@@ -246,37 +246,15 @@
       ]
     },
     {
-      "parameters": {},
-      "id": "231a78fc-faa7-4ccd-bfc8-3f54fe034403",
-      "name": "Merge Terminus + Otter Rosters",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        6000,
-        2500
-      ]
-    },
-    {
-      "parameters": {},
-      "id": "c0001176-a820-460a-8fd7-375d86f308e2",
-      "name": "Merge + SuiteLife Roster",
+      "parameters": {
+        "numberInputs": 4
+      },
+      "id": "cd01ef6c-de41-4045-8874-6e7188eb78ba",
+      "name": "Merge Coding Project Rosters",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
         6240,
-        2560
-      ]
-    },
-    {
-      "parameters": {
-        "numberInputs": 3
-      },
-      "id": "0f9d1849-5dc0-45b6-9e68-ff154f7c6b77",
-      "name": "Merge + Rudder Roster",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        6480,
         2620
       ]
     },
@@ -584,7 +562,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 180000
         }
       },
       "id": "28f77640-a385-4cc9-b618-c2448f37e21b",
@@ -641,7 +619,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 180000
         }
       },
       "id": "6ad61d68-5d3f-4756-839a-ac710ed9219a",
@@ -743,7 +721,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_rows\": $json.p_rows } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 180000
         }
       },
       "id": "2b111686-9e0c-48e7-9418-c527e81886ed",
@@ -800,7 +778,7 @@
         "specifyBody": "json",
         "jsonBody": "={{ { \"p_source_key\": $json.p_source_key, \"p_sync_run_id\": $json.p_sync_run_id, \"p_expected_count\": $json.p_expected_count } }}",
         "options": {
-          "timeout": 30000
+          "timeout": 180000
         }
       },
       "id": "faa8064a-b560-44d5-847a-2d6de6d401a6",
@@ -941,7 +919,7 @@
       "main": [
         [
           {
-            "node": "Merge Terminus + Otter Rosters",
+            "node": "Merge Coding Project Rosters",
             "type": "main",
             "index": 0
           }
@@ -952,20 +930,9 @@
       "main": [
         [
           {
-            "node": "Merge Terminus + Otter Rosters",
+            "node": "Merge Coding Project Rosters",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge Terminus + Otter Rosters": {
-      "main": [
-        [
-          {
-            "node": "Merge + SuiteLife Roster",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -974,20 +941,9 @@
       "main": [
         [
           {
-            "node": "Merge + SuiteLife Roster",
+            "node": "Merge Coding Project Rosters",
             "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge + SuiteLife Roster": {
-      "main": [
-        [
-          {
-            "node": "Merge + Rudder Roster",
-            "type": "main",
-            "index": 0
+            "index": 2
           }
         ]
       ]
@@ -996,14 +952,14 @@
       "main": [
         [
           {
-            "node": "Merge + Rudder Roster",
+            "node": "Merge Coding Project Rosters",
             "type": "main",
-            "index": 1
+            "index": 3
           }
         ]
       ]
     },
-    "Merge + Rudder Roster": {
+    "Merge Coding Project Rosters": {
       "main": [
         [
           {
@@ -1087,16 +1043,6 @@
             "node": "Read Terminus Task Pull - Unified",
             "type": "main",
             "index": 0
-          },
-          {
-            "node": "Read Otter Task IDs - Unified",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Rudder Task Raw Pull - Unified",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -1139,6 +1085,17 @@
         [
           {
             "node": "Validate Terminus Tasks - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Terminus Tasks - Unified": {
+      "main": [
+        [
+          {
+            "node": "Read Otter Task IDs - Unified",
             "type": "main",
             "index": 0
           }
@@ -1266,6 +1223,17 @@
         ]
       ]
     },
+    "Validate Otter Task Snapshot": {
+      "main": [
+        [
+          {
+            "node": "Read Rudder Task Raw Pull - Unified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Validate Rudder Tasks - Unified": {
       "main": [
         [
@@ -1293,17 +1261,6 @@
         [
           {
             "node": "Validate Rudder Task Snapshot",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Validate Otter Task Snapshot": {
-      "main": [
-        [
-          {
-            "node": "Refresh Coding Task Metrics - Unified",
             "type": "main",
             "index": 0
           }

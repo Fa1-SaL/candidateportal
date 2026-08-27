@@ -91,6 +91,38 @@ function sheets(name, documentId, sheetName, position, options = {}) {
   );
 }
 
+function visibleSheetGrid(name, documentId, sheetRange, position) {
+  const nodeName = addNode(
+    name,
+    "n8n-nodes-base.httpRequest",
+    4.2,
+    position,
+    {
+      url: `https://sheets.googleapis.com/v4/spreadsheets/${documentId}`,
+      authentication: "predefinedCredentialType",
+      nodeCredentialType: "googleSheetsOAuth2Api",
+      sendQuery: true,
+      queryParameters: {
+        parameters: [
+          { name: "includeGridData", value: "true" },
+          { name: "ranges", value: sheetRange },
+          {
+            name: "fields",
+            value:
+              "sheets(data(startRow,rowData(values(formattedValue)),rowMetadata(hiddenByFilter,hiddenByUser)))",
+          },
+        ],
+      },
+      options: { timeout: 120000 },
+    },
+    googleCredential,
+  );
+  const node = nodes.find((candidate) => candidate.name === nodeName);
+  node.maxTries = 8;
+  node.waitBetweenTries = 30000;
+  return nodeName;
+}
+
 function tag(name, source, position) {
   return addNode(name, "n8n-nodes-base.set", 3.4, position, {
     assignments: {
@@ -398,16 +430,45 @@ function contract(signed, sent) {
   if (/sent|shared/.test(sentStatus)) return 'sent';
   return null;
 }
+function cellText(cell) { return text(cell?.formattedValue); }
+const payload = items[0]?.json;
+const grid = payload?.sheets?.[0]?.data?.[0];
+const rowData = grid?.rowData;
+const rowMetadata = grid?.rowMetadata;
+if (!Array.isArray(rowData) || rowData.length < 2) {
+  throw new Error('PaperBench Live Candidates grid returned no data rows');
+}
+if (!Array.isArray(rowMetadata) || !rowMetadata.some((row) => row?.hiddenByFilter || row?.hiddenByUser)) {
+  throw new Error('PaperBench Live Candidates is missing hidden-row metadata; refusing an unfiltered roster');
+}
+const headers = (rowData[0]?.values || []).map(cellText);
+if (!headers.some((column) => key(column) === 'status')) {
+  throw new Error('PaperBench Live Candidates is missing the Status column');
+}
+const rosterRows = rowData.slice(1).flatMap((row, offset) => {
+  const sourceIndex = offset + 1;
+  const metadata = rowMetadata[sourceIndex] || {};
+  if (metadata.hiddenByFilter || metadata.hiddenByUser) return [];
+  const values = row?.values || [];
+  const result = { row_number: Number(grid.startRow || 0) + sourceIndex + 1 };
+  for (let index = 0; index < headers.length; index += 1) {
+    if (headers[index]) result[headers[index]] = cellText(values[index]);
+  }
+  return [result];
+});
+if (!rosterRows.length) throw new Error('PaperBench Live Candidates returned no visible rows');
 const output = [];
+const seenEmails = new Set();
 const syncRunId = String($execution.id);
-for (const item of items) {
-  const row = item.json;
+for (const row of rosterRows) {
   const candidateEmail = text(read(row, 'Email', 'Personal Email')).toLowerCase();
   if (!EMAIL_RE.test(candidateEmail) || text(read(row, 'Status')).toLowerCase() !== 'active') continue;
   const projects = text(read(row, 'Project'))
     .split(/[,;/]+/)
     .map((value) => value.trim().toLowerCase().replace(/\s+/g, ' '));
   if (!projects.some((project) => project === 'paperbench' || project === 'paper bench')) continue;
+  if (seenEmails.has(candidateEmail)) throw new Error('PaperBench Live Candidates has a duplicate active email: ' + candidateEmail);
+  seenEmails.add(candidateEmail);
   const fullName = [text(read(row, 'First Name')), text(read(row, 'Last name', 'Last Name'))].filter(Boolean).join(' ');
   const sourceDomain = text(read(row, 'Domain'));
   const domain = /^(coding|stem|mojave)$/i.test(sourceDomain) ? null : sourceDomain;
@@ -421,7 +482,7 @@ for (const item of items) {
     p_contract_status: contract(read(row, 'Contracts Signed'), read(row, 'Contract Sent')),
     p_source_key: 'paperbench-live-candidates',
     p_source_priority: 100,
-    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates',
+    p_source_sheet: 'Snorkel MainPaperBench Internal / PaperBench Live Candidates (visible Status = ACTIVE rows)',
     p_source_row: row.row_number || null,
     p_sync_run_id: syncRunId,
     p_membership_authoritative: true,
@@ -1045,7 +1106,7 @@ const SOURCES = {
   },
   sentinel_assessment: {
     vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'assessment',
-    componentLabel: 'Assessment', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July,2026(Assessment)',
+    componentLabel: 'Assessment', sourceSheet: 'SnorkelxSentinel - Sub Contract Payment / July/Aug2026(Assessment)',
   },
   sentinel_fixable: {
     vertical: 'Coding', project: 'Sentinel Ultra', componentKey: 'fixable',
@@ -1491,9 +1552,13 @@ const tagMaster = tag("Tag Snorkel Master", "master", [-1680, 1120]);
 const tagSent = tag("Tag Contracts Sent", "contract_sent", [-1680, 1240]);
 const tagSigned = tag("Tag Contracts Signed", "contract_signed", [-1680, 1360]);
 const tagSpring = tag("Tag SpringVerify", "springverify", [-1680, 1480]);
-const mergeMasterSent = addNode("Merge Master + Contract Sent", "n8n-nodes-base.merge", 3, [-1440, 1180], {});
-const mergeSigned = addNode("Merge + Contract Signed", "n8n-nodes-base.merge", 3, [-1200, 1240], {});
-const mergeSpring = addNode("Merge + SpringVerify", "n8n-nodes-base.merge", 3, [-960, 1300], {});
+const mergeMasterSources = addNode(
+  "Merge Unified Candidate Sources",
+  "n8n-nodes-base.merge",
+  3,
+  [-1200, 1300],
+  { numberInputs: 4 },
+);
 const normalizeMaster = code("Normalize Unified Candidate Assignments", masterNormalizer, [-720, 1300]);
 const batchMaster = code("Batch Unified Candidate Assignments", assignmentBatchCode, [-480, 1300]);
 const upsertMaster = http("Upsert Unified Candidate Assignments", "upsert_portal_assignments_batch", [-240, 1300]);
@@ -1501,17 +1566,22 @@ const validateMaster = code("Validate Unified Candidate Assignments", validateCo
 
 for (const source of [master, contractSent, contractSigned, springverify]) connect(trigger, source);
 connect(master, tagMaster); connect(contractSent, tagSent); connect(contractSigned, tagSigned); connect(springverify, tagSpring);
-connect(tagMaster, mergeMasterSent, 0); connect(tagSent, mergeMasterSent, 1);
-connect(mergeMasterSent, mergeSigned, 0); connect(tagSigned, mergeSigned, 1);
-connect(mergeSigned, mergeSpring, 0); connect(tagSpring, mergeSpring, 1);
-connect(mergeSpring, normalizeMaster); connect(normalizeMaster, batchMaster); connect(batchMaster, upsertMaster); connect(upsertMaster, validateMaster);
+connect(tagMaster, mergeMasterSources, 0); connect(tagSent, mergeMasterSources, 1);
+connect(tagSigned, mergeMasterSources, 2); connect(tagSpring, mergeMasterSources, 3);
+connect(mergeMasterSources, normalizeMaster); connect(normalizeMaster, batchMaster); connect(batchMaster, upsertMaster); connect(upsertMaster, validateMaster);
 
-const paperCandidates = sheets("Read PaperBench Live Candidates - Unified", "1zgjIRlGOl2i7ZMFCufcxAIpU4SbSJgrQW1XBzJw2mQc", "PaperBench Live Candidates", [240, 1120]);
+const paperCandidates = visibleSheetGrid(
+  "Read PaperBench Live Candidates - Unified",
+  "1zgjIRlGOl2i7ZMFCufcxAIpU4SbSJgrQW1XBzJw2mQc",
+  "'PaperBench Live Candidates'!A:P",
+  [240, 1120],
+);
 const normalizePaperCandidates = code("Normalize PaperBench Status - Unified", paperbenchNormalizer, [480, 1120]);
 const batchPaperCandidates = code("Batch PaperBench Status - Unified", assignmentBatchCode, [720, 1120]);
 const upsertPaperCandidates = http("Upsert PaperBench Status - Unified", "upsert_portal_assignments_batch", [960, 1120]);
 const validatePaperCandidates = code("Validate PaperBench Status - Unified", validateCode, [1200, 1120]);
-connect(validateMaster, paperCandidates); connect(paperCandidates, normalizePaperCandidates); connect(normalizePaperCandidates, batchPaperCandidates); connect(batchPaperCandidates, upsertPaperCandidates); connect(upsertPaperCandidates, validatePaperCandidates);
+connect(paperCandidates, normalizePaperCandidates); connect(normalizePaperCandidates, batchPaperCandidates);
+connect(batchPaperCandidates, upsertPaperCandidates); connect(upsertPaperCandidates, validatePaperCandidates);
 
 const sentinelTasks = sheets("Read Sentinel Task Pull - Unified", "1v3kh9OvhoX7M2jADIeY8d1ihrrRqGz4_44TzEXSJXpk", "Sentinel Task Pull", [240, 1320]);
 const normalizeSentinelTasks = code("Normalize Sentinel Tasks - Unified", sentinelTaskNormalizer, [480, 1320]);
@@ -1521,7 +1591,7 @@ const upsertSentinelTasks = httpBody(
   "stage_task_event_snapshot_batch",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_rows": $json.p_rows } }}',
   [960, 1320],
-  30000,
+  180000,
 );
 const validateSentinelTasks = code("Validate Sentinel Tasks - Unified", strictValidateCode, [1200, 1320]);
 const prepareSentinelTaskSnapshot = code(
@@ -1534,7 +1604,7 @@ const finalizeSentinelTaskSnapshot = httpBody(
   "finalize_task_event_snapshot",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_expected_count": $json.p_expected_count } }}',
   [1680, 1320],
-  30000,
+  180000,
 );
 const validateSentinelTaskSnapshot = code(
   "Validate Sentinel Task Snapshot",
@@ -1545,6 +1615,7 @@ connect(validateMaster, sentinelTasks); connect(sentinelTasks, normalizeSentinel
 connect(validateSentinelTasks, prepareSentinelTaskSnapshot);
 connect(prepareSentinelTaskSnapshot, finalizeSentinelTaskSnapshot);
 connect(finalizeSentinelTaskSnapshot, validateSentinelTaskSnapshot);
+connect(validateSentinelTaskSnapshot, paperCandidates);
 
 const paperTasks = sheets("Read PaperBench Activity - Unified", "1Tzgi8zIZddLkllQ5bYI6z8UNNdJTD8F1pbHACcygYuc", "CH-auto-import", [1440, 1120]);
 const normalizePaperTasks = code("Normalize PaperBench Tasks - Unified", paperTaskNormalizer, [1680, 1120]);
@@ -1554,7 +1625,7 @@ const upsertPaperTasks = httpBody(
   "stage_task_event_snapshot_batch",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_rows": $json.p_rows } }}',
   [2160, 1120],
-  30000,
+  180000,
 );
 const validatePaperTasks = code("Validate PaperBench Tasks - Unified", strictValidateCode, [2400, 1120]);
 const preparePaperTaskSnapshot = code(
@@ -1567,7 +1638,7 @@ const finalizePaperTaskSnapshot = httpBody(
   "finalize_task_event_snapshot",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_expected_count": $json.p_expected_count } }}',
   [2880, 1120],
-  30000,
+  180000,
 );
 const validatePaperTaskSnapshot = code(
   "Validate PaperBench Task Snapshot",
@@ -1586,7 +1657,6 @@ const refreshExistingTaskMetrics = httpBody(
   [3360, 1220],
   30000,
 );
-connect(validateSentinelTaskSnapshot, refreshExistingTaskMetrics);
 connect(validatePaperTaskSnapshot, refreshExistingTaskMetrics);
 
 const codingSourcesTrigger = addNode(
@@ -1625,14 +1695,12 @@ const tagTerminusRoster = tag("Tag Terminus Roster", "terminus", [5760, 2440]);
 const tagOtterRoster = tag("Tag Otter Roster", "otter", [5760, 2560]);
 const tagSuiteLifeRoster = tag("Tag SuiteLife Roster", "suitelife", [5760, 2680]);
 const tagRudderRoster = tag("Tag Rudder Roster", "rudder", [5760, 2800]);
-const mergeTerminusOtterRosters = addNode("Merge Terminus + Otter Rosters", "n8n-nodes-base.merge", 3, [6000, 2500], {});
-const mergeSuiteLifeRoster = addNode("Merge + SuiteLife Roster", "n8n-nodes-base.merge", 3, [6240, 2560], {});
-const mergeRudderRoster = addNode(
-  "Merge + Rudder Roster",
+const mergeCodingRosters = addNode(
+  "Merge Coding Project Rosters",
   "n8n-nodes-base.merge",
   3,
-  [6480, 2620],
-  { numberInputs: 3 },
+  [6240, 2620],
+  { numberInputs: 4 },
 );
 const normalizeCodingRosters = code("Normalize Coding Project Rosters", codingRosterNormalizer, [6720, 2620]);
 const batchCodingRosters = code("Batch Coding Project Rosters", assignmentBatchCode, [6960, 2620]);
@@ -1653,10 +1721,9 @@ for (const source of [terminusRoster, otterRoster, suiteLifeRoster, rudderRoster
 }
 connect(terminusRoster, tagTerminusRoster); connect(otterRoster, tagOtterRoster);
 connect(suiteLifeRoster, tagSuiteLifeRoster); connect(rudderRoster, tagRudderRoster);
-connect(tagTerminusRoster, mergeTerminusOtterRosters, 0); connect(tagOtterRoster, mergeTerminusOtterRosters, 1);
-connect(mergeTerminusOtterRosters, mergeSuiteLifeRoster, 0); connect(tagSuiteLifeRoster, mergeSuiteLifeRoster, 1);
-connect(mergeSuiteLifeRoster, mergeRudderRoster, 0); connect(tagRudderRoster, mergeRudderRoster, 1);
-connect(mergeRudderRoster, normalizeCodingRosters); connect(normalizeCodingRosters, batchCodingRosters);
+connect(tagTerminusRoster, mergeCodingRosters, 0); connect(tagOtterRoster, mergeCodingRosters, 1);
+connect(tagSuiteLifeRoster, mergeCodingRosters, 2); connect(tagRudderRoster, mergeCodingRosters, 3);
+connect(mergeCodingRosters, normalizeCodingRosters); connect(normalizeCodingRosters, batchCodingRosters);
 connect(batchCodingRosters, upsertCodingRosters); connect(upsertCodingRosters, validateCodingRosters);
 connect(validateCodingRosters, summarizeRosterSnapshots); connect(summarizeRosterSnapshots, finalizeCodingRosters);
 connect(finalizeCodingRosters, validateRosterFinalizers);
@@ -1693,7 +1760,7 @@ const upsertOtterTasks = httpBody(
   "stage_task_event_snapshot_batch",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_rows": $json.p_rows } }}',
   [9120, 2620],
-  30000,
+  180000,
 );
 const validateOtterTasks = code("Validate Otter Tasks - Unified", strictValidateCode, [9360, 2620]);
 const prepareOtterTaskSnapshot = code(
@@ -1706,7 +1773,7 @@ const finalizeOtterTaskSnapshot = httpBody(
   "finalize_task_event_snapshot",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_expected_count": $json.p_expected_count } }}',
   [9840, 2560],
-  30000,
+  180000,
 );
 const validateOtterTaskSnapshot = code(
   "Validate Otter Task Snapshot",
@@ -1727,7 +1794,7 @@ const upsertRudderTasks = httpBody(
   "stage_task_event_snapshot_batch",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_rows": $json.p_rows } }}',
   [9120, 2800],
-  30000,
+  180000,
 );
 const validateRudderTasks = code("Validate Rudder Tasks - Unified", strictValidateCode, [9360, 2800]);
 const prepareRudderTaskSnapshot = code(
@@ -1740,7 +1807,7 @@ const finalizeRudderTaskSnapshot = httpBody(
   "finalize_task_event_snapshot",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_expected_count": $json.p_expected_count } }}',
   [9840, 2860],
-  30000,
+  180000,
 );
 const validateRudderTaskSnapshot = code(
   "Validate Rudder Task Snapshot",
@@ -1755,9 +1822,10 @@ const refreshCodingTaskMetrics = httpBody(
   30000,
 );
 
-for (const source of [terminusTasks, otterTasks, rudderTasks]) connect(validateRosterFinalizers, source);
+connect(validateRosterFinalizers, terminusTasks);
 connect(terminusTasks, normalizeTerminusTasks); connect(normalizeTerminusTasks, batchTerminusTasks);
 connect(batchTerminusTasks, upsertTerminusTasks); connect(upsertTerminusTasks, validateTerminusTasks);
+connect(validateTerminusTasks, otterTasks);
 connect(otterTasks, normalizeOtterTasks); connect(normalizeOtterTasks, batchOtterTasks);
 connect(batchOtterTasks, upsertOtterTasks); connect(upsertOtterTasks, validateOtterTasks);
 connect(rudderTasks, normalizeRudderTasks); connect(normalizeRudderTasks, batchRudderTasks);
@@ -1765,10 +1833,10 @@ connect(batchRudderTasks, upsertRudderTasks); connect(upsertRudderTasks, validat
 connect(validateOtterTasks, prepareOtterTaskSnapshot);
 connect(prepareOtterTaskSnapshot, finalizeOtterTaskSnapshot);
 connect(finalizeOtterTaskSnapshot, validateOtterTaskSnapshot);
+connect(validateOtterTaskSnapshot, rudderTasks);
 connect(validateRudderTasks, prepareRudderTaskSnapshot);
 connect(prepareRudderTaskSnapshot, finalizeRudderTaskSnapshot);
 connect(finalizeRudderTaskSnapshot, validateRudderTaskSnapshot);
-connect(validateOtterTaskSnapshot, refreshCodingTaskMetrics);
 connect(validateRudderTaskSnapshot, refreshCodingTaskMetrics);
 
 const rigaPayments = sheets("Read Riga July Payments - Unified", "1yvitEtjut8zweM_FnXZNIMxRe6dcIS66A63aggYL1Xw", "July - 2026", [240, 1540]);
@@ -1779,26 +1847,29 @@ const tagRigaPayments = tag("Tag Riga July Payments", "riga", [480, 1540]);
 const tagRainierPayments = tag("Tag Rainier July Payments", "rainier", [480, 1660]);
 const tagSequoiaPayments = tag("Tag Sequoia July Payments", "sequoia", [480, 1780]);
 const tagStarfishPayments = tag("Tag Starfish July Payments", "starfish", [480, 1900]);
-const mergeRigaRainierPayments = addNode("Merge Riga + Rainier Payments", "n8n-nodes-base.merge", 3, [720, 1600], {});
-const mergeSequoiaPayments = addNode("Merge + Sequoia Payments", "n8n-nodes-base.merge", 3, [960, 1660], {});
-const mergeStarfishPayments = addNode("Merge + Starfish Payments", "n8n-nodes-base.merge", 3, [1200, 1720], {});
+const mergeStemPayments = addNode(
+  "Merge STEM July Payments",
+  "n8n-nodes-base.merge",
+  3,
+  [960, 1720],
+  { numberInputs: 4 },
+);
 const normalizeStemPayments = code("Normalize STEM July Payments - Unified", stemPaymentNormalizer, [1440, 1720]);
 const upsertStemPayments = http("Sync STEM July Payments - Unified", "sync_stem_july_2026_payments", [1680, 1720], 30000);
 const validateStemPayments = code("Validate STEM July Payments - Unified", validateCode, [1920, 1720]);
 
 for (const source of [rigaPayments, rainierPayments, sequoiaPayments, starfishPayments]) connect(validateMaster, source);
 connect(rigaPayments, tagRigaPayments); connect(rainierPayments, tagRainierPayments); connect(sequoiaPayments, tagSequoiaPayments); connect(starfishPayments, tagStarfishPayments);
-connect(tagRigaPayments, mergeRigaRainierPayments, 0); connect(tagRainierPayments, mergeRigaRainierPayments, 1);
-connect(mergeRigaRainierPayments, mergeSequoiaPayments, 0); connect(tagSequoiaPayments, mergeSequoiaPayments, 1);
-connect(mergeSequoiaPayments, mergeStarfishPayments, 0); connect(tagStarfishPayments, mergeStarfishPayments, 1);
-connect(mergeStarfishPayments, normalizeStemPayments); connect(normalizeStemPayments, upsertStemPayments); connect(upsertStemPayments, validateStemPayments);
+connect(tagRigaPayments, mergeStemPayments, 0); connect(tagRainierPayments, mergeStemPayments, 1);
+connect(tagSequoiaPayments, mergeStemPayments, 2); connect(tagStarfishPayments, mergeStemPayments, 3);
+connect(mergeStemPayments, normalizeStemPayments); connect(normalizeStemPayments, upsertStemPayments); connect(upsertStemPayments, validateStemPayments);
 
 const mojavePayments = sheets("Read Mojave July Payments - Unified", "1icVvzZeL2yR7Kj2O6KUcOUKYqpg0S1B2zFI7LRIUDEs", "July - 2026", [2160, 1540]);
 const terminusTaskPayments = sheets("Read Terminus Task Payments - Unified", "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o", "July, 2026(Task)", [2160, 1660]);
 const terminusReviewPayments = sheets("Read Terminus Review Payments - Unified", "1Y3IutxG-FM1cIqnnoesZ4xvkchM8vU-uXLcnL_Jw89o", "July,2026(Review)", [2160, 1780]);
 const otterWorkflowAPayments = sheets("Read Otter Workflow A Payments - Unified", "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k", "July,2026(workflow A)", [2160, 1900]);
 const otterWorkflowBPayments = sheets("Read Otter Workflow B Payments - Unified", "1sBTAySkgFm-GuRqOtwwNSxOyO2Tg94PfvzRyV36Kx1k", "July,2026(workflow B)", [2160, 2020]);
-const sentinelAssessmentPayments = sheets("Read Sentinel Assessment Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July,2026(Assessment)", [2160, 2140]);
+const sentinelAssessmentPayments = sheets("Read Sentinel Assessment Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July/Aug2026(Assessment)", [2160, 2140]);
 const sentinelFixablePayments = sheets("Read Sentinel Fixable Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July,2026(Fixable)", [2160, 2260]);
 const sentinelNonFixablePayments = sheets("Read Sentinel Non Fixable Payments - Unified", "1v_z3qHfx9-970-rVgVp0NkT9RoMONcqAkjTVup5yL5U", "July,2026(N.Fixable)", [2160, 2380]);
 
@@ -1822,13 +1893,13 @@ const tagSentinelAssessmentPayments = tag("Tag Sentinel Assessment Payments", "s
 const tagSentinelFixablePayments = tag("Tag Sentinel Fixable Payments", "sentinel_fixable", [2400, 2260]);
 const tagSentinelNonFixablePayments = tag("Tag Sentinel Non Fixable Payments", "sentinel_non_fixable", [2400, 2380]);
 
-const mergeMojaveTerminusTask = addNode("Merge Mojave + Terminus Task Payments", "n8n-nodes-base.merge", 3, [2640, 1600], {});
-const mergeTerminusReview = addNode("Merge + Terminus Review Payments", "n8n-nodes-base.merge", 3, [2880, 1660], {});
-const mergeOtterWorkflowA = addNode("Merge + Otter Workflow A Payments", "n8n-nodes-base.merge", 3, [3120, 1720], {});
-const mergeOtterWorkflowB = addNode("Merge + Otter Workflow B Payments", "n8n-nodes-base.merge", 3, [3360, 1780], {});
-const mergeSentinelAssessment = addNode("Merge + Sentinel Assessment Payments", "n8n-nodes-base.merge", 3, [3600, 1840], {});
-const mergeSentinelFixable = addNode("Merge + Sentinel Fixable Payments", "n8n-nodes-base.merge", 3, [3840, 1900], {});
-const mergeSentinelNonFixable = addNode("Merge + Sentinel Non Fixable Payments", "n8n-nodes-base.merge", 3, [4080, 1960], {});
+const mergeProjectPayments = addNode(
+  "Merge Project July Payments",
+  "n8n-nodes-base.merge",
+  3,
+  [3360, 1960],
+  { numberInputs: 8 },
+);
 const normalizeProjectPayments = code("Normalize Project July Payments - Unified", projectPaymentNormalizer, [4320, 1960]);
 const upsertProjectPayments = http("Sync Project July Payments - Unified", "sync_project_july_2026_payments", [4560, 1960], 30000);
 const validateProjectPayments = code("Validate Project July Payments - Unified", validateCode, [4800, 1960]);
@@ -1849,14 +1920,11 @@ connect(terminusReviewPayments, tagTerminusReviewPayments); connect(otterWorkflo
 connect(otterWorkflowBPayments, tagOtterWorkflowBPayments); connect(sentinelAssessmentPayments, tagSentinelAssessmentPayments);
 connect(sentinelFixablePayments, tagSentinelFixablePayments); connect(sentinelNonFixablePayments, tagSentinelNonFixablePayments);
 
-connect(tagMojavePayments, mergeMojaveTerminusTask, 0); connect(tagTerminusTaskPayments, mergeMojaveTerminusTask, 1);
-connect(mergeMojaveTerminusTask, mergeTerminusReview, 0); connect(tagTerminusReviewPayments, mergeTerminusReview, 1);
-connect(mergeTerminusReview, mergeOtterWorkflowA, 0); connect(tagOtterWorkflowAPayments, mergeOtterWorkflowA, 1);
-connect(mergeOtterWorkflowA, mergeOtterWorkflowB, 0); connect(tagOtterWorkflowBPayments, mergeOtterWorkflowB, 1);
-connect(mergeOtterWorkflowB, mergeSentinelAssessment, 0); connect(tagSentinelAssessmentPayments, mergeSentinelAssessment, 1);
-connect(mergeSentinelAssessment, mergeSentinelFixable, 0); connect(tagSentinelFixablePayments, mergeSentinelFixable, 1);
-connect(mergeSentinelFixable, mergeSentinelNonFixable, 0); connect(tagSentinelNonFixablePayments, mergeSentinelNonFixable, 1);
-connect(mergeSentinelNonFixable, normalizeProjectPayments); connect(normalizeProjectPayments, upsertProjectPayments); connect(upsertProjectPayments, validateProjectPayments);
+connect(tagMojavePayments, mergeProjectPayments, 0); connect(tagTerminusTaskPayments, mergeProjectPayments, 1);
+connect(tagTerminusReviewPayments, mergeProjectPayments, 2); connect(tagOtterWorkflowAPayments, mergeProjectPayments, 3);
+connect(tagOtterWorkflowBPayments, mergeProjectPayments, 4); connect(tagSentinelAssessmentPayments, mergeProjectPayments, 5);
+connect(tagSentinelFixablePayments, mergeProjectPayments, 6); connect(tagSentinelNonFixablePayments, mergeProjectPayments, 7);
+connect(mergeProjectPayments, normalizeProjectPayments); connect(normalizeProjectPayments, upsertProjectPayments); connect(upsertProjectPayments, validateProjectPayments);
 
 const geraniumTrigger = addNode(
   "Schedule Trigger - Geranium Portal Data",
@@ -1960,7 +2028,7 @@ const upsertGeraniumTaskEvents = httpBody(
   "stage_task_event_snapshot_batch",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_rows": $json.p_rows } }}',
   [13440, 3570],
-  30000,
+  180000,
 );
 const validateGeraniumTaskEvents = code(
   "Validate Geranium Task Events",
@@ -1977,7 +2045,7 @@ const finalizeGeraniumTaskSnapshot = httpBody(
   "finalize_task_event_snapshot",
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_expected_count": $json.p_expected_count } }}',
   [14160, 3510],
-  30000,
+  180000,
 );
 const validateGeraniumTaskSnapshot = code(
   "Validate Geranium Task Snapshot",
@@ -2046,6 +2114,25 @@ connect(normalizeGeraniumMetrics, batchGeraniumMetrics);
 connect(batchGeraniumMetrics, upsertGeraniumMetrics);
 connect(upsertGeraniumMetrics, validateGeraniumMetrics);
 
+for (const mergeNode of nodes.filter((node) => node.type === "n8n-nodes-base.merge")) {
+  const expectedInputs = Number(mergeNode.parameters.numberInputs ?? 2);
+  const incomingInputs = [];
+  for (const connection of Object.values(connections)) {
+    for (const lane of connection.main ?? []) {
+      for (const edge of lane) {
+        if (edge.node === mergeNode.name) incomingInputs.push(edge.index);
+      }
+    }
+  }
+  const expectedIndexes = Array.from({ length: expectedInputs }, (_, index) => index);
+  const actualIndexes = [...incomingInputs].sort((left, right) => left - right);
+  if (JSON.stringify(actualIndexes) !== JSON.stringify(expectedIndexes)) {
+    throw new Error(
+      `${mergeNode.name} expects inputs ${expectedIndexes.join(", ")} but has ${actualIndexes.join(", ")}`,
+    );
+  }
+}
+
 const selection = {
   nodes,
   connections,
@@ -2106,9 +2193,7 @@ const codingSourceNodeNames = new Set([
   tagOtterRoster,
   tagSuiteLifeRoster,
   tagRudderRoster,
-  mergeTerminusOtterRosters,
-  mergeSuiteLifeRoster,
-  mergeRudderRoster,
+  mergeCodingRosters,
   normalizeCodingRosters,
   batchCodingRosters,
   upsertCodingRosters,
@@ -2161,9 +2246,7 @@ const stemPaymentNodeNames = new Set([
   tagRainierPayments,
   tagSequoiaPayments,
   tagStarfishPayments,
-  mergeRigaRainierPayments,
-  mergeSequoiaPayments,
-  mergeStarfishPayments,
+  mergeStemPayments,
   normalizeStemPayments,
   upsertStemPayments,
   validateStemPayments,
@@ -2214,13 +2297,7 @@ const projectPaymentNodeNames = new Set([
   tagSentinelAssessmentPayments,
   tagSentinelFixablePayments,
   tagSentinelNonFixablePayments,
-  mergeMojaveTerminusTask,
-  mergeTerminusReview,
-  mergeOtterWorkflowA,
-  mergeOtterWorkflowB,
-  mergeSentinelAssessment,
-  mergeSentinelFixable,
-  mergeSentinelNonFixable,
+  mergeProjectPayments,
   normalizeProjectPayments,
   upsertProjectPayments,
   validateProjectPayments,

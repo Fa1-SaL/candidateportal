@@ -247,35 +247,15 @@
       ]
     },
     {
-      "parameters": {},
-      "id": "f2df1235-cfbb-4c3e-85c2-cd7fa08500c8",
-      "name": "Merge Riga + Rainier Payments",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        720,
-        1600
-      ]
-    },
-    {
-      "parameters": {},
-      "id": "22b91c1a-9a88-408d-a3c1-42ad3d58195c",
-      "name": "Merge + Sequoia Payments",
+      "parameters": {
+        "numberInputs": 4
+      },
+      "id": "4c60bccc-fb27-4742-9b08-4aaab9c10790",
+      "name": "Merge STEM July Payments",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
       "position": [
         960,
-        1660
-      ]
-    },
-    {
-      "parameters": {},
-      "id": "1cc93829-00dd-4542-81d5-547d7c026ee3",
-      "name": "Merge + Starfish Payments",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        1200,
         1720
       ]
     },
@@ -386,7 +366,7 @@
       "main": [
         [
           {
-            "node": "Merge Riga + Rainier Payments",
+            "node": "Merge STEM July Payments",
             "type": "main",
             "index": 0
           }
@@ -397,20 +377,9 @@
       "main": [
         [
           {
-            "node": "Merge Riga + Rainier Payments",
+            "node": "Merge STEM July Payments",
             "type": "main",
             "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge Riga + Rainier Payments": {
-      "main": [
-        [
-          {
-            "node": "Merge + Sequoia Payments",
-            "type": "main",
-            "index": 0
           }
         ]
       ]
@@ -419,20 +388,9 @@
       "main": [
         [
           {
-            "node": "Merge + Sequoia Payments",
+            "node": "Merge STEM July Payments",
             "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge + Sequoia Payments": {
-      "main": [
-        [
-          {
-            "node": "Merge + Starfish Payments",
-            "type": "main",
-            "index": 0
+            "index": 2
           }
         ]
       ]
@@ -441,14 +399,14 @@
       "main": [
         [
           {
-            "node": "Merge + Starfish Payments",
+            "node": "Merge STEM July Payments",
             "type": "main",
-            "index": 1
+            "index": 3
           }
         ]
       ]
     },
-    "Merge + Starfish Payments": {
+    "Merge STEM July Payments": {
       "main": [
         [
           {

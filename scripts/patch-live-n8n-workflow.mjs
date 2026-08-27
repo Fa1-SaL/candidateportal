@@ -41,6 +41,30 @@ const obsoleteNodes = new Set([
   "Combine Sequoia IP Data",
   "Batch IP Addendum",
   "Set IP Addendum Status",
+
+  // Replaced by one correctly sized multi-input Merge per source group.
+  "Merge Master + Contract Sent",
+  "Merge + Contract Signed",
+  "Merge + SpringVerify",
+  "Merge Terminus + Otter Rosters",
+  "Merge + SuiteLife Roster",
+  "Merge + Rudder Roster",
+  "Merge Riga + Rainier Payments",
+  "Merge + Sequoia Payments",
+  "Merge + Starfish Payments",
+  "Merge Mojave + Terminus Task Payments",
+  "Merge + Terminus Review Payments",
+  "Merge + Otter Workflow A Payments",
+  "Merge + Otter Workflow B Payments",
+  "Merge + Sentinel Assessment Payments",
+  "Merge + Sentinel Fixable Payments",
+  "Merge + Sentinel Non Fixable Payments",
+
+  // The explicit Status column is authoritative for PaperBench membership.
+  // Avoid the raw Sheets metadata endpoint, which is quota-limited and adds
+  // no information beyond Status = ACTIVE plus the PaperBench project token.
+  "Wait for PaperBench Sheets Quota - Unified",
+  "Read Filtered PaperBench Emails - Unified",
 ]);
 
 function nodeByName(name) {
@@ -83,7 +107,7 @@ function addHttpNode(name, rpc, jsonBody, position) {
       sendBody: true,
       specifyBody: "json",
       jsonBody,
-      options: { timeout: 120000 },
+      options: { timeout: 180000 },
     },
     id: randomUUID(),
     name,
@@ -310,10 +334,10 @@ return [{ json: {
 } }];`;
 
 nodeByName("Schedule Trigger - STEM Candidates").parameters = {
-  rule: { interval: [{ field: "hours", hoursInterval: 6, triggerAtMinute: 5 }] },
+  rule: { interval: [{ field: "hours", hoursInterval: 6, triggerAtMinute: 10 }] },
 };
 nodeByName("Schedule Trigger - External Trackers").parameters = {
-  rule: { interval: [{ field: "hours", hoursInterval: 6, triggerAtMinute: 15 }] },
+  rule: { interval: [{ field: "hours", hoursInterval: 6, triggerAtMinute: 20 }] },
 };
 nodeByName("Normalize All Task Metrics").parameters.jsCode = stemTaskNormalizer;
 nodeByName("Batch Task Events").parameters.jsCode = stemTaskBatcher;
@@ -323,7 +347,7 @@ upsertTaskEvents.parameters.url =
   "https://imkiodmiaocumozdpplp.supabase.co/rest/v1/rpc/stage_task_event_snapshot_batch";
 upsertTaskEvents.parameters.jsonBody =
   '={{ { "p_source_key": $json.p_source_key, "p_sync_run_id": $json.p_sync_run_id, "p_rows": $json.p_rows } }}';
-upsertTaskEvents.parameters.options = { timeout: 120000 };
+upsertTaskEvents.parameters.options = { timeout: 180000 };
 upsertTaskEvents.retryOnFail = true;
 upsertTaskEvents.maxTries = 4;
 upsertTaskEvents.waitBetweenTries = 3000;
@@ -338,7 +362,9 @@ addHttpNode(
 );
 addCodeNode("Validate STEM Task Snapshots", snapshotValidator, [1696, 5088]);
 
-nodeByName("Batch Cumulative Metrics").parameters.jsCode = `const rows = items.map((item) => item.json);
+nodeByName("Batch Cumulative Metrics").parameters.jsCode = `const rows = $('Normalize All Task Metrics').all()
+  .map((item) => item.json)
+  .filter((row) => row._kind === 'cumulative');
 const output = [];
 for (let index = 0; index < rows.length; index += 50) {
   output.push({ json: { p_rows: rows.slice(index, index + 50) } });
@@ -364,8 +390,22 @@ connect("Upsert Task Events", "Validate STEM Task Snapshot Batches");
 connect("Validate STEM Task Snapshot Batches", "Prepare STEM Task Snapshot Finalizers");
 connect("Prepare STEM Task Snapshot Finalizers", "Finalize STEM Task Snapshots");
 connect("Finalize STEM Task Snapshots", "Validate STEM Task Snapshots");
+workflow.connections["Route: event vs cumulative"].main[1] = [];
+connect("Validate STEM Task Snapshots", "Batch Cumulative Metrics");
 connect("Batch Cumulative Metrics", "Upsert Cumulative Metrics");
 connect("Upsert Cumulative Metrics", "Validate STEM Cumulative Metrics");
+
+// The Sequoia workbook recreated its Crossing Hurdles Review tab. Pin the
+// current worksheet id so regenerated workflows do not retain the stale gid.
+const sequoiaReview = nodeByName("Sequoia - CH Review");
+sequoiaReview.parameters.sheetName = {
+  __rl: true,
+  value: 1902325900,
+  mode: "list",
+  cachedResultName: "Crossing Hurdles Review",
+  cachedResultUrl:
+    "https://docs.google.com/spreadsheets/d/1VgNkgoETwTFgerkib09G-cH0qHBY3y8ec0zPP8XTwBg/edit#gid=1902325900",
+};
 
 workflow.nodes = workflow.nodes.filter((node) => !obsoleteNodes.has(node.name));
 for (const name of obsoleteNodes) delete workflow.connections[name];
@@ -375,6 +415,16 @@ for (const connection of Object.values(workflow.connections)) {
       if (obsoleteNodes.has(lane[index].node)) lane.splice(index, 1);
     }
   }
+}
+
+// Google Sheets occasionally returns a transient 5xx response. Apply the
+// same bounded retry policy to inherited live nodes as to generated nodes so
+// one brief outage cannot abort an entire authoritative snapshot.
+for (const node of workflow.nodes) {
+  if (node.type !== "n8n-nodes-base.googleSheets") continue;
+  node.retryOnFail = true;
+  node.maxTries = 5;
+  node.waitBetweenTries = 15000;
 }
 
 const names = new Set(workflow.nodes.map((node) => node.name));
