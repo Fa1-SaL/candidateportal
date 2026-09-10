@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./dashboard.css";
 
 :root { --background:#fcf8ff; --foreground:#1b1b24; --accent:#3525cd; --muted:#625f72; --border:#dedce8; }
 @theme inline { --color-background:var(--background); --color-foreground:var(--foreground); --font-sans:var(--font-manrope); }
@@ -81,6 +82,7 @@ dt { color:var(--muted); }dd { margin:0; font-weight:650; min-width:0; overflow-
 .task-id-list { padding-left:28px; margin:12px 0; }.task-id-list li { padding:10px 4px; border-bottom:1px solid #efedf4; }.task-id-list code { overflow-wrap:anywhere; user-select:all; font-size:.875rem; }
 .pagination { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; font-size:.875rem; }
 .portal-footer { border-top:1px solid var(--border); padding:20px; color:var(--muted); font-size:.875rem; background:#fff; }
+.dashboard-footer-beta { display:none; }
 .portal-footer > div { max-width:1200px; margin:auto; display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between; align-items:center; }
 .portal-footer a { display:inline-flex; align-items:center; min-height:44px; color:var(--accent); }
 .skip-link { position:fixed; z-index:200; top:-100px; left:12px; padding:12px; background:var(--accent); color:white; }.skip-link:focus { top:12px; }

@@ -37,7 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <footer className="portal-footer">
           <div>
-            <p>
+            <p className="default-footer-copy">
               Questions about your records? Contact{" "}
               <a
                 className="font-medium text-[#3525cd] transition-colors hover:text-[#1f1599]"
@@ -46,6 +46,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 faisal@crossinghurdles.com
               </a>
               .
+            </p>
+            <p className="dashboard-footer-beta">
+              <strong>Early Beta:</strong> This portal is currently in its early beta stage. Some information may occasionally be inaccurate or incomplete. For ideas, suggestions, or corrections, please email{" "}
+              <a href="mailto:faisal@crossinghurdles.com">faisal@crossinghurdles.com</a>.
             </p>
             <nav aria-label="Related websites" className="flex flex-wrap items-center gap-6">
               <a className="transition-colors hover:text-[#3525cd]" href="https://experts.snorkel-ai.com/">

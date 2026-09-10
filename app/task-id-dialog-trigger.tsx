@@ -2,15 +2,15 @@
 import { useState, type ReactNode } from "react";
 import PortalDialog from "./portal-dialog";
 
-export default function TaskIdDialogTrigger({ children, count, label, taskIds, projectName, notice }: {
-  children: ReactNode; count: number | null; label: string; taskIds: string[] | null; projectName: string; notice: string;
+export default function TaskIdDialogTrigger({ children, count, label, taskIds, projectName, notice, className = "" }: {
+  children: ReactNode; count: number | null; label: string; taskIds: string[] | null; projectName: string; notice: string; className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [copied, setCopied] = useState("");
   const available = count !== null && count > 0 && taskIds !== null && taskIds.length === count;
   const pageSize = 50; const pageCount = Math.ceil((taskIds?.length ?? 0) / pageSize);
-  return <div className="task-card">
+  return <div className={"task-card " + className}>
     {available ? <button type="button" className="task-trigger" aria-haspopup="dialog" aria-expanded={open}
       aria-label={"View " + label.toLowerCase() + " task IDs for " + projectName} onClick={() => { setPage(0); setCopied(""); setOpen(true); }}>{children}<span className="text-link">View task IDs →</span></button> : <div className="task-trigger">{children}<span className="secondary-text">{count === 0 ? "No tasks in this status" : notice}</span></div>}
     <PortalDialog open={open} onClose={() => setOpen(false)} title={label + " task IDs"} description={projectName + " · " + (count ?? "Unknown") + " tasks"}>
