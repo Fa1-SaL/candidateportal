@@ -31,5 +31,10 @@ export async function updateSession(request: NextRequest) {
 
   await supabase.auth.getClaims();
 
+  // Session-bearing responses must not enter a shared CDN/browser cache,
+  // including requests where no cookie refresh was necessary.
+  response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  response.headers.set("CDN-Cache-Control", "no-store");
+  response.headers.set("Referrer-Policy", "no-referrer");
   return response;
 }

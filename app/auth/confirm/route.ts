@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { privateAuthRedirect } from "@/lib/auth/response";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -24,10 +24,10 @@ export async function GET(request: Request) {
     });
 
     if (!error) {
-      return NextResponse.redirect(redirectTo);
+      return privateAuthRedirect(redirectTo);
     }
   }
 
   loginUrl.searchParams.set("auth_error", AUTH_VERIFICATION_ERROR_CODE);
-  return NextResponse.redirect(loginUrl);
+  return privateAuthRedirect(loginUrl);
 }
