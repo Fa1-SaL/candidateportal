@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { numeric, isoDate, formatMoney, processStatus, getTaskCounts, getTaskDetails, getPaymentPeriods, getTerms, parseSnapshot, parsePublicSnapshot } from "./model.ts";
+import { numeric, isoDate, formatMoney, getDomainLabel, processStatus, getTaskCounts, getTaskDetails, getPaymentPeriods, getTerms, parseSnapshot, parsePublicSnapshot } from "./model.ts";
 import { fixturePreviewEnabled } from "./preview.ts";
 
 const now = Date.parse("2026-09-08T12:00:00Z");
@@ -16,6 +16,21 @@ const snapshot = (domainOverrides = {}, overrides = {}) => ({
     state: "verified", revision: "run-1", verified_at: "2026-09-01T06:00:00Z", source_as_of: "2026-08-31",
     value: { submitted: 2, accepted: 1, rejected: 0, rework: 0, evaluation_pending: 1 }, ...domainOverrides,
   } } }, ...overrides,
+});
+
+test("Rudder displays General without changing other project domains or source data", () => {
+  const rudder = Object.freeze({ project_name: "Rudder", vertical_name: "Coding", domain: "Coding" });
+  assert.equal(getDomainLabel(rudder), "General");
+  assert.equal(getDomainLabel({ project_name: " Rudder ", vertical_name: "Coding" }), "General");
+  assert.equal(rudder.domain, "Coding");
+  for (const project_name of ["Terminus", "Otter", "Sentinel Ultra", "SuiteLife", "PaperBench"]) {
+    assert.equal(getDomainLabel({ project_name, vertical_name: "Coding", domain: "Python" }), "Coding");
+  }
+  assert.equal(getDomainLabel({ project_name: "Riga", vertical_name: "STEM", domain: "Chemistry" }), "Chemistry");
+  assert.equal(getDomainLabel({ project_name: "Geranium", domain: "Finance" }), "Finance");
+  for (const value of [undefined, null, {}, { project_name: "Riga", vertical_name: "STEM" }]) {
+    assert.equal(getDomainLabel(value), "Not available");
+  }
 });
 
 test("strict numbers do not extract digits from corrupt text", () => {

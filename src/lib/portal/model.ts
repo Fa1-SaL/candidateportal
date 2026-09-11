@@ -30,6 +30,11 @@ export function record(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
 }
 export function text(value: unknown): string | null { return typeof value === "string" && value.trim() ? value.trim() : null; }
+export function getDomainLabel(value: unknown): string {
+  const assignment = record(value);
+  if (text(assignment.project_name) === "Rudder") return "General";
+  return text(assignment.vertical_name) === "Coding" ? "Coding" : text(assignment.domain) ?? "Not available";
+}
 export function numeric(value: unknown): number | null {
   if (typeof value === "number") return Number.isFinite(value) ? value : null;
   if (typeof value !== "string" || !/^-?\d+(?:\.\d+)?$/.test(value.trim())) return null;

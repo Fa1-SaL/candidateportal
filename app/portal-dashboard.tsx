@@ -1,4 +1,4 @@
-import { formatDate, getTaskCounts, getTaskDetails, processStatus, record, text, type Domain, type PortalSnapshot, type TaskBucket } from "@/lib/portal/model";
+import { formatDate, getDomainLabel, getTaskCounts, getTaskDetails, processStatus, record, text, type Domain, type PortalSnapshot, type TaskBucket } from "@/lib/portal/model";
 import ProjectSwitcher from "./project-switcher";
 import AccountActions from "./account-actions";
 import TaskIdDialogTrigger from "./task-id-dialog-trigger";
@@ -52,7 +52,7 @@ export default function PortalDashboard({ email, name, snapshots, requestedProje
   const projects = snapshots.map(item => { const assignment = record(item.domains.assignment.value); return { id: item.assignmentId, projectName: text(assignment.project_name) ?? "Project details unavailable", verticalName: text(assignment.vertical_name) ?? "Vertical unavailable" }; });
   const assignment = record(snapshot?.domains.assignment.value);
   const candidateName = name ?? text(assignment.full_name) ?? email;
-  const domain = text(assignment.vertical_name) === "Coding" ? "Coding" : text(assignment.domain) ?? "Not available";
+  const domain = getDomainLabel(assignment);
   const checks = record(snapshot?.domains.checks.value);
   const projectName = text(assignment.project_name) ?? "Not available";
   const counts = getTaskCounts(snapshot?.domains.metrics.value);

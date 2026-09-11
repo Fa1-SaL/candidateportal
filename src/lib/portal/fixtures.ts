@@ -2,7 +2,7 @@
 import { parseSnapshot, type PortalSnapshot } from "./model";
 const verifiedAt = "2026-09-01T06:00:00Z";
 export function previewSnapshots(): PortalSnapshot[] {
-  return ["Riga", "Terminus"].map((name, index) => {
+  return ["Riga", "Terminus", "Rudder"].map((name, index) => {
     const revision = "synthetic-revision-1";
     const domain = (value: unknown, state = "verified") => ({ state, revision, verified_at: verifiedAt, source_as_of: "2026-08-31", value });
     const total = index ? 8 : 12; const accepted = index ? 4 : 8;
