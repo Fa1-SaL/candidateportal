@@ -6,6 +6,8 @@ import { containsAuthParameters } from "@/lib/auth/redirects";
 import { authenticationUnavailable } from "@/lib/auth/errors";
 import PortalDashboard from "./portal-dashboard";
 import SessionBoundary from "./session-boundary";
+import Maintenance from "./maintenance";
+import { PORTAL_UNDER_MAINTENANCE } from "@/lib/portal/maintenance";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,7 @@ export default async function Home({ searchParams }: {
   // Old emails can land on "/" with auth material. Never carry it into links,
   // analytics or the dashboard URL; auth verification belongs on /auth/*.
   if (containsAuthParameters(Object.keys(params))) redirect(requestedProject ? "/?project=" + encodeURIComponent(requestedProject) : "/");
+  if (PORTAL_UNDER_MAINTENANCE) return <Maintenance />;
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authenticationUnavailable(authError)) throw new Error("Authentication service unavailable");

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { PORTAL_UNDER_MAINTENANCE } from "../src/lib/portal/maintenance.ts";
 
 // Read-only production-build checks. Deliberately refuse non-loopback targets,
 // never follow redirects, and never send cookies, emails or real auth material.
@@ -24,4 +25,31 @@ for (const [path, status] of cases) {
   }
   await response.body?.cancel();
   console.log("PASS " + path.split("?")[0] + " HTTP " + status + " private/no-store");
+}
+
+if (PORTAL_UNDER_MAINTENANCE) {
+  for (const path of ["/", "/?project=synthetic-maintenance-test", "/login"]) {
+    const response = await fetch(new URL(path, base), { redirect: "manual", signal: AbortSignal.timeout(10000) });
+    assert.equal(response.status, 200, path);
+    const html = await response.text();
+    assert.match(html, /The candidate portal is currently under maintenance/);
+    assert.match(html, /sandbox="allow-scripts"/);
+    assert.match(html, /src="\/dino\/index.html"/);
+    assert.doesNotMatch(html, /<input[^>]+type="email"|Task Summary|candidate_portal_snapshot/);
+    assert.match(response.headers.get("cache-control") ?? "", /no-store/);
+    assert.equal(response.headers.get("x-frame-options"), "DENY");
+    assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+    console.log("PASS maintenance screen and no candidate data: " + path);
+  }
+  for (const path of ["/dino/index.html", "/dino/offline.js", "/dino/offline-sprite-definitions.js", "/dino/embed.js", "/dino/sprite-1x.png", "/dino/sprite-2x.png"]) {
+    const response = await fetch(new URL(path, base), { signal: AbortSignal.timeout(10000) });
+    assert.equal(response.status, 200, path);
+    if (path === "/dino/index.html") {
+      assert.equal(response.headers.get("x-frame-options"), "SAMEORIGIN");
+      assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'self'/);
+      assert.match(response.headers.get("content-security-policy") ?? "", /connect-src 'none'/);
+    }
+    assert.ok((await response.arrayBuffer()).byteLength > 0, path);
+    console.log("PASS game asset " + path);
+  }
 }

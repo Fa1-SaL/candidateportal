@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Unmodified, BSD-licensed Chromium game engine.
+    "public/dino/offline.js",
+    "public/dino/offline-sprite-definitions.js",
   ]),
 ]);
 

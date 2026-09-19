@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; img-src 'self'; style-src 'unsafe-inline'; connect-src 'none'; media-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Dinosaur runner</title>
+  <style>
+    * { box-sizing:border-box; }
+    html,body { margin:0; width:100%; height:260px; overflow:hidden; background:transparent; color:#53515c; font-family:Arial,Helvetica,sans-serif; font-size:12px; }
+    .interstitial-wrapper { position:relative; width:100%; max-width:600px; height:176px; margin:auto; padding:0; }
+    .icon-offline,#offline-resources,.hidden { display:none; }
+    .runner-container { position:absolute; top:20px; width:100%; height:150px; overflow:hidden; outline-offset:-3px; touch-action:none; }
+    .runner-canvas { display:block; width:100%; height:150px; image-rendering:pixelated; }
+    .controller { position:absolute; inset:0; touch-action:none; }
+    .offline-runner-live-region { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+    .controls { display:flex; justify-content:center; align-items:center; gap:10px; margin-top:14px; }
+    .controls button { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; padding:12px; border:1px solid #dedce8; border-radius:8px; background:#fff; cursor:pointer; touch-action:manipulation; }
+    .controls button:hover { border-color:#9588d8; background:#f4f0ff; }
+    .controls button:disabled { opacity:.4; cursor:default; }
+    .controls button[aria-pressed=true] { background:#eee9fb; border-color:#9588d8; }
+    .controls img { display:block; width:18px; height:18px; }
+    :focus-visible { outline:2px solid #3525cd; outline-offset:2px; }
+    #game-status { display:block; text-align:center; margin-top:9px; font-size:11px; color:#625f72; }
+  </style>
+  <script src="./offline.js" defer></script>
+  <script src="./offline-sprite-definitions.js" defer></script>
+  <script src="./embed.js" defer></script>
+</head>
+<body>
+  <div class="interstitial-wrapper">
+    <div class="icon-offline" aria-hidden="true"></div>
+  </div>
+  <div id="offline-resources" aria-hidden="true">
+    <img id="offline-resources-1x" src="./sprite-1x.png" alt="">
+    <img id="offline-resources-2x" src="./sprite-2x.png" alt="">
+  </div>
+  <div class="controls" aria-label="Game controls">
+    <button id="jump" type="button" aria-label="Play" title="Play" disabled><img id="jump-icon" src="./play.svg" alt=""></button>
+    <button id="pause" type="button" aria-label="Pause" title="Pause" aria-pressed="false" disabled><img src="./pause.svg" alt=""></button>
+    <button id="restart" type="button" aria-label="Restart" title="Restart" disabled><img src="./rotate-ccw.svg" alt=""></button>
+  </div>
+  <output id="game-status" aria-live="polite">Loading game...</output>
+  <noscript>JavaScript is required to play.</noscript>
+</body>
+</html>

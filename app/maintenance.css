@@ -1,0 +1,13 @@
+.maintenance-shell { display:flex; flex-direction:column; }
+.maintenance-main { flex:1; display:flex; align-items:center; justify-content:center; padding:64px 24px; }
+.maintenance-content { width:100%; max-width:600px; text-align:center; }
+.maintenance-badge { display:inline-flex; align-items:center; min-height:26px; padding:3px 11px; margin-bottom:20px; border:1px solid #e1dcf7; border-radius:100px; background:#f0ecfb; color:#62558a; font-size:11px; font-weight:600; }
+.maintenance-content h1 { font-size:30px; line-height:1.35; font-weight:750; letter-spacing:0; text-wrap:balance; }
+.maintenance-copy { margin-top:16px; color:var(--muted); font-size:14px; line-height:1.7; }
+.maintenance-game { display:block; width:100%; height:260px; margin-top:32px; border:0; background:transparent; }
+@media (max-width:600px) {
+  .maintenance-main { padding:40px 20px; }
+  .maintenance-content h1 { font-size:24px; line-height:1.4; }
+  .maintenance-copy { font-size:13px; }
+  .maintenance-game { margin-top:20px; }
+}

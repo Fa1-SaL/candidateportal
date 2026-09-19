@@ -20,7 +20,7 @@ const contentSecurityPolicy = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "frame-src 'none'",
+  "frame-src 'self'",
   "manifest-src 'self'",
 ].join("; ");
 
@@ -39,6 +39,14 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), browsing-topics=()",
           },
+        ],
+      },
+      {
+        // Only the isolated, static game may be framed by this portal.
+        source: "/dino/index.html",
+        headers: [
+          { key: "Content-Security-Policy", value: "default-src 'none'; script-src 'self'; img-src 'self'; style-src 'unsafe-inline'; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; frame-ancestors 'self'" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
         ],
       },
     ];
