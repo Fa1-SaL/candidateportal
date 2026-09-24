@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
+import { randomUUID } from "node:crypto";
 import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { parsePublicSnapshot } from "@/lib/portal/model";
+import { inspectSnapshotRead, snapshotReadDiagnostic } from "@/lib/portal/snapshot-read";
 import { containsAuthParameters } from "@/lib/auth/redirects";
 import { authenticationUnavailable } from "@/lib/auth/errors";
 import PortalDashboard from "./portal-dashboard";
@@ -35,11 +37,12 @@ export default async function Home({ searchParams }: {
   const { data, error, count } = await supabase.from("candidate_portal_snapshot")
     .select("assignment_id,revision,applied_at,verified_at,source_as_of,payload", { count: "exact" })
     .order("assignment_id", { ascending: true }).limit(51);
-  if (error || count === null || count > 50 || count !== (data?.length ?? 0)) return protect(<PortalDashboard email={email} name={null} snapshots={[]} unavailable />);
-  const snapshots = (data ?? []).flatMap(row => { const snapshot = parsePublicSnapshot(row); return snapshot ? [snapshot] : []; });
-  const invalid = snapshots.length !== (data?.length ?? 0);
+  const read = inspectSnapshotRead({ data, error, count }, parsePublicSnapshot);
   // A malformed published project must not quietly vanish from an apparently
   // complete project selector. Fail closed and let an operator reconcile it.
-  if (invalid) return protect(<PortalDashboard email={email} name={null} snapshots={[]} unavailable />);
-  return protect(<PortalDashboard email={email} name={null} snapshots={snapshots} requestedProject={requestedProject} />);
+  if (!read.ok) {
+    console.error(JSON.stringify(snapshotReadDiagnostic(read.reason, randomUUID())));
+    return protect(<PortalDashboard email={email} name={null} snapshots={[]} unavailable />);
+  }
+  return protect(<PortalDashboard email={email} name={null} snapshots={read.snapshots} requestedProject={requestedProject} />);
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { numeric, isoDate, formatMoney, getDomainLabel, processStatus, getTaskCounts, getTaskDetails, getPaymentPeriods, getTerms, parseSnapshot, parsePublicSnapshot } from "./model.ts";
+import { numeric, isoDate, formatMoney, formatTimestamp, getDomainLabel, processStatus, getCheckPresentation, getTaskCounts, getTaskDetails, getPaymentPeriods, getTerms, parseSnapshot, parsePublicSnapshot } from "./model.ts";
 import { fixturePreviewEnabled } from "./preview.ts";
 
 const now = Date.parse("2026-09-08T12:00:00Z");
@@ -54,6 +54,55 @@ test("process statuses preserve unknown and explicit negation", () => {
   assert.equal(processStatus("awaited", "check"), "In progress");
   assert.equal(processStatus("not_received", "check"), "Not received");
   assert.equal(processStatus("action_required", "check"), "Action required");
+});
+test("known check results never receive a missing-data badge", () => {
+  for (const [raw, expected] of [["not_received", "Not received"], ["action_required", "Action required"], ["exception", "Exception"], ["unrecognized source status", "Under review"]]) {
+    const presentation = getCheckPresentation(raw, "check");
+    assert.equal(presentation.label, expected);
+    assert.equal(presentation.badge, expected);
+    assert.equal(presentation.positive, false);
+  }
+  assert.equal(getCheckPresentation(null, "check").badge, "Unavailable");
+  assert.equal(getCheckPresentation("awaited", "check").badge, "Pending");
+  assert.equal(getCheckPresentation("signed", "contract").positive, true);
+  assert.equal(getCheckPresentation("not_signed", "contract").negative, true);
+});
+test("SpringVerify awaiting input preserves the approved wording without implying completion or rejection", () => {
+  for (const raw of ["Awaiting Input", "awaiting_input", "awaiting-input", "  AWAITING INPUT  "]) {
+    assert.equal(processStatus(raw, "check"), "Awaiting input");
+    assert.deepEqual(getCheckPresentation(raw, "check"), {
+      label: "Awaiting input", badge: "Awaiting input", positive: false, negative: false,
+    });
+    const input = snapshot();
+    input.payload.domains.checks = {
+      state: "verified", revision: "run-1", verified_at: "2026-09-01T06:00:00Z", source_as_of: "2026-08-31",
+      value: { springverify_status: raw },
+    };
+    const parsed = parsePublicSnapshot(input, now);
+    assert.equal(parsed.domains.checks.value.springverify_status, raw);
+    assert.equal(getCheckPresentation(parsed.domains.checks.value.springverify_status, "check").label, "Awaiting input");
+  }
+  assert.equal(processStatus("awaiting_input", "contract"), "Under review");
+  assert.equal(processStatus("awaited", "check"), "In progress");
+  assert.equal(processStatus("unknown input status", "check"), "Under review");
+});
+test("publication times preserve the instant and explicitly label UTC", () => {
+  const utc = formatTimestamp("2026-09-17T18:45:12Z");
+  assert.equal(formatTimestamp("2026-09-18T00:15:12+05:30"), utc);
+  assert.match(utc, /17 Sept? 2026/);
+  assert.match(utc, /18:45:12/);
+  assert.match(utc, /UTC/);
+  for (const value of [null, "", "2026-02-30T12:00:00Z", "2026-09-17"]) assert.equal(formatTimestamp(value), "Unavailable");
+});
+test("a held domain keeps its verification and cutoff when a later snapshot is published", () => {
+  const parsed = parsePublicSnapshot(snapshot({ state: "held" }, {
+    revision: "run-2", applied_at: "2026-09-08T06:05:00Z", verified_at: "2026-09-08T06:01:00Z",
+  }), now);
+  assert.equal(parsed.appliedAt, "2026-09-08T06:05:00Z");
+  assert.equal(parsed.domains.metrics.state, "held");
+  assert.equal(parsed.domains.metrics.verifiedAt, "2026-09-01T06:00:00Z");
+  assert.equal(parsed.domains.metrics.sourceAsOf, "2026-08-31");
+  assert.equal(parsed.domains.metrics.revision, "run-1");
 });
 test("missing counts are unknown and explicit zero is retained", () => {
   assert.equal(getTaskCounts({}).submitted, null);

@@ -28,7 +28,7 @@ export function createSessionGuard(options: {
     if (disposed || leaving) return;
     pause(); leaving = true; options.leave();
   }
-  async function check() {
+  async function check(onVerified?: () => void) {
     if (disposed || leaving) return;
     pause();
     const request = generation;
@@ -44,7 +44,12 @@ export function createSessionGuard(options: {
       if (disposed || leaving || request !== generation) return;
       if (identity.unavailable) options.state("unavailable");
       else if (identity.userId !== options.expectedUserId) invalidate();
-      else options.state("ready");
+      else {
+        options.state("ready");
+        // Run follow-up work inside the winning identity check, not in a later
+        // promise continuation that could race sign-out or page concealment.
+        onVerified?.();
+      }
     } catch {
       if (!disposed && !leaving && request === generation) options.state("unavailable");
     } finally {

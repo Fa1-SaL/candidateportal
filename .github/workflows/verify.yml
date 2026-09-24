@@ -21,3 +21,59 @@ jobs:
       - run: npm run lint
       - run: npm run build
       - run: npm run typecheck
+      - name: Smoke-test the local production server
+        shell: bash
+        timeout-minutes: 5
+        env:
+          PORTAL_SMOKE_URL: "http://127.0.0.1:3101"
+        run: |
+          set -euo pipefail
+          smoke_log="$(mktemp "${RUNNER_TEMP}/portal-smoke.XXXXXX.log")"
+          server_pid=""
+          cleanup() {
+            result=$?
+            trap - EXIT INT TERM
+            if [[ -n "$server_pid" ]]; then
+              if kill -0 "$server_pid" 2>/dev/null; then
+                kill "$server_pid" 2>/dev/null || true
+                for attempt in {1..10}; do
+                  kill -0 "$server_pid" 2>/dev/null || break
+                  sleep 0.5
+                done
+                if kill -0 "$server_pid" 2>/dev/null; then
+                  kill -KILL "$server_pid" 2>/dev/null || true
+                fi
+              fi
+              wait "$server_pid" 2>/dev/null || true
+            fi
+            if [[ "$result" -ne 0 ]]; then
+              echo "Local production server log (last 100 lines):"
+              tail -n 100 "$smoke_log"
+            fi
+            exit "$result"
+          }
+          trap cleanup EXIT
+          trap 'exit 130' INT
+          trap 'exit 143' TERM
+
+          # Own the actual Next process, not an npm wrapper or an unrelated server.
+          node node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3101 >"$smoke_log" 2>&1 &
+          server_pid=$!
+          ready=0
+          deadline=$((SECONDS + 45))
+          while (( SECONDS < deadline )); do
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              echo "Local production server exited before becoming ready."
+              exit 1
+            fi
+            if curl --fail --silent --max-time 1 --noproxy '*' --output /dev/null "$PORTAL_SMOKE_URL/login"; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "$ready" -ne 1 ]]; then
+            echo "Local production server did not become ready within 45 seconds."
+            exit 1
+          fi
+          npm run test:smoke

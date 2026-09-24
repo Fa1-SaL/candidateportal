@@ -52,4 +52,48 @@ if (PORTAL_UNDER_MAINTENANCE) {
     assert.ok((await response.arrayBuffer()).byteLength > 0, path);
     console.log("PASS game asset " + path);
   }
+} else {
+  function assertActiveResponse(response, html, path) {
+    assert.match(response.headers.get("cache-control") ?? "", /no-store/, path);
+    assert.equal(response.headers.get("cdn-cache-control"), "no-store", path);
+    assert.equal(response.headers.get("referrer-policy"), "no-referrer", path);
+    assert.equal(response.headers.get("x-frame-options"), "DENY", path);
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff", path);
+    assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/, path);
+    assert.doesNotMatch(html, /The candidate portal is currently under maintenance|src="\/dino\/index.html"/, path);
+    assert.doesNotMatch(html, /Task Summary|candidate_portal_snapshot/, path);
+  }
+
+  for (const path of ["/", "/?project=synthetic-active-test"]) {
+    const response = await fetch(new URL(path, base), { redirect: "manual", signal: AbortSignal.timeout(10000) });
+    const html = await response.text();
+    assertActiveResponse(response, html, path);
+    let destination;
+    if (response.status === 307) {
+      destination = response.headers.get("location");
+    } else {
+      // app/loading.tsx can start streaming before Home redirects. Next then
+      // returns HTTP 200 with an actual refresh meta tag, not a 307 header.
+      assert.equal(response.status, 200, path);
+      const redirects = [...html.matchAll(/<meta\b(?=[^>]*\bhttp-equiv="refresh")[^>]*\bcontent="([^"]*)"[^>]*>/gi)];
+      assert.equal(redirects.length, 1, path + " must redirect anonymous visitors");
+      destination = redirects[0][1].match(/^\s*\d+\s*;\s*url=(.+?)\s*$/i)?.[1];
+    }
+    assert.ok(destination, path + " must provide a login destination");
+    assert.equal(new URL(destination, base).href, new URL("/login", base).href, path);
+    console.log("PASS active anonymous login redirect and private/no-store: " + path);
+  }
+
+  const response = await fetch(new URL("/login", base), { redirect: "manual", signal: AbortSignal.timeout(10000) });
+  assert.equal(response.status, 200, "/login");
+  const html = await response.text();
+  assertActiveResponse(response, html, "/login");
+  // Require the rendered form, not just its text inside a script, loading
+  // fallback, or error page. This does not submit an OTP or authenticate.
+  const form = html.match(/<form\b[^>]*\bclass="[^"]*\blogin-form\b[^"]*"[^>]*>[\s\S]*?<\/form>/)?.[0];
+  assert.ok(form, "/login must render the sign-in form");
+  assert.match(form, /<label\b[^>]*\bfor="email"[^>]*>Email address<\/label>/);
+  assert.match(form, /<input\b(?=[^>]*\bname="email")(?=[^>]*\btype="email")[^>]*>/);
+  assert.match(form, /<button\b[^>]*\btype="submit"[^>]*>Email me a sign-in link<\/button>/);
+  console.log("PASS active login form and private/no-store; no maintenance or candidate data");
 }

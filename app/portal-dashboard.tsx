@@ -1,15 +1,18 @@
-import { formatDate, getDomainLabel, getTaskCounts, getTaskDetails, processStatus, record, text, type Domain, type PortalSnapshot, type TaskBucket } from "@/lib/portal/model";
+import { formatDate, formatTimestamp, getCheckPresentation, getDomainLabel, getTaskCounts, getTaskDetails, record, text, type Domain, type PortalSnapshot, type TaskBucket } from "@/lib/portal/model";
 import ProjectSwitcher from "./project-switcher";
 import AccountActions from "./account-actions";
 import TaskIdDialogTrigger from "./task-id-dialog-trigger";
 import DashboardIcon from "./dashboard-icon";
 import DashboardPopover from "./dashboard-popover";
 
-function Freshness({ domain }: { domain: Domain }) {
-  if (domain.state === "unavailable") return <p>Verified data is not available yet.</p>;
-  return <p>{domain.state === "held" ? "Update under review; showing the previous verified values. " : "Verified snapshot. "}
-    Verified {formatDate(domain.verifiedAt?.slice(0, 10) ?? null)}.
-    {domain.sourceAsOf ? " Source through " + formatDate(domain.sourceAsOf) + "." : " Source cutoff unavailable."}</p>;
+function Freshness({ label, domain }: { label: string; domain: Domain }) {
+  return <p className="secondary-text"><strong>{label}: </strong>
+    {domain.state === "unavailable" ? "Verified data unavailable; verification time and source cutoff unknown." : <>
+      {domain.state === "held" && "Update under review; showing previous verified values. "}
+      Verified <time dateTime={domain.verifiedAt ?? undefined}>{formatTimestamp(domain.verifiedAt)}</time>.
+      {domain.sourceAsOf ? <> Source through <time dateTime={domain.sourceAsOf}>{formatDate(domain.sourceAsOf)}</time>.</> : " Source cutoff unknown."}
+    </>}
+  </p>;
 }
 
 function InfoCard({ icon, label, value, subvalue, className = "" }: {
@@ -21,16 +24,15 @@ function InfoCard({ icon, label, value, subvalue, className = "" }: {
   </section>;
 }
 
-function CheckCard({ icon, label, value, primary = false }: { icon: string; label: string; value: string; primary?: boolean }) {
-  const positive = value === "Signed" || value === "Completed";
-  const negative = value === "Not signed" || value === "Not completed";
-  const display = value === "Completed" ? "Verified" : value === "Not completed" ? "Not Verified" : value === "Unavailable" ? "Not available" : value;
+function CheckCard({ icon, label, value, kind, primary = false }: { icon: string; label: string; value: unknown; kind: "contract" | "check"; primary?: boolean }) {
+  const presentation = getCheckPresentation(value, kind);
+  const { positive, negative } = presentation;
   return <section className="dashboard-card dashboard-check">
     <div className="dashboard-label"><DashboardIcon name={icon} /><h2>{label}</h2></div>
-    <div className="dashboard-check-value"><p className="dashboard-value">{display}</p>
+    <div className="dashboard-check-value"><p className="dashboard-value">{presentation.label}</p>
       <span className={"dashboard-verification-badge " + (positive ? primary ? "primary" : "success" : negative ? "error" : "neutral")}>
         {(positive && !primary || negative) && <DashboardIcon name={positive ? "check_circle" : "cancel"} />}
-        {positive ? "Verified" : negative ? "Not Verified" : value === "In progress" ? "Pending" : "Unavailable"}
+        {presentation.badge}
       </span>
     </div>
   </section>;
@@ -84,6 +86,13 @@ export default function PortalDashboard({ email, name, snapshots, requestedProje
       </section> : <>
         <ProjectSwitcher projects={projects} selectedProjectId={snapshot.assignmentId} preview={preview} />
         {requestedProject && !snapshots.some(item => item.assignmentId === requestedProject) && <p role="status" className="notice">The requested project is unavailable. Showing {projectName}.</p>}
+        <section className="notice" aria-label="Published data dates">
+          <p><strong>Published <time dateTime={snapshot.appliedAt}>{formatTimestamp(snapshot.appliedAt)}</time>.</strong> Refresh checks for a newer published update.</p>
+          <Freshness label="Profile" domain={snapshot.domains.assignment} />
+          <Freshness label="Checks" domain={snapshot.domains.checks} />
+          <Freshness label="Task counts" domain={snapshot.domains.metrics} />
+          <Freshness label="Task IDs" domain={snapshot.domains.task_events} />
+        </section>
         <div className="dashboard-grid" key={snapshot.assignmentId + ":" + snapshot.revision}>
           <div className="dashboard-information" id="project-details">
             <div className="dashboard-info-grid">
@@ -99,17 +108,16 @@ export default function PortalDashboard({ email, name, snapshots, requestedProje
               <section className="dashboard-card dashboard-domain"><h2 className="dashboard-field-label">Domain</h2><p className="dashboard-value">{domain}</p></section>
             </div>
             <div className="dashboard-check-grid">
-              <CheckCard icon="description" label="Contract Status" value={processStatus(checks.contract_status, "contract")} primary />
-              <CheckCard icon="verified_user" label="SpringVerify Status" value={processStatus(checks.springverify_status, "check")} />
-              <CheckCard icon="gpp_maybe" label="Remofirst Status" value={processStatus(checks.remofirst_status, "check")} />
+              <CheckCard icon="description" label="Contract Status" value={checks.contract_status} kind="contract" primary />
+              <CheckCard icon="verified_user" label="SpringVerify Status" value={checks.springverify_status} kind="check" />
+              <CheckCard icon="gpp_maybe" label="Remofirst Status" value={checks.remofirst_status} kind="check" />
             </div>
-            {(snapshot.domains.assignment.state === "held" || snapshot.domains.checks.state === "held") && <p className="secondary-text">An update is under review. The previous verified profile values remain visible.</p>}
           </div>
           <aside className="dashboard-summary">
             <section className="dashboard-card dashboard-task-panel" aria-labelledby="tasks-heading">
               <h2 id="tasks-heading">Task Summary</h2>
               <DashboardPopover id="task-summary-update-note" label="Task Summary update information" className="dashboard-task-info" trigger={<DashboardIcon name="info" />}>
-                <p>Showing the latest published snapshot.</p><Freshness domain={snapshot.domains.metrics} />
+                <p>Counts come from the published update. Task IDs are shown only when they reconcile with these counts.</p>
               </DashboardPopover>
               <div className="dashboard-task-grid">{taskTiles.map(({ bucket, label, icon, tone }) => <TaskIdDialogTrigger key={bucket}
                 className={bucket === "evaluationPending" ? "dashboard-task-wide" : undefined}

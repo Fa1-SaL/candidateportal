@@ -66,6 +66,13 @@ export function formatDate(value: string | null): string {
   const date = isoDate(value);
   return date ? new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`)) : "Unavailable";
 }
+export function formatTimestamp(value: string | null): string {
+  const date = timestamp(value);
+  return date ? new Intl.DateTimeFormat("en-IN", {
+    day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hourCycle: "h23", timeZone: "UTC", timeZoneName: "short",
+  }).format(new Date(date)) : "Unavailable";
+}
 export function processStatus(value: unknown, kind: "contract" | "check"): string {
   const input = text(value)?.toLowerCase().replace(/[_-]/g, " ");
   if (!input) return "Unavailable";
@@ -74,9 +81,22 @@ export function processStatus(value: unknown, kind: "contract" | "check"): strin
   if (positives.includes(input)) return kind === "contract" ? "Signed" : "Completed";
   if (negatives.includes(input)) return kind === "contract" ? "Not signed" : "Not completed";
   if (["pending", "in progress", "sent", "processing", "awaiting signature", "awaited"].includes(input)) return "In progress";
+  if (kind === "check" && input === "awaiting input") return "Awaiting input";
   if (kind === "check" && input === "not received") return "Not received";
   if (kind === "check" && input === "action required") return "Action required";
+  if (kind === "check" && input === "exception") return "Exception";
   return "Under review";
+}
+export function getCheckPresentation(value: unknown, kind: "contract" | "check") {
+  const status = processStatus(value, kind);
+  const positive = status === "Signed" || status === "Completed";
+  const negative = status === "Not signed" || status === "Not completed";
+  return {
+    label: status === "Completed" ? "Verified" : status === "Not completed" ? "Not Verified" : status === "Unavailable" ? "Not available" : status,
+    badge: positive ? "Verified" : negative ? "Not Verified" : status === "In progress" ? "Pending" : status,
+    positive,
+    negative,
+  };
 }
 export function getTaskCounts(value: unknown): TaskCounts {
   const row = record(value);

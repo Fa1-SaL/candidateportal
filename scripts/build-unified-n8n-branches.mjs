@@ -872,6 +872,14 @@ function read(row, ...names) {
   }
   return '';
 }
+function readTaskStatus(row, ...names) {
+  const wanted = new Set(names.map(key));
+  const matches = Object.keys(row || {}).filter((column) => wanted.has(key(column)));
+  if (!matches.length) throw new Error('Otter Task ID Tracking: missing task status header');
+  if (matches.length > 1) throw new Error('Otter Task ID Tracking: ambiguous task status headers');
+  // A present blank cell retains the existing status policy; an absent header cannot supply it.
+  return row[matches[0]];
+}
 function status(value) {
   const normalized = text(value).toLowerCase();
   if (['accepted', 'approved', 'provisionally accepted', 'completed'].includes(normalized)) return 'accepted';
@@ -907,7 +915,7 @@ for (const item of items) {
     p_project_slug: 'Otter',
     p_project_name_raw: 'Otter',
     p_task_type: text(read(row, 'Workflow')) || null,
-    p_status: status(read(row, 'Current Status')),
+    p_status: status(readTaskStatus(row, 'Current Status')),
     p_submitted_at_source: text(read(row, 'Latest Client Submission Timestamp')) || null,
     p_source_sheet: 'Snorkel MainOtter ML Experts - Internal Dhruv / Task ID Tracking',
     p_source_key: 'task-source:otter',
@@ -928,6 +936,14 @@ function read(row, ...names) {
     if (match) return match[1];
   }
   return '';
+}
+function readTaskStatus(row, ...names) {
+  const wanted = new Set(names.map(key));
+  const matches = Object.keys(row || {}).filter((column) => wanted.has(key(column)));
+  if (!matches.length) throw new Error('Rudder Task Raw Pull: missing task status header');
+  if (matches.length > 1) throw new Error('Rudder Task Raw Pull: ambiguous task status headers');
+  // A present blank cell retains the existing status policy; an absent header cannot supply it.
+  return row[matches[0]];
 }
 function status(value) {
   const normalized = text(value).toLowerCase();
@@ -968,7 +984,7 @@ for (const item of items) {
     p_project_slug: 'Rudder',
     p_project_name_raw: text(read(row, 'Project Name')) || 'Rudder',
     p_task_type: text(read(row, 'Task Type')) || null,
-    p_status: status(read(row, 'Task Status', 'State Enum', 'Status')),
+    p_status: status(readTaskStatus(row, 'Task Status', 'State Enum', 'Status')),
     p_created_at_source: text(read(row, 'Created At')) || null,
     p_submitted_at_source: text(read(row, 'Last Submitted At', 'Submitted At')) || null,
     p_bpo_source: bpoSource || null,
