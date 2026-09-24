@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:security": "node --test --test-isolation=none src/lib/auth/redirects.test.mjs src/lib/auth/session-guard.test.mjs",
-    "test": "node --test --test-isolation=none src/lib/auth/redirects.test.mjs src/lib/auth/session-guard.test.mjs src/lib/portal/model.test.mjs",
+    "test": "node --test --test-isolation=none src/lib/auth/redirects.test.mjs src/lib/auth/session-guard.test.mjs src/lib/portal/model.test.mjs src/lib/portal/snapshot-read.test.mjs scripts/task-status-headers.test.mjs scripts/geranium-header-patch.test.mjs",
     "typecheck": "tsc --noEmit",
     "test:smoke": "node scripts/smoke-local.mjs"
   },
